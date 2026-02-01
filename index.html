@@ -487,7 +487,7 @@ document.getElementById("btnGo").addEventListener("click",()=>{
   });
 
   // 첫 곡 자동 재생
-  if(songs.length>0)setTimeout(()=>playSong(encodeURIComponent(songs[0].q)),600);
+  if(songs.length > 0) { setTimeout(() => document.querySelector('#result .play-btn')?.click(), 600); }
 });
 
 function playSong(query){
