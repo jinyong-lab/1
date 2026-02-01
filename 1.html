@@ -510,6 +510,7 @@ document.getElementById("btnCompat").addEventListener("click",()=>{
   const ji1=ps1[2].ji,ji2=ps2[2].ji;
 
   const gm=[4,0,1,2,3],km=[3,4,0,1,2];
+  const gh=[[0,5],[1,6],[2,7],[3,8],[4,9]];
   let score=50;
   if(el2===gm[el1])score+=20;if(el1===gm[el2])score+=15;if(el1===el2)score+=12;
   if(el2===km[el1])score-=15;if(el1===km[el2])score-=10;
@@ -525,7 +526,6 @@ document.getElementById("btnCompat").addEventListener("click",()=>{
   if(yh.some(([a,b])=>(ji1===a&&ji2===b)||(ji1===b&&ji2===a)))sokScore+=25;
   if(ch.some(([a,b])=>(ji1===a&&ji2===b)||(ji1===b&&ji2===a)))sokScore-=15;
   if(CG_YY[dg1]!==CG_YY[dg2])sokScore+=15;
-  const gh=[[0,5],[1,6],[2,7],[3,8],[4,9]];
   if(gh.some(([a,b])=>(dg1===a&&dg2===b)||(dg1===b&&dg2===a)))sokScore+=20;
   if(JJ_EL[ji1]===1||JJ_EL[ji2]===1)sokScore+=5;
   if(JJ_EL[ji1]===4&&JJ_EL[ji2]===4)sokScore+=5;
