@@ -321,11 +321,11 @@ function fortuneText(dg,ec,category,dayOffset){
 
 // 노래 DB
 const songDB={
-  0:[{t:"봄날 - BTS",q:"BTS 봄날 MV"},{t:"꽃길 - BIGBANG",q:"빅뱅 꽃길 MV"},{t:"나무 - 이적",q:"이적 나무 MV"},{t:"봄이 좋냐 - 10cm",q:"10cm 봄이좋냐 MV"},{t:"Forest - EXO",q:"EXO Forest"}],
-  1:[{t:"불타오르네 - BTS",q:"BTS 불타오르네 MV"},{t:"Playing With Fire - BLACKPINK",q:"BLACKPINK 불장난 MV"},{t:"빨간맛 - Red Velvet",q:"Red Velvet 빨간맛 MV"},{t:"Dynamite - BTS",q:"BTS Dynamite MV"},{t:"Fire - 2NE1",q:"2NE1 Fire MV"}],
-  2:[{t:"여행 - 볼빨간사춘기",q:"볼빨간사춘기 여행 MV"},{t:"좋은 날 - IU",q:"아이유 좋은날 MV"},{t:"사계 - 태연",q:"태연 사계 MV"},{t:"편지 - 김광진",q:"김광진 편지"},{t:"나의 사랑 나의 곁에 - 김현식",q:"김현식 나의사랑나의곁에"}],
-  3:[{t:"FEARLESS - LE SSERAFIM",q:"르세라핌 FEARLESS MV"},{t:"SOLO - 제니",q:"제니 SOLO MV"},{t:"Power - EXO",q:"EXO Power MV"},{t:"독백 - 김동률",q:"김동률 독백"},{t:"Champion - PSY",q:"싸이 챔피언 MV"}],
-  4:[{t:"밤편지 - IU",q:"아이유 밤편지 MV"},{t:"파도 - 잔나비",q:"잔나비 파도 MV"},{t:"비가 오는 날엔 - 윤하",q:"윤하 비가오는날엔 MV"},{t:"Blue - BIGBANG",q:"빅뱅 Blue MV"},{t:"바다 - 비비",q:"비비 바다"}],
+  0:[{t:"봄날 - BTS", id:"xEeFrLSkMm8", q:"BTS 봄날 MV"},{t:"꽃길 - BIGBANG", id:"", q:"빅뱅 꽃길 MV"},{t:"나무 - 이적", id:"", q:"이적 나무 MV"},{t:"봄이 좋냐 - 10cm", id:"GD_k_y_35pM", q:"10cm 봄이좋냐 MV"},{t:"Forest - EXO", id:"R1-Q-o2DR5A", q:"EXO Forest"}],
+  1:[{t:"불타오르네 - BTS", id:"ALj5MKjy2BU", q:"BTS 불타오르네 MV"},{t:"Playing With Fire - BLACKPINK", id:"9pdj4iJD08s", q:"BLACKPINK 불장난 MV"},{t:"빨간맛 - Red Velvet", id:"WyiIGEHQP8o", q:"Red Velvet 빨간맛 MV"},{t:"Dynamite - BTS", id:"gdZLi9oWNZg", q:"BTS Dynamite MV"},{t:"Fire - 2NE1", id:"49A79BF_lZ0", q:"2NE1 Fire MV"}],
+  2:[{t:"여행 - 볼빨간사춘기", id:"xYi5d_dL3_Q", q:"볼빨간사춘기 여행 MV"},{t:"좋은 날 - IU", id:"jeqdYqsrsA0", q:"아이유 좋은날 MV"},{t:"사계 - 태연", id:"4OrCA1OInoo", q:"태연 사계 MV"},{t:"편지 - 김광진", id:"c42fg3L_3vI", q:"김광진 편지"},{t:"나의 사랑 나의 곁에 - 김현식", id:"H4p_i_gJgA8", q:"김현식 나의사랑나의곁에"}],
+  3:[{t:"FEARLESS - LE SSERAFIM", id:"pyf8cbGyfP0", q:"르세라핌 FEARLESS MV"},{t:"SOLO - 제니", id:"b73BI9eUkjM", q:"제니 SOLO MV"},{t:"Power - EXO", id:"sNhhvQZUDGU", q:"EXO Power MV"},{t:"독백 - 김동률", id:"Co_y29T2I_Q", q:"김동률 독백"},{t:"Champion - PSY", id:"jKr3Gk5jO_Y", q:"싸이 챔피언 MV"}],
+  4:[{t:"밤편지 - IU", id:"BzYnNdJhZQw", q:"아이유 밤편지 MV"},{t:"파도 - 잔나비", id:"pT1EwPhL2cM", q:"잔나비 파도 MV"},{t:"비가 오는 날엔 - 윤하", id:"Re-A1sS_T1Y", q:"윤하 비가오는날엔 MV"},{t:"Blue - BIGBANG", id:"2GRP1rkE4O0", q:"빅뱅 Blue MV"},{t:"바다 - 비비", id:"7soYTbVHeA", q:"비비 바다"}],
 };
 function getSongs(el,ec){let mn=0;for(let i=0;i<5;i++)if(ec[i]<ec[mn])mn=i;const s=[...songDB[el]];if(mn!==el&&ec[mn]<=1)s.push(...songDB[mn].slice(0,2));return s.slice(0,6)}
 
@@ -454,7 +454,7 @@ document.getElementById("btnGo").addEventListener("click",()=>{
   html+=`<div class="player-wrap" id="playerWrap"><div style="display:flex;align-items:center;justify-content:center;position:absolute;top:0;left:0;width:100%;height:100%;color:var(--muted);font-size:14px">아래 재생 버튼을 눌러주세요</div></div>`;
   html+=`<ul class="song-list">`;
   for(const s of songs){
-    html+=`<li><button class="play-btn" data-query="${encodeURIComponent(s.q)}">▶</button> <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(s.q)}" target="_blank" rel="noopener">${s.t}</a></li>`;
+    html+=`<li><button class="play-btn" data-id="${s.id}">▶</button> <a href="https://www.youtube.com/watch?v=${s.id}" target="_blank" rel="noopener">${s.t}</a></li>`;
   }
   html+=`</ul></div></div>`;
 
@@ -482,18 +482,24 @@ document.getElementById("btnGo").addEventListener("click",()=>{
   document.getElementById("result").addEventListener("click",function(e){
     const btn=e.target.closest(".play-btn");
     if(!btn)return;
-    const q=btn.getAttribute("data-query");
-    if(q)playSong(q);
+    const id=btn.getAttribute("data-id");
+    if(id)playSong(id);
   });
 
   // 첫 곡 자동 재생
-  if(songs.length > 0) { setTimeout(() => document.querySelector('#result .play-btn')?.click(), 600); }
+  if(songs.length > 0) {
+    const firstPlayable = songs.find(s => s.id);
+    if (firstPlayable) {
+      setTimeout(() => playSong(firstPlayable.id), 600);
+    }
+  }
 });
 
-function playSong(query){
+function playSong(videoId){
+  if (!videoId) return;
   const pw=document.getElementById("playerWrap");
   if(!pw)return;
-  pw.innerHTML=`<iframe src="https://www.youtube.com/embed?listType=search&list=${query}&autoplay=1" allow="autoplay;encrypted-media;accelerometer;gyroscope;picture-in-picture" allowfullscreen></iframe>`;
+  pw.innerHTML=`<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
 }
 
 // ===== 궁합 =====
