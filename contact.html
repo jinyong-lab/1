@@ -1,25 +1,50 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>문의하기</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 800px; margin: 0 auto; }
-        h1 { text-align: center; }
-        .contact-info { text-align: center; margin-top: 40px; }
+        :root[data-theme="dark"]{--bg:linear-gradient(180deg, #1d2b4b, #0b1020);--card:#121a33;--line:rgba(255,255,255,.10);--muted:rgba(255,255,255,.55);--text:#fff;--accent:#4f7cff;--input-bg:#0b1020;}
+        :root[data-theme="light"]{--bg:linear-gradient(180deg, #ffffff, #f0f2f5);--card:#fff;--line:rgba(0,0,0,.10);--muted:rgba(0,0,0,.50);--text:#1a1a1a;--accent:#3b63d9;--input-bg:#f7f8fa;}
+        *{box-sizing:border-box}
+        body{margin:0;font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:grid;place-items:center;padding:20px;}
+        .card{width:min(800px,96vw);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 40px;box-shadow:0 22px 60px rgba(0,0,0,.15);}
+        h1 { text-align: center; margin-bottom: 40px; }
+        .form-group{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+        label{font-size:14px;color:var(--muted);font-weight:600;}
+        input,textarea{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--input-bg);color:var(--text);outline:none;font-size:15px;width:100%;}
+        textarea{resize:vertical;min-height:120px;}
+        input:focus,textarea:focus{border-color:var(--accent)}
+        button{border:none;border-radius:12px;padding:14px 20px;background:var(--accent);color:#fff;font-weight:700;font-size:16px;cursor:pointer;width:100%;margin-top:14px;}
+        .home-link { display: block; text-align: center; margin-top: 40px; color: var(--text); }
     </style>
 </head>
 <body>
-    <h1>문의하기</h1>
-    <p>웹사이트 관련 문의, 제안, 또는 오류 제보는 아래 이메일로 연락주시면 감사하겠습니다.</p>
-    
-    <div class="contact-info">
-        <p><strong>이메일:</strong> [이메일 주소 삽입]</p>
-    </div>
-
-    <div style="text-align: center; margin-top: 50px;">
-        <a href="index.html">돌아가기</a>
+    <div class="card">
+        <h1>문의하기</h1>
+        <p style="text-align: center; margin-top: -20px; margin-bottom: 30px; color: var(--muted);">
+            사이트 관련 문의, 제안, 오류 제보는 아래 양식을 이용해주세요.
+        </p>
+        <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+            <div class="form-group">
+                <label for="name">이름</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="message">내용</label>
+                <textarea id="message" name="message" required></textarea>
+            </div>
+            <button type="submit">전송하기</button>
+        </form>
+        <a href="index.html" class="home-link">홈으로 돌아가기</a>
     </div>
 </body>
 </html>

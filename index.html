@@ -4,15 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>사주풀이 + 노래 추천 v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    :root[data-theme="dark"]{--bg:#0b1020;--card:#121a33;--line:rgba(255,255,255,.10);--muted:rgba(255,255,255,.55);--text:#fff;--accent:#4f7cff;--danger:rgba(255,80,80,.18);--danger-line:rgba(255,80,80,.35);--input-bg:#0b1020;--pillar-bg:rgba(255,255,255,.04);--highlight:rgba(79,124,255,.12);--music-bg:rgba(79,124,255,.08);--music-line:rgba(79,124,255,.2);--link:#cfe0ff;--toggle-bg:rgba(255,255,255,.10);--toggle-text:rgba(255,255,255,.85);--luck-bar-bg:rgba(255,255,255,.08);--section-title:#8eaaff;--fortune-bg:rgba(255,255,255,.04);--fortune-hover:rgba(255,255,255,.08)}
-    :root[data-theme="light"]{--bg:#f0f2f5;--card:#fff;--line:rgba(0,0,0,.10);--muted:rgba(0,0,0,.50);--text:#1a1a1a;--accent:#3b63d9;--danger:rgba(255,80,80,.12);--danger-line:rgba(255,80,80,.30);--input-bg:#f7f8fa;--pillar-bg:rgba(0,0,0,.03);--highlight:rgba(59,99,217,.08);--music-bg:rgba(59,99,217,.06);--music-line:rgba(59,99,217,.15);--link:#2850b8;--toggle-bg:rgba(0,0,0,.06);--toggle-text:rgba(0,0,0,.70);--luck-bar-bg:rgba(0,0,0,.06);--section-title:#2850b8;--fortune-bg:rgba(0,0,0,.03);--fortune-hover:rgba(0,0,0,.06)}
+    :root[data-theme="dark"]{--bg:linear-gradient(180deg, #1d2b4b, #0b1020);--card:#121a33;--line:rgba(255,255,255,.10);--muted:rgba(255,255,255,.55);--text:#fff;--accent:#4f7cff;--danger:rgba(255,80,80,.18);--danger-line:rgba(255,80,80,.35);--input-bg:#0b1020;--pillar-bg:rgba(255,255,255,.04);--highlight:rgba(79,124,255,.12);--music-bg:rgba(79,124,255,.08);--music-line:rgba(79,124,255,.2);--link:#cfe0ff;--toggle-bg:rgba(255,255,255,.10);--toggle-text:rgba(255,255,255,.85);--luck-bar-bg:rgba(255,255,255,.08);--section-title:#8eaaff;--fortune-bg:rgba(255,255,255,.04);--fortune-hover:rgba(255,255,255,.08)}
+    :root[data-theme="light"]{--bg:linear-gradient(180deg, #ffffff, #f0f2f5);--card:#fff;--line:rgba(0,0,0,.10);--muted:rgba(0,0,0,.50);--text:#1a1a1a;--accent:#3b63d9;--danger:rgba(255,80,80,.12);--danger-line:rgba(255,80,80,.30);--input-bg:#f7f8fa;--pillar-bg:rgba(0,0,0,.03);--highlight:rgba(59,99,217,.08);--music-bg:rgba(59,99,217,.06);--music-line:rgba(59,99,217,.15);--link:#2850b8;--toggle-bg:rgba(0,0,0,.06);--toggle-text:rgba(0,0,0,.70);--luck-bar-bg:rgba(0,0,0,.06);--section-title:#2850b8;--fortune-bg:rgba(0,0,0,.03);--fortune-hover:rgba(0,0,0,.06)}
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:grid;place-items:center;padding:20px;transition:background .3s,color .3s}
-    .card{width:min(800px,96vw);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 22px 60px rgba(0,0,0,.15);transition:background .3s}
-    .top-bar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
-    .top-bar h1{margin:0;font-size:24px}
-    .theme-toggle{border:none;border-radius:10px;padding:7px 14px;background:var(--toggle-bg);color:var(--toggle-text);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;width:auto;margin-top:0}
+    body{margin:0;font-family:'Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:grid;place-items:center;padding:20px;transition:color .3s, background .3s}
+    .card{width:min(800px,96vw);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 22px 60px rgba(0,0,0,.15);transition:background .3s, border .3s, box-shadow .3s}
+    .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .top-bar h1{margin:0;font-size:24px;font-weight:700;}
+    .theme-toggle{border:none;border-radius:10px;padding:7px 14px;background:var(--toggle-bg);color:var(--toggle-text);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;width:auto;margin-top:0;transition: all 0.3s ease;flex-shrink: 0;}
+    .theme-toggle:hover{transform:translateY(-2px)}
     .subtitle{font-size:13px;color:var(--muted);margin-bottom:14px}
     .tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:2px solid var(--line);padding-bottom:0}
     .tab-btn{border:none;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;margin-bottom:-2px;width:auto;margin-top:0}
@@ -22,13 +26,15 @@
     .form-group{display:flex;flex-direction:column;gap:4px}
     .form-group.full{grid-column:1/-1}
     label{font-size:13px;color:var(--muted)}
-    input,select{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--input-bg);color:var(--text);outline:none;font-size:14px;transition:background .3s,color .3s}
+    input,select{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--input-bg);color:var(--text);outline:none;font-size:14px;transition:background .3s,color .3s, border .3s}
+    input:focus,select:focus{border-color:var(--accent)}
     select option{background:var(--input-bg);color:var(--text)}
     .calendar-row{display:flex;gap:8px;margin-top:4px}
     .calendar-row label{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text);cursor:pointer}
     .calendar-row input[type="radio"]{width:auto;accent-color:var(--accent)}
-    button{border:none;border-radius:12px;padding:12px 18px;background:var(--accent);color:#fff;font-weight:700;font-size:15px;cursor:pointer;width:100%;margin-top:14px}
-    button:disabled{opacity:.6;cursor:not-allowed}
+    button{border:none;border-radius:12px;padding:12px 18px;background:var(--accent);color:#fff;font-weight:700;font-size:15px;cursor:pointer;width:100%;margin-top:14px;transition: all 0.3s ease;}
+    button:hover{filter:brightness(1.2);transform:translateY(-2px);}
+    button:disabled{opacity:.6;cursor:not-allowed; filter:brightness(1); transform:none;}
     .err{display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--danger);border:1px solid var(--danger-line);color:var(--text);font-size:13px}
     .section{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
     .section-title{font-size:16px;font-weight:700;margin:0 0 12px;color:var(--section-title)}
@@ -72,8 +78,8 @@
     .compat-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
     /* Fortune buttons */
     .fortune-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
-    .fortune-btn{border:none;border-radius:12px;padding:14px 8px;background:var(--fortune-bg);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:background .2s;width:auto;margin:0}
-    .fortune-btn:hover{background:var(--fortune-hover)}
+    .fortune-btn{border:none;border-radius:12px;padding:14px 8px;background:var(--fortune-bg);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition: all 0.3s ease;width:auto;margin:0}
+    .fortune-btn:hover{background:var(--fortune-hover);transform:translateY(-2px)}
     .fortune-btn.active{background:var(--accent);color:#fff}
     .fortune-btn .f-icon{font-size:24px;display:block;margin-bottom:4px}
     .fortune-content{margin-top:12px;display:none}
@@ -141,6 +147,15 @@
     <div id="compatResult" style="display:none"></div>
   </div>
 </div>
+
+  <footer>
+    <p>&copy; 2023 사주풀이 + 노래 추천. All rights reserved.</p>
+    <nav>
+      <a href="/privacy-policy.html">개인정보처리방침</a> |
+      <a href="/contact.html">문의하기</a>
+    </nav>
+    <div id="lastModified" style="font-size: 10px; margin-top: 10px;"></div>
+  </footer>
 
 <script>
 // ===== 데이터 =====
@@ -453,18 +468,32 @@ document.getElementById("btnGo").addEventListener("click",()=>{
   html+=`</div>`;
 
   // 10. 노래
-  const songs=getSongs(myEl,ec);
   html+=`<div class="section"><div class="music-box"><h3>사주에 어울리는 노래</h3>`;
   html+=`<div class="player-wrap" id="playerWrap"><div style="display:flex;align-items:center;justify-content:center;position:absolute;top:0;left:0;width:100%;height:100%;color:var(--muted);font-size:14px">아래 재생 버튼을 눌러주세요</div></div>`;
-  html+=`<ul class="song-list">`;
-  for(const s of songs){
-    html+=`<li><button class="play-btn" data-id="${s.id}">▶</button> <a href="https://www.youtube.com/watch?v=${s.id}" target="_blank" rel="noopener">${s.t}</a></li>`;
-  }
-  html+=`</ul></div></div>`;
+  html+=`<ul class="song-list"><li>API 키를 확인하거나 잠시 기다려주세요...</li></ul></div></div>`;
 
   document.getElementById("result").innerHTML=html;
   document.getElementById("result").style.display="block";
   document.getElementById("result").scrollIntoView({behavior:"smooth"});
+
+  // 노래 API 호출 및 리스트 렌더링
+  getSongs(myEl, ec).then(songs => {
+    const songList = document.querySelector('.song-list');
+    if (songList && songs && songs.length > 0) {
+      songList.innerHTML = ''; // '불러오는 중' 메시지 삭제
+      songs.forEach(s => {
+        const li = document.createElement('li');
+        const safeTitle = s.t.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        li.innerHTML = `<button class="play-btn" data-id="${s.id}">▶</button> <a href="https://www.youtube.com/watch?v=${s.id}" target="_blank" rel="noopener">${safeTitle}</a>`;
+        songList.appendChild(li);
+      });
+
+      const firstPlayable = songs.find(s => s.id);
+      if (firstPlayable) {
+        setTimeout(() => playSong(firstPlayable.id), 600);
+      }
+    }
+  });
 
   // 운세 버튼 이벤트 위임
   document.getElementById("result").addEventListener("click",function(e){
@@ -489,14 +518,6 @@ document.getElementById("btnGo").addEventListener("click",()=>{
     const id=btn.getAttribute("data-id");
     if(id)playSong(id);
   });
-
-  // 첫 곡 자동 재생
-  if(songs.length > 0) {
-    const firstPlayable = songs.find(s => s.id);
-    if (firstPlayable) {
-      setTimeout(() => playSong(firstPlayable.id), 600);
-    }
-  }
 });
 
 function playSong(videoId){
@@ -625,13 +646,5 @@ document.getElementById("btnCompat").addEventListener("click",()=>{
 
 document.getElementById('lastModified').textContent = 'Last modified: ' + new Date().toLocaleString();
 </script>
-  <footer>
-    <p>&copy; 2023 사주풀이 + 노래 추천. All rights reserved.</p>
-    <nav>
-      <a href="/privacy-policy.html">개인정보처리방침</a> |
-      <a href="/contact.html">문의하기</a>
-    </nav>
-    <div id="lastModified" style="font-size: 10px; margin-top: 10px;"></div>
-  </footer>
 </body>
 </html>
