@@ -102,14 +102,49 @@
     <button class="tab-btn active" data-tab="tabMain">내 사주</button>
     <button class="tab-btn" data-tab="tabCompat">궁합 보기</button>
   </div>
+
+  <!-- 탭1: 내 사주 -->
   <div class="tab-pane active" id="tabMain">
     <div class="form-grid">
+      <div class="form-group"><label>년도</label><input type="number" id="bY" placeholder="예: 1995" min="1900" max="2100"/></div>
+      <div class="form-group"><label>월</label><select id="bM"><option value="">선택</option><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select></div>
+      <div class="form-group"><label>일</label><select id="bD"><option value="">선택</option></select></div>
+      <div class="form-group full"><label>양력 / 음력</label><div class="calendar-row"><label><input type="radio" name="cal" value="solar" checked/> 양력</label><label><input type="radio" name="cal" value="lunar"/> 음력</label></div></div>
+      <div class="form-group full"><label>태어난 시간</label><select id="bT"><option value="">선택해주세요</option><option value="0">자시 (23:00~01:00)</option><option value="1">축시 (01:00~03:00)</option><option value="2">인시 (03:00~05:00)</option><option value="3">묘시 (05:00~07:00)</option><option value="4">진시 (07:00~09:00)</option><option value="5">사시 (09:00~11:00)</option><option value="6">오시 (11:00~13:00)</option><option value="7">미시 (13:00~15:00)</option><option value="8">신시 (15:00~17:00)</option><option value="9">유시 (17:00~19:00)</option><option value="10">술시 (19:00~21:00)</option><option value="11">해시 (21:00~23:00)</option><option value="-1">모름</option></select></div>
+      <div class="form-group full"><label>태어난 지역</label><input type="text" id="bP" placeholder="예: 서울, 부산, 대구, 인천..."/></div>
+      <div class="form-group full"><label>성별</label><div class="calendar-row"><label><input type="radio" name="gender" value="male" checked/> 남자</label><label><input type="radio" name="gender" value="female"/> 여자</label></div></div>
     </div>
     <button id="btnGo">사주 분석하기</button>
     <div class="err" id="errBox"></div>
     <div id="result" style="display:none"></div>
   </div>
+
+  <!-- 탭2: 궁합 -->
   <div class="tab-pane" id="tabCompat">
+    <div class="vs-wrap">
+      <div>
+        <div style="font-weight:700;margin-bottom:8px;color:var(--section-title)">나</div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="form-group"><label>년도</label><input type="number" id="cY1" placeholder="1995" min="1900" max="2100"/></div>
+          <div class="form-group"><label>월</label><select id="cM1"><option value="">선택</option><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select></div>
+          <div class="form-group"><label>일</label><select id="cD1"><option value="">선택</option></select></div>
+          <div class="form-group"><label>시간</label><select id="cT1"><option value="">선택</option><option value="0">자시 (23~01시)</option><option value="1">축시 (01~03시)</option><option value="2">인시 (03~05시)</option><option value="3">묘시 (05~07시)</option><option value="4">진시 (07~09시)</option><option value="5">사시 (09~11시)</option><option value="6">오시 (11~13시)</option><option value="7">미시 (13~15시)</option><option value="8">신시 (15~17시)</option><option value="9">유시 (17~19시)</option><option value="10">술시 (19~21시)</option><option value="11">해시 (21~23시)</option><option value="-1">모름</option></select></div>
+        </div>
+      </div>
+      <div class="vs-label">VS</div>
+      <div>
+        <div style="font-weight:700;margin-bottom:8px;color:var(--section-title)">상대</div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="form-group"><label>년도</label><input type="number" id="cY2" placeholder="1997" min="1900" max="2100"/></div>
+          <div class="form-group"><label>월</label><select id="cM2"><option value="">선택</option><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select></div>
+          <div class="form-group"><label>일</label><select id="cD2"><option value="">선택</option></select></div>
+          <div class="form-group"><label>시간</label><select id="cT2"><option value="">선택</option><option value="0">자시 (23~01시)</option><option value="1">축시 (01~03시)</option><option value="2">인시 (03~05시)</option><option value="3">묘시 (05~07시)</option><option value="4">진시 (07~09시)</option><option value="5">사시 (09~11시)</option><option value="6">오시 (11~13시)</option><option value="7">미시 (13~15시)</option><option value="8">신시 (15~17시)</option><option value="9">유시 (17~19시)</option><option value="10">술시 (19~21시)</option><option value="11">해시 (21~23시)</option><option value="-1">모름</option></select></div>
+        </div>
+      </div>
+    </div>
+    <button id="btnCompat">궁합 분석하기</button>
+    <div class="err" id="errBox2"></div>
+    <div id="compatResult" style="display:none"></div>
   </div>
 </div>
   <footer>
@@ -121,8 +156,10 @@
     <div id="lastModified" style="font-size: 10px; margin-top: 10px;"></div>
   </footer>
 <script>
-// Saju logic...
-const YOUTUBE_API_KEY = 'YOUR_API_KEY_HERE';
+// Saju logic from the clean file...
+// ...
+// ...
+
 // 오행에 따른 검색어 매핑
 const elQueries = {
   0: "calm acoustic playlist", // 목
@@ -168,7 +205,41 @@ async function getSongs(el, ec) {
   }
 }
 
-// ... rest of the script
+// ... the rest of the saju logic ...
+
+document.getElementById("btnGo").addEventListener("click",()=>{
+  // ... (existing code)
+  // 10. 노래
+  html+=`<div class="section"><div class="music-box"><h3>사주에 어울리는 노래</h3>`;
+  html+=`<div class="player-wrap" id="playerWrap"><div style="display:flex;align-items:center;justify-content:center;position:absolute;top:0;left:0;width:100%;height:100%;color:var(--muted);font-size:14px">아래 재생 버튼을 눌러주세요</div></div>`;
+  html+=`<ul class="song-list"><li>API 키를 확인하거나 잠시 기다려주세요...</li></ul></div></div>`;
+
+  document.getElementById("result").innerHTML=html;
+  document.getElementById("result").style.display="block";
+  document.getElementById("result").scrollIntoView({behavior:"smooth"});
+
+  // 노래 API 호출 및 리스트 렌더링
+  getSongs(myEl, ec).then(songs => {
+    const songList = document.querySelector('.song-list');
+    if (songList && songs && songs.length > 0) {
+      songList.innerHTML = ''; // '불러오는 중' 메시지 삭제
+      songs.forEach(s => {
+        const li = document.createElement('li');
+        const safeTitle = s.t.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        li.innerHTML = `<button class="play-btn" data-id="${s.id}">▶</button> <a href="https://www.youtube.com/watch?v=${s.id}" target="_blank" rel="noopener">${safeTitle}</a>`;
+        songList.appendChild(li);
+      });
+
+      const firstPlayable = songs.find(s => s.id);
+      if (firstPlayable) {
+        setTimeout(() => playSong(firstPlayable.id), 600);
+      }
+    }
+  });
+  // ...
+});
+
+// ...
 document.getElementById('lastModified').textContent = 'Last modified: ' + new Date().toLocaleString();
 </script>
 </body>
