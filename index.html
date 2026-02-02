@@ -78,7 +78,11 @@
     .fortune-btn .f-icon{font-size:24px;display:block;margin-bottom:4px}
     .fortune-content{margin-top:12px;display:none}
     .fortune-content.active{display:block}
-    @media(max-width:600px){.form-grid{grid-template-columns:1fr 1fr}.compat-grid,.compat-detail-grid{grid-template-columns:1fr}.vs-wrap{grid-template-columns:1fr;text-align:center}.fortune-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:600px){body{padding:10px}.card{padding:18px}.top-bar{flex-direction:column;align-items:flex-start;gap:10px}.form-grid{grid-template-columns:1fr 1fr}.compat-grid,.compat-detail-grid{grid-template-columns:1fr}.vs-wrap{grid-template-columns:1fr;text-align:center}.pillar-wrap{gap:8px}.pillar{min-width:75px;padding:10px 12px}.pillar .gan,.pillar .ji{font-size:20px}.fortune-grid{grid-template-columns:repeat(3,1fr)}}
+    footer{margin-top:20px;padding:20px;text-align:center;font-size:12px;color:var(--muted)}
+    footer a{color:var(--muted);text-decoration:none}
+    footer a:hover{text-decoration:underline}
+    footer nav{margin-top:8px}
   </style>
 </head>
 <body>
@@ -618,6 +622,16 @@ document.getElementById("btnCompat").addEventListener("click",()=>{
   document.getElementById("compatResult").style.display="block";
   document.getElementById("compatResult").scrollIntoView({behavior:"smooth"});
 });
+
+document.getElementById('lastModified').textContent = 'Last modified: ' + new Date().toLocaleString();
 </script>
+  <footer>
+    <p>&copy; 2023 사주풀이 + 노래 추천. All rights reserved.</p>
+    <nav>
+      <a href="/privacy-policy.html">개인정보처리방침</a> |
+      <a href="/contact.html">문의하기</a>
+    </nav>
+    <div id="lastModified" style="font-size: 10px; margin-top: 10px;"></div>
+  </footer>
 </body>
 </html>
