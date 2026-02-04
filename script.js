@@ -153,13 +153,32 @@ function showError(message, boxId) {
 
 
 async function getGptAnswer(sajuData, question) {
-  // 이 함수는 GPT API를 호출하는 예시입니다.
-  // 실제 구현을 위해서는 서버 측에 API 요청을 처리하는 로직이 필요합니다.
-  console.log("GPT API에 전달될 데이터:", { sajuData, question });
+  // サーバーレス関数（プロキシ）を呼び出します。
+  // 注意：このパスはホスティングプロバイダー（Vercel, Netlifyなど）によって異なる場合があります。
+  // Vercel -> /api/get-saju-answer
+  // Netlify -> /.netlify/functions/get-saju-answer
+  const apiPath = '/api/get-saju-answer';
 
-  // 임시 반환값
-  await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
-  return `"${question}"에 대한 답변을 생성하는 중... (실제 API 연동 필요)`;
+  try {
+    const response = await fetch(apiPath, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sajuData, question })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("API Error:", data);
+      return data.error?.message || 'API로부터 답변을 받아오는 중 오류가 발생했습니다.';
+    }
+
+    return data.choices[0].message.content;
+
+  } catch (error) {
+    console.error('Error calling proxy function:', error);
+    return '서버와 통신하는 중 오류가 발생했습니다.';
+  }
 }
 
 
