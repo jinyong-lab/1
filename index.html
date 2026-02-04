@@ -113,6 +113,7 @@
       <div class="form-group full"><label>태어난 시간</label><select id="bT"><option value="">선택해주세요</option><option value="0">자시 (23:00~01:00)</option><option value="1">축시 (01:00~03:00)</option><option value="2">인시 (03:00~05:00)</option><option value="3">묘시 (05:00~07:00)</option><option value="4">진시 (07:00~09:00)</option><option value="5">사시 (09:00~11:00)</option><option value="6">오시 (11:00~13:00)</option><option value="7">미시 (13:00~15:00)</option><option value="8">신시 (15:00~17:00)</option><option value="9">유시 (17:00~19:00)</option><option value="10">술시 (19:00~21:00)</option><option value="11">해시 (21:00~23:00)</option><option value="-1">모름</option></select></div>
       <div class="form-group full"><label>태어난 지역</label><input type="text" id="bP" placeholder="예: 서울, 부산, 대구, 인천..."/></div>
       <div class="form-group full"><label>성별</label><div class="calendar-row"><label><input type="radio" name="gender" value="male" checked/> 남자</label><label><input type="radio" name="gender" value="female"/> 여자</label></div></div>
+      <div class="form-group full"><label>궁금한 질문 (선택)</label><textarea id="bQ" rows="2" placeholder="예: 올해 재물운은 어떨까요?"></textarea></div>
     </div>
     <button id="btnGo">사주 분석하기</button>
     <div class="err" id="errBox"></div>
@@ -141,6 +142,7 @@
           <div class="form-group"><label>시간</label><select id="cT2"><option value="">선택</option><option value="0">자시 (23~01시)</option><option value="1">축시 (01~03시)</option><option value="2">인시 (03~05시)</option><option value="3">묘시 (05~07시)</option><option value="4">진시 (07~09시)</option><option value="5">사시 (09~11시)</option><option value="6">오시 (11~13시)</option><option value="7">미시 (13~15시)</option><option value="8">신시 (15~17시)</option><option value="9">유시 (17~19시)</option><option value="10">술시 (19~21시)</option><option value="11">해시 (21~23시)</option><option value="-1">모름</option></select></div>
         </div>
       </div>
+    <div class="form-group full" style="grid-column: 1 / -1; margin-top: 10px;"><label>궁금한 질문 (선택)</label><textarea id="cQ" rows="2" placeholder="예: 저희의 전반적인 궁합이 궁금해요."></textarea></div>
     </div>
     <button id="btnCompat">궁합 분석하기</button>
     <div class="err" id="errBox2"></div>
@@ -155,92 +157,6 @@
     </nav>
     <div id="lastModified" style="font-size: 10px; margin-top: 10px;"></div>
   </footer>
-<script>
-// Saju logic from the clean file...
-// ...
-// ...
-
-// 오행에 따른 검색어 매핑
-const elQueries = {
-  0: "calm acoustic playlist", // 목
-  1: "upbeat pop music playlist", // 화
-  2: "comfortable easy listening playlist", // 토
-  3: "powerful epic music playlist", // 금
-  4: "chill lofi hiphop playlist" // 수
-};
-
-async function getSongs(el, ec) {
-  const musicBox = document.querySelector('.music-box');
-  const songList = musicBox.querySelector('.song-list');
-  
-  const query = elQueries[el] || "korean ballad";
-  const url = `/functions/youtube-proxy?q=${encodeURIComponent(query)}`;
-  
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Proxy error:', errorText);
-      songList.innerHTML = `<li>노래 추천 서버에 문제가 발생했습니다.</li>`;
-      return [];
-    }
-    const data = await response.json();
-    
-    if (data.error || !data.items || data.items.length === 0) {
-       songList.innerHTML = `<li>추천할 노래를 찾지 못했습니다. (서버 메시지: ${data.error?.message || '없음'})</li>`;
-       return [];
-    }
-
-    const songs = data.items.map(item => ({
-      t: item.snippet.title,
-      id: item.id.videoId
-    }));
-    
-    return songs.slice(0, 6);
-
-  } catch (error) {
-    console.error("Error fetching songs from proxy:", error);
-    songList.innerHTML = `<li>노래를 가져오는 중 오류가 발생했습니다.</li>`;
-    return [];
-  }
-}
-
-// ... the rest of the saju logic ...
-
-document.getElementById("btnGo").addEventListener("click",()=>{
-  // ... (existing code)
-  // 10. 노래
-  html+=`<div class="section"><div class="music-box"><h3>사주에 어울리는 노래</h3>`;
-  html+=`<div class="player-wrap" id="playerWrap"><div style="display:flex;align-items:center;justify-content:center;position:absolute;top:0;left:0;width:100%;height:100%;color:var(--muted);font-size:14px">아래 재생 버튼을 눌러주세요</div></div>`;
-  html+=`<ul class="song-list"><li>API 키를 확인하거나 잠시 기다려주세요...</li></ul></div></div>`;
-
-  document.getElementById("result").innerHTML=html;
-  document.getElementById("result").style.display="block";
-  document.getElementById("result").scrollIntoView({behavior:"smooth"});
-
-  // 노래 API 호출 및 리스트 렌더링
-  getSongs(myEl, ec).then(songs => {
-    const songList = document.querySelector('.song-list');
-    if (songList && songs && songs.length > 0) {
-      songList.innerHTML = ''; // '불러오는 중' 메시지 삭제
-      songs.forEach(s => {
-        const li = document.createElement('li');
-        const safeTitle = s.t.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        li.innerHTML = `<button class="play-btn" data-id="${s.id}">▶</button> <a href="https://www.youtube.com/watch?v=${s.id}" target="_blank" rel="noopener">${safeTitle}</a>`;
-        songList.appendChild(li);
-      });
-
-      const firstPlayable = songs.find(s => s.id);
-      if (firstPlayable) {
-        setTimeout(() => playSong(firstPlayable.id), 600);
-      }
-    }
-  });
-  // ...
-});
-
-// ...
-document.getElementById('lastModified').textContent = 'Last modified: ' + new Date().toLocaleString();
-</script>
+<script src="script.js?v=2" defer></script>
 </body>
 </html>
