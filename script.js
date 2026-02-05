@@ -127,11 +127,8 @@ function showError(message, boxId) {
 
 
 async function getGptAnswer(sajuData, question) {
-  // サーバーレス関数（プロキシ）を呼び出します。
-  // 注意：このパスはホスティングプロバイダー（Vercel, Netlifyなど）によって異なる場合があります。
-  // Vercel -> /api/get-saju-answer
-  // Netlify -> /.netlify/functions/get-saju-answer
-  const apiPath = '/api/get-saju-answer';
+  // Cloudflare Pages의 함수 경로는 /api/가 아닌 루트 경로를 사용합니다.
+  const apiPath = '/get-saju-answer';
 
   try {
     const response = await fetch(apiPath, {
