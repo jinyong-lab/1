@@ -68,28 +68,30 @@ function setupEventListeners() {
 
 setupEventListeners();
 
-// Saju logic from the clean file...
-
-// ...
-// ...
-
 // 오행에 따른 검색어 매핑
 const elQueries = {
-  0: "calm acoustic playlist", // 목
-  1: "upbeat pop music playlist", // 화
-  2: "comfortable easy listening playlist", // 토
-  3: "powerful epic music playlist", // 금
-  4: "chill lofi hiphop playlist" // 수
+  "목": "calm acoustic playlist",
+  "화": "upbeat pop music playlist",
+  "토": "comfortable easy listening playlist",
+  "금": "powerful epic music playlist",
+  "수": "chill lofi hiphop playlist"
 };
 
-// YouTube IFrame Player API를 위한 전역 변수
+// --- YouTube IFrame API 로딩을 위한 준비 ---
 let player;
-function onYouTubeIframeAPIReady() {
-  // 이 함수는 YouTube API 스크립트가 로드되면 자동으로 호출됩니다.
-  // 플레이어는 필요할 때 생성되므로 여기서는 비워둡니다.
-}
+// YouTube API 스크립트가 로드되면 이 Promise가 resolve됩니다.
+const ytApiReady = new Promise(resolve => {
+  // 이미 API가 로드되었다면 즉시 resolve합니다.
+  if (window.YT && window.YT.Player) {
+    resolve(window.YT);
+  } else {
+    // 그렇지 않다면, API가 로드될 때 resolve 하도록 전역 콜백을 설정합니다.
+    window.onYouTubeIframeAPIReady = () => resolve(window.YT);
+  }
+});
 
-function getSongs(el, resultDiv) {
+// 노래 플레이어를 생성하거나 업데이트하는 함수
+async function getSongs(sajuElement, resultDiv) {
   const musicBox = resultDiv.querySelector('.music-box');
   const playerContainer = resultDiv.querySelector('#player-container');
   
@@ -100,28 +102,37 @@ function getSongs(el, resultDiv) {
   
   playerContainer.style.display = 'block';
 
-  const query = elQueries[el] || "korean ballad";
+  // 사주 결과에서 나온 오행 키워드를 사용합니다.
+  const query = elQueries[sajuElement] || "korean ballad playlist";
 
-  // 만약 플레이어가 이미 생성되었다면, 새 플레이리스트를 로드합니다.
-  if (player && typeof player.loadPlaylist === 'function') {
-    player.loadPlaylist({
-      listType: 'search',
-      list: query
-    });
-  } else { // 플레이어가 없다면 새로 생성합니다.
-    player = new YT.Player('player-container', {
-      height: '390',
-      width: '640',
-      playerVars: {
+  try {
+    // API가 준비될 때까지 기다립니다.
+    const YT = await ytApiReady;
+
+    // 플레이어가 이미 있다면 새 플레이리스트를 로드하고, 없다면 새로 생성합니다.
+    if (player && typeof player.loadPlaylist === 'function') {
+      player.loadPlaylist({
         listType: 'search',
-        list: query,
-        autoplay: 1,
-        loop: 1,
-      },
-      events: {
-        'onReady': (event) => event.target.playVideo(),
-      }
-    });
+        list: query
+      });
+    } else {
+      player = new YT.Player('player-container', {
+        height: '390',
+        width: '100%',
+        playerVars: {
+          listType: 'search',
+          list: query,
+          autoplay: 1,
+          loop: 1,
+        },
+        events: {
+          'onReady': (event) => event.target.playVideo(),
+        }
+      });
+    }
+  } catch (error) {
+    console.error("YouTube Player Error:", error);
+    playerContainer.innerHTML = "<p>노래 플레이어를 로드하는 중 오류가 발생했습니다.</p>";
   }
 }
 
@@ -131,12 +142,9 @@ function showError(message, boxId) {
     errBox.style.display = 'block';
 }
 
-async function getGptAnswer(sajuData, question) {
-  // _worker.js에서 정의한 최종 API 경로
-  const params = new URLSearchParams({
-    sajuData: JSON.stringify(sajuData),
-    question: question
-  });
+// AI 응답을 요청하는 통합 함수
+async function getAiResponse(payload) {
+  const params = new URLSearchParams(payload);
   const apiPath = `/api/saju?${params.toString()}`;
 
   try {
@@ -145,140 +153,140 @@ async function getGptAnswer(sajuData, question) {
 
     if (!response.ok) {
       console.error("API Error:", data);
-      return data.error?.message || 'API로부터 답변을 받아오는 중 오류가 발생했습니다.';
+      return `**오류 발생:** ${data.error?.message || 'API로부터 답변을 받아오는 중 오류가 발생했습니다.'}`;
     }
-
     return data.choices[0].message.content;
-
   } catch (error) {
     console.error('Error calling worker function:', error);
-    // SyntaxError는 보통 서버가 JSON이 아닌 HTML(오류 페이지 등)을 반환할 때 발생합니다.
     if (error instanceof SyntaxError) {
-      return "서버 응답 형식이 잘못되었습니다. 서버 기능(API)이 올바르게 배포되었는지 확인해주세요.";
+      return "**오류 발생:** 서버 응답 형식이 잘못되었습니다. API가 올바르게 배포되었는지 확인해주세요.";
     }
-    return '서버와 통신하는 중 오류가 발생했습니다.';
+    return '**오류 발생:** 서버와 통신하는 중 오류가 발생했습니다.';
   }
 }
 
+// 마크다운을 HTML로 렌더링하는 간단한 유틸리티
+function renderMarkdown(md) {
+    // Bold, Italic
+    md = md.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    md = md.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Headings
+    md = md.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    md = md.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    md = md.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    // List items
+    md = md.replace(/^\* (.*$)/gim, '<li>$1</li>');
+    // Replace newlines with <br> for paragraphs
+    md = md.replace(/\n/g, '<br>');
+    return md;
+}
+
+
+// --- 이벤트 리스너 ---
 
 document.getElementById("btnGo").addEventListener("click", async () => {
     const errBox = document.getElementById('errBox');
     errBox.style.display = 'none';
 
-    const year = document.getElementById('bY').value;
-    const month = document.getElementById('bM').value;
-    const day = document.getElementById('bD').value;
-    const time = document.getElementById('bT').value;
-    const gender = document.querySelector('input[name="gender"]:checked').value;
-    const question = document.getElementById('bQ').value;
+    const sajuData = {
+      year: document.getElementById('bY').value,
+      month: document.getElementById('bM').value,
+      day: document.getElementById('bD').value,
+      time: document.getElementById('bT').value,
+      gender: document.querySelector('input[name="gender"]:checked').value,
+      cal: document.querySelector('input[name="cal"]:checked').value,
+      b_time_ext: document.querySelector('#bT option:checked').textContent,
+    };
+    const userQuestion = document.getElementById('bQ').value;
 
-    if (!year || !month || !day || !time) {
+    if (!sajuData.year || !sajuData.month || !sajuData.day || !sajuData.time) {
         showError('모든 정보를 입력해주세요.', 'errBox');
         return;
     }
 
     const resultDiv = document.getElementById("result");
     resultDiv.style.display = 'block';
-    resultDiv.innerHTML = `<div class="section"><p>분석 중입니다. 잠시만 기다려주세요...</p></div>`;
+    resultDiv.innerHTML = `<div class="section"><p>사주를 분석하고 있습니다. 잠시만 기다려주세요...</p></div>`;
     resultDiv.scrollIntoView({ behavior: "smooth" });
-
-    const sajuData = { year, month, day, time, gender };
     
-    // --- 임시 사주 분석 로직 START ---
-    const randomElement = Math.floor(Math.random() * 5);
-    const elements = ['목(木)', '화(火)', '토(土)', '금(金)', '수(水)'];
-    const gans = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-    const jis = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-    const randomGan = gans[Math.floor(Math.random() * gans.length)];
-    const randomJi = jis[Math.floor(Math.random() * jis.length)];
-    // --- 임시 사주 분석 로직 END ---
-
-    let gptHtml = '';
-    if (question) {
-      const gptAnswer = await getGptAnswer(sajuData, question);
-      gptHtml = `
-        <div class="section">
-          <h3 class="section-title">궁금한 질문에 대한 답변</h3>
-          <div class="info-card" style="white-space: pre-wrap;">${gptAnswer}</div>
-        </div>
-      `;
-    }
+    // AI에 보낼 요청 데이터를 구성합니다.
+    const aiPayload = {
+      type: 'saju',
+      sajuData: JSON.stringify(sajuData),
+      question: userQuestion
+    };
     
+    const aiResponse = await getAiResponse(aiPayload);
+
+    // AI 응답에서 핵심 오행(키워드)을 추출합니다. (예: "목")
+    // 간단한 구현: 응답에서 첫번째로 언급된 오행을 사용합니다.
+    const elementMatch = aiResponse.match(/[木火土金水]/);
+    const sajuElement = elementMatch ? elementMatch[0] : "목";
+
+    // 결과를 표시할 HTML 구조 생성
     resultDiv.innerHTML = `
         <div class="section">
-            <h3 class="section-title">사주 분석 결과 (임시)</h3>
-            <div class="info-card">
-                실제 사주 분석 로직이 없어, 결과를 임의로 생성했습니다.<br>
-                당신의 일주(日柱)는 <strong>${randomGan}${randomJi}</strong>이며, 행운의 오행은 <strong>${elements[randomElement]}</strong>입니다.
-            </div>
+            <h3 class="section-title" style="font-family: var(--font-serif);">📜 나의 사주 분석 결과</h3>
+            <div class="info-card" style="white-space: normal;">${renderMarkdown(aiResponse)}</div>
         </div>
         <div class="section">
-            <h3 class="section-title">행운의 오행에 맞는 노래 추천</h3>
+            <h3 class="section-title" style="font-family: var(--font-serif);">🎵 행운의 노래 추천</h3>
             <div class="music-box">
                 <div class="player-wrap">
                     <div id="player-container"></div>
                 </div>
+                <p style="font-size:12px; text-align:center; color: var(--muted); margin-top:10px;">'${sajuElement}'의 기운에 맞는 플레이리스트가 자동 재생됩니다.</p>
             </div>
         </div>
-    ` + gptHtml;
+    `;
 
-    getSongs(randomElement, resultDiv);
+    // 노래 추천 함수 호출
+    getSongs(sajuElement, resultDiv);
 });
 
 document.getElementById("btnCompat").addEventListener("click", async () => {
     const errBox = document.getElementById('errBox2');
     errBox.style.display = 'none';
 
-    const y1 = document.getElementById('cY1').value;
-    const m1 = document.getElementById('cM1').value;
-    const d1 = document.getElementById('cD1').value;
-    const y2 = document.getElementById('cY2').value;
-    const m2 = document.getElementById('cM2').value;
-    const d2 = document.getElementById('cD2').value;
-    const question = document.getElementById('cQ').value; // 질문 읽기
+    const person1 = {
+        year: document.getElementById('cY1').value,
+        month: document.getElementById('cM1').value,
+        day: document.getElementById('cD1').value,
+        time: document.getElementById('cT1').value,
+    };
+     const person2 = {
+        year: document.getElementById('cY2').value,
+        month: document.getElementById('cM2').value,
+        day: document.getElementById('cD2').value,
+        time: document.getElementById('cT2').value,
+    };
+    const userQuestion = document.getElementById('cQ').value;
 
-    if (!y1 || !m1 || !d1 || !y2 || !m2 || !d2) {
-        showError('나와 상대방의 정보를 모두 입력해주세요.', 'errBox2');
+    if (!person1.year || !person1.month || !person1.day || !person2.year || !person2.month || !person2.day) {
+        showError('나와 상대방의 년, 월, 일을 모두 입력해주세요.', 'errBox2');
         return;
     }
 
     const resultDiv = document.getElementById("compatResult");
     resultDiv.style.display = 'block';
-    resultDiv.innerHTML = `<div class="section"><p>분석 중입니다. 잠시만 기다려주세요...</p></div>`;
+    resultDiv.innerHTML = `<div class="section"><p>궁합을 분석하고 있습니다. 잠시만 기다려주세요...</p></div>`;
     resultDiv.scrollIntoView({ behavior: "smooth" });
 
-    const compatData = {
-        person1: { year: y1, month: m1, day: d1 },
-        person2: { year: y2, month: m2, day: d2 }
+    const aiPayload = {
+      type: 'compat',
+      person1: JSON.stringify(person1),
+      person2: JSON.stringify(person2),
+      question: userQuestion
     };
+
+    const aiResponse = await getAiResponse(aiPayload);
     
-    // --- 임시 궁합 분석 로직 ---
-    const randomScore = Math.floor(Math.random() * 51) + 50; // 50-100점
-
-    let gptHtml = '';
-    if (question) {
-      const gptAnswer = await getGptAnswer(compatData, question);
-      gptHtml = `
-        <div class="section">
-          <h3 class="section-title">궁금한 질문에 대한 답변</h3>
-          <div class="info-card" style="white-space: pre-wrap;">${gptAnswer}</div>
-        </div>
-      `;
-    }
-
-    // 결과 표시
     resultDiv.innerHTML = `
-        <div class="section">
-            <h3 class="section-title">궁합 분석 결과 (임시)</h3>
-            <div class="compat-score-wrap">
-                <div class="compat-big-score">${randomScore}점</div>
-                <div class="compat-grade">${randomScore > 85 ? '천생연분' : randomScore > 70 ? '좋은 인연' : '노력 필요'}</div>
-            </div>
-            <div class="info-card">
-                실제 궁합 분석 로직이 없어, 점수를 임의로 생성했습니다. 재미로만 참고해주세요.
-            </div>
-        </div>
-    ` + gptHtml;
+      <div class="section">
+        <h3 class="section-title" style="font-family: var(--font-serif);">💌 우리 궁합 분석 결과</h3>
+        <div class="info-card" style="white-space: normal;">${renderMarkdown(aiResponse)}</div>
+      </div>
+    `;
 });
 
 
