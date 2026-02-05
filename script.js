@@ -127,15 +127,16 @@ function showError(message, boxId) {
 
 
 async function getGptAnswer(sajuData, question) {
-  // Cloudflare Pages의 함수 경로는 /functions/ 폴더를 포함할 수 있습니다.
-  const apiPath = '/functions/get-saju-answer';
+  // GET 방식으로 데이터를 URL에 담아 보냅니다.
+  const params = new URLSearchParams({
+    sajuData: JSON.stringify(sajuData),
+    question: question
+  });
+  const apiPath = `/functions/get-saju-answer?${params.toString()}`;
 
   try {
-    const response = await fetch(apiPath, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sajuData, question })
-    });
+    // method를 'POST'에서 'GET'(기본값)으로 변경합니다.
+    const response = await fetch(apiPath);
 
     const data = await response.json();
 
