@@ -93,55 +93,29 @@ async function getSongs(el, resultDiv) {
     console.error("Song list element not found");
     return;
   }
-  
-  songList.innerHTML = '<li>노래를 검색 중...</li>';
-  
+
+  // 기존 노래 검색어 로직은 유지
   const query = elQueries[el] || "korean ballad";
-  const url = `/functions/youtube-proxy?q=${encodeURIComponent(query)}`;
   
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Proxy error:', errorText);
-      songList.innerHTML = `<li>노래 추천 서버에 문제가 발생했습니다.</li>`;
-      return;
-    }
-    const data = await response.json();
-    
-    if (data.error || !data.items || data.items.length === 0) {
-       songList.innerHTML = `<li>추천할 노래를 찾지 못했습니다. (서버 메시지: ${data.error?.message || '없음'})</li>`;
-       return;
-    }
+  // 유튜브 검색 결과 페이지로 바로 연결되는 URL 생성
+  const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 
-    const songs = data.items.slice(0, 5).map(item => ({
-      t: item.snippet.title,
-      id: item.id.videoId
-    }));
-    
-    songList.innerHTML = ''; // Clear loading message
-    songs.forEach(song => {
-      const li = document.createElement('li');
-      li.innerHTML = `<a href="https://youtu.be/${song.id}" target="_blank">${song.t}</a> <button class="play-btn" data-videoid="${song.id}">재생</button>`;
-      songList.appendChild(li);
-    });
-
-    resultDiv.querySelectorAll('.play-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const videoId = btn.dataset.videoid;
-        const playerWrap = resultDiv.querySelector('.player-wrap');
-        const player = resultDiv.querySelector('#youtubePlayer');
-        if (player && playerWrap) {
-            player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            playerWrap.style.display = 'block';
-            player.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      });
-    });
-
-  } catch (error) {
-    console.error("Error fetching songs from proxy:", error);
-    songList.innerHTML = `<li>노래를 가져오는 중 오류가 발생했습니다.</li>`;
+  // 노래 목록 대신, 생성된 검색 링크를 표시
+  songList.innerHTML = `
+    <li>
+      <a href="${searchUrl}" target="_blank" style="font-weight: bold;">
+        🎵 당신의 사주를 위한 노래 플레이리스트 보기
+      </a>
+    </li>
+    <li style="font-size: 12px; color: var(--muted); padding-top: 5px;">
+      (서버 오류 수정을 위해, 이제 노래 목록을 직접 로드하는 대신 유튜브 검색 링크를 제공합니다.)
+    </li>
+  `;
+  
+  // 더 이상 사용되지 않는 비디오 플레이어를 숨김
+  const playerWrap = resultDiv.querySelector('.player-wrap');
+  if (playerWrap) {
+    playerWrap.style.display = 'none';
   }
 }
 
