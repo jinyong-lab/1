@@ -127,8 +127,8 @@ function showError(message, boxId) {
 
 
 async function getGptAnswer(sajuData, question) {
-  // Cloudflare Pages의 함수 경로는 /api/가 아닌 루트 경로를 사용합니다.
-  const apiPath = '/get-saju-answer';
+  // Cloudflare Pages의 함수 경로는 /functions/ 폴더를 포함할 수 있습니다.
+  const apiPath = '/functions/get-saju-answer';
 
   try {
     const response = await fetch(apiPath, {
