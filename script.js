@@ -79,43 +79,49 @@ const elQueries = {
   1: "upbeat pop music playlist", // 화
   2: "comfortable easy listening playlist", // 토
   3: "powerful epic music playlist", // 금
-  4: "chill lofi hiphop playlist" // 수
+  4. "chill lofi hiphop playlist" // 수
 };
 
-async function getSongs(el, resultDiv) {
+// YouTube IFrame Player API를 위한 전역 변수
+let player;
+function onYouTubeIframeAPIReady() {
+  // 이 함수는 YouTube API 스크립트가 로드되면 자동으로 호출됩니다.
+  // 플레이어는 필요할 때 생성되므로 여기서는 비워둡니다.
+}
+
+function getSongs(el, resultDiv) {
   const musicBox = resultDiv.querySelector('.music-box');
-  if (!musicBox) {
-    console.error("Music box element not found");
+  const playerContainer = resultDiv.querySelector('#player-container');
+  
+  if (!musicBox || !playerContainer) {
+    console.error("Music box or player container not found");
     return;
   }
-  const songList = musicBox.querySelector('.song-list');
-  if (!songList) {
-    console.error("Song list element not found");
-    return;
-  }
+  
+  playerContainer.style.display = 'block';
 
-  // 기존 노래 검색어 로직은 유지
   const query = elQueries[el] || "korean ballad";
-  
-  // 유튜브 검색 결과 페이지로 바로 연결되는 URL 생성
-  const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 
-  // 노래 목록 대신, 생성된 검색 링크를 표시
-  songList.innerHTML = `
-    <li>
-      <a href="${searchUrl}" target="_blank" style="font-weight: bold;">
-        🎵 당신의 사주를 위한 노래 플레이리스트 보기
-      </a>
-    </li>
-    <li style="font-size: 12px; color: var(--muted); padding-top: 5px;">
-      (서버 오류 수정을 위해, 이제 노래 목록을 직접 로드하는 대신 유튜브 검색 링크를 제공합니다.)
-    </li>
-  `;
-  
-  // 더 이상 사용되지 않는 비디오 플레이어를 숨김
-  const playerWrap = resultDiv.querySelector('.player-wrap');
-  if (playerWrap) {
-    playerWrap.style.display = 'none';
+  // 만약 플레이어가 이미 생성되었다면, 새 플레이리스트를 로드합니다.
+  if (player && typeof player.loadPlaylist === 'function') {
+    player.loadPlaylist({
+      listType: 'search',
+      list: query
+    });
+  } else { // 플레이어가 없다면 새로 생성합니다.
+    player = new YT.Player('player-container', {
+      height: '390',
+      width: '640',
+      playerVars: {
+        listType: 'search',
+        list: query,
+        autoplay: 1,
+        loop: 1,
+      },
+      events: {
+        'onReady': (event) => event.target.playVideo(),
+      }
+    });
   }
 }
 
@@ -125,19 +131,16 @@ function showError(message, boxId) {
     errBox.style.display = 'block';
 }
 
-
 async function getGptAnswer(sajuData, question) {
-  // GET 방식으로 데이터를 URL에 담아 보냅니다.
+  // _worker.js에서 정의한 최종 API 경로
   const params = new URLSearchParams({
     sajuData: JSON.stringify(sajuData),
     question: question
   });
-  const apiPath = `/functions/get-saju-answer?${params.toString()}`;
+  const apiPath = `/api/saju?${params.toString()}`;
 
   try {
-    // method를 'POST'에서 'GET'(기본값)으로 변경합니다.
     const response = await fetch(apiPath);
-
     const data = await response.json();
 
     if (!response.ok) {
@@ -148,7 +151,11 @@ async function getGptAnswer(sajuData, question) {
     return data.choices[0].message.content;
 
   } catch (error) {
-    console.error('Error calling proxy function:', error);
+    console.error('Error calling worker function:', error);
+    // SyntaxError는 보통 서버가 JSON이 아닌 HTML(오류 페이지 등)을 반환할 때 발생합니다.
+    if (error instanceof SyntaxError) {
+      return "서버 응답 형식이 잘못되었습니다. 서버 기능(API)이 올바르게 배포되었는지 확인해주세요.";
+    }
     return '서버와 통신하는 중 오류가 발생했습니다.';
   }
 }
@@ -163,7 +170,7 @@ document.getElementById("btnGo").addEventListener("click", async () => {
     const day = document.getElementById('bD').value;
     const time = document.getElementById('bT').value;
     const gender = document.querySelector('input[name="gender"]:checked').value;
-    const question = document.getElementById('bQ').value; // 질문 읽기
+    const question = document.getElementById('bQ').value;
 
     if (!year || !month || !day || !time) {
         showError('모든 정보를 입력해주세요.', 'errBox');
@@ -175,9 +182,10 @@ document.getElementById("btnGo").addEventListener("click", async () => {
     resultDiv.innerHTML = `<div class="section"><p>분석 중입니다. 잠시만 기다려주세요...</p></div>`;
     resultDiv.scrollIntoView({ behavior: "smooth" });
 
+    const sajuData = { year, month, day, time, gender };
+    
     // --- 임시 사주 분석 로직 START ---
-    // 실제 로직이 없으므로, 결과와 행운의 오행을 임의로 생성합니다.
-    const randomElement = Math.floor(Math.random() * 5); // 0:목, 1:화, 2:토, 3:금, 4:수
+    const randomElement = Math.floor(Math.random() * 5);
     const elements = ['목(木)', '화(火)', '토(土)', '금(金)', '수(水)'];
     const gans = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
     const jis = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -187,7 +195,7 @@ document.getElementById("btnGo").addEventListener("click", async () => {
 
     let gptHtml = '';
     if (question) {
-      const gptAnswer = await getGptAnswer({ year, month, day, time, gender }, question);
+      const gptAnswer = await getGptAnswer(sajuData, question);
       gptHtml = `
         <div class="section">
           <h3 class="section-title">궁금한 질문에 대한 답변</h3>
@@ -196,28 +204,25 @@ document.getElementById("btnGo").addEventListener("click", async () => {
       `;
     }
     
-    // 결과를 표시할 HTML 구조 생성
     resultDiv.innerHTML = `
         <div class="section">
             <h3 class="section-title">사주 분석 결과 (임시)</h3>
             <div class="info-card">
-                입력된 정보 기반의 실제 사주 분석 로직이 없어, 결과를 임의로 생성했습니다.<br>
+                실제 사주 분석 로직이 없어, 결과를 임의로 생성했습니다.<br>
                 당신의 일주(日柱)는 <strong>${randomGan}${randomJi}</strong>이며, 행운의 오행은 <strong>${elements[randomElement]}</strong>입니다.
             </div>
         </div>
         <div class="section">
             <h3 class="section-title">행운의 오행에 맞는 노래 추천</h3>
             <div class="music-box">
-                <ul class="song-list"></ul>
-                <div class="player-wrap" style="display:none;">
-                    <iframe id="youtubePlayer" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                <div class="player-wrap">
+                    <div id="player-container"></div>
                 </div>
             </div>
         </div>
     ` + gptHtml;
 
-    // 노래 추천 함수 호출
-    await getSongs(randomElement, resultDiv);
+    getSongs(randomElement, resultDiv);
 });
 
 document.getElementById("btnCompat").addEventListener("click", async () => {
