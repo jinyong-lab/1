@@ -79,7 +79,7 @@ const elQueries = {
   1: "upbeat pop music playlist", // 화
   2: "comfortable easy listening playlist", // 토
   3: "powerful epic music playlist", // 금
-  4. "chill lofi hiphop playlist" // 수
+  4: "chill lofi hiphop playlist" // 수
 };
 
 // YouTube IFrame Player API를 위한 전역 변수
