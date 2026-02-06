@@ -219,9 +219,8 @@ document.getElementById("btnGo").addEventListener("click", async () => {
     const aiResponse = await getAiResponse(aiPayload);
 
     // AI 응답에서 핵심 오행(키워드)을 추출합니다. (예: "목")
-    // 간단한 구현: 응답에서 첫번째로 언급된 오행을 사용합니다.
-    const elementMatch = aiResponse.match(/[木火土金水]/);
-    const sajuElement = elementMatch ? elementMatch[0] : "목";
+    const elementMatch = aiResponse.match(/핵심오행: (\[[가-힣]\])/);
+    const sajuElement = elementMatch ? elementMatch[1].replace(/[\[\]]/g, "") : "목";
 
     // 결과를 표시할 HTML 구조 생성
     resultDiv.innerHTML = `

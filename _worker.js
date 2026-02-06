@@ -36,11 +36,17 @@ function getSajuPrompt(sajuData, question) {
 2.  **일간(日干) 분석**: Analyze the user's Day Master. Describe its core characteristics and nature.
 3.  **오행(五行) 분석**: Analyze the overall balance of the Five Elements (목, 화, 토, 금, 수) in their chart. Identify which elements are strong, weak, or missing, and explain what this means.
 4.  **종합 총평**: Provide a general, comprehensive reading of their personality, innate talents, strengths, and weaknesses. Offer actionable advice for their life path, relationships, and career based on this analysis.
-5.  **핵심 오행 키워드**: At the very end of your response, on a new line, write "### 핵심오행: [키워드]" where [키워드] is the single most important element (목, 화, 토, 금, or 수) for the user's fortune.
+5.  **주요 신살(神殺) 분석**: Identify and explain the meaning of significant Sal (e.g., 도화살, 역마살) and Gwi-in (e.g., 천을귀인) in the user's chart. Explain them in an easy-to-understand way with examples.
+6.  **가족 관계 운세**: Briefly analyze the user's fortune related to their ancestors, parents, and children based on their chart.
+7.  **핵심 오행 키워드**: At the very end of your response, on a new line, write "### 핵심오행: [키워드]" where [키워드] is the single most important element (목, 화, 토, 금, or 수) for the user's fortune.
 `;
 
   if (question) {
-    userPrompt += `\n---\n**사용자의 추가 질문**: "${question}"\n\nBased on the comprehensive analysis above, please provide a thoughtful answer to the user's specific question.`;
+    userPrompt += `
+---
+**사용자의 추가 질문**: "${question}"
+
+Based on the comprehensive analysis above, please provide a thoughtful answer to the user's specific question.`;
   }
 
   return [
@@ -69,7 +75,11 @@ function getCompatPrompt(person1, person2, question) {
 `;
 
     if (question) {
-        userPrompt += `\n---\n**사용자의 추가 질문**: "${question}"\n\nBased on the compatibility analysis, please provide a thoughtful answer to their specific question.`;
+        userPrompt += `
+---
+**사용자의 추가 질문**: "${question}"
+
+Based on the compatibility analysis, please provide a thoughtful answer to their specific question.`;
     }
 
     return [
