@@ -22,9 +22,9 @@ async function callOpenAi(apiKey, messages) {
 }
 
 function getSajuPrompt(sajuData, question) {
-  const systemPrompt = "You are an expert fortune teller specializing in Saju (Four Pillars of Destiny, 사주팔자). Your tone should be wise, empathetic, and insightful. Format your entire response in Markdown.";
+  const systemPrompt = "You are an expert fortune teller specializing in Saju (Four Pillars of Destiny, 사주팔자). Your tone should be wise, empathetic, and insightful. Provide detailed explanations with easy-to-understand examples. Format your entire response in Markdown, using headings, bold text, and lists where appropriate for readability.";
   
-  let userPrompt = `Please provide a detailed and comprehensive Saju reading for the user with the following information. Structure your response clearly with the following sections:
+  let userPrompt = `Please provide a detailed and comprehensive Saju reading for the user with the following information. Structure your response clearly with the following sections, ensuring rich content and easy-to-understand explanations with examples:
 
 **User's Information:**
 *   Birth Date: ${sajuData.year}-${sajuData.month}-${sajuData.day} (${sajuData.b_time_ext})
@@ -32,13 +32,14 @@ function getSajuPrompt(sajuData, question) {
 *   Gender: ${sajuData.gender}
 
 **Your Analysis (in Korean):**
-1.  **사주팔자 구성**: Accurately determine the user's Four Pillars (Year, Month, Day, Time pillars) with their Heavenly Stems and Earthly Branches (간지). Display this in a clear, structured way.
-2.  **일간(日干) 분석**: Analyze the user's Day Master. Describe its core characteristics and nature.
-3.  **오행(五行) 분석**: Analyze the overall balance of the Five Elements (목, 화, 토, 금, 수) in their chart. Identify which elements are strong, weak, or missing, and explain what this means.
-4.  **종합 총평**: Provide a general, comprehensive reading of their personality, innate talents, strengths, and weaknesses. Offer actionable advice for their life path, relationships, and career based on this analysis.
-5.  **주요 신살(神殺) 분석**: Identify and explain the meaning of significant Sal (e.g., 도화살, 역마살) and Gwi-in (e.g., 천을귀인) in the user's chart. Explain them in an easy-to-understand way with examples.
-6.  **가족 관계 운세**: Briefly analyze the user's fortune related to their ancestors, parents, and children based on their chart.
-7.  **핵심 오행 키워드**: At the very end of your response, on a new line, write "### 핵심오행: [키워드]" where [키워드] is the single most important element (목, 화, 토, 금, or 수) for the user's fortune.
+1.  **사주팔자 구성 및 특징**: 사용자의 사주팔자(년주, 월주, 일주, 시주)를 정확히 명시하고, 각 주의 천간(天干)과 지지(地支)의 의미를 설명해주세요. 일간(日干)의 특징과 성격을 상세히 분석해주세요.
+2.  **오행(五行) 분석 및 균형**: 사주 내 오행(木, 火, 土, 金, 水)의 분포와 강약을 분석하고, 오행의 상생(相生)과 상극(相剋) 관계를 통해 성격, 운세에 미치는 영향을 설명해주세요. 부족하거나 과도한 오행이 있다면 어떤 영향을 미 주는지 예시를 들어 설명해주세요.
+3.  **주요 신살(神殺) 분석**: 도화살(桃花殺), 역마살(驛馬殺), 화개살(華蓋殺) 등 주요 길흉신살(吉凶神殺)과 천을귀인(天乙貴人) 같은 귀인(貴人)이 있다면 그 의미와 사용자 삶에 미칠 영향을 구체적인 예시와 함께 설명해주세요. (사용자에게 해당하는 신살/귀인만 언급)
+4.  **초년운(初年運) / 중년운(中年運) / 말년운(末年運)**: 각 시기별 운세의 흐름과 특징을 설명하고, 각 시기에 주의할 점이나 기회를 잡을 방법에 대한 조언을 해주세요.
+5.  **건강/재물/직업운 조언**: 사주를 바탕으로 건강, 재물, 직업과 관련하여 특별히 주의할 점이나 발전시킬 수 있는 부분에 대한 실질적인 조언을 제공해주세요.
+6.  **가족 관계 및 대인운**: 조상, 부모, 배우자, 자식과의 관계에서 나타날 수 있는 운세의 특징과 원만한 관계를 위한 조언을 해주세요.
+7.  **종합 운세 총평**: 전체 사주 분석 내용을 바탕으로 사용자의 삶에 대한 전반적인 운세 총평과 함께 긍정적인 메시지 및 발전적인 방향을 제시해주세요.
+8.  **핵심 오행 키워드**: 응답의 맨 마지막 줄에는 다음과 같은 형식으로 사용자의 사주에서 가장 중요한 핵심 오행을 한글로 제시해주세요. (예: ### 핵심오행: [목])
 `;
 
   if (question) {
@@ -46,7 +47,7 @@ function getSajuPrompt(sajuData, question) {
 ---
 **사용자의 추가 질문**: "${question}"
 
-Based on the comprehensive analysis above, please provide a thoughtful answer to the user's specific question.`;
+위의 종합적인 분석을 바탕으로, 사용자의 질문에 대해 신중하게 답변해주세요.`;
   }
 
   return [
