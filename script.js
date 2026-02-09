@@ -114,12 +114,31 @@ function resetPlayer() {
   playerIframe = null;
 }
 
+function getEmbedUrl(videoId, query) {
+  const base = 'https://www.youtube-nocookie.com/embed';
+  const params = new URLSearchParams({
+    autoplay: '1',
+    rel: '0',
+    modestbranding: '1',
+    playsinline: '1'
+  });
+  if (window.location && window.location.origin) {
+    params.set('origin', window.location.origin);
+  }
+  if (videoId) {
+    return `${base}/${videoId}?${params.toString()}`;
+  }
+  params.set('listType', 'search');
+  params.set('list', query);
+  return `${base}?${params.toString()}`;
+}
+
 function createFallbackIframe(playerContainer, query) {
   if (!playerContainer) return;
   const iframe = document.createElement('iframe');
-  const src = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&rel=0&modestbranding=1&playsinline=1`;
-  iframe.src = src;
-  iframe.allow = 'autoplay; encrypted-media';
+  iframe.src = getEmbedUrl(null, query);
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+  iframe.referrerPolicy = 'origin-when-cross-origin';
   iframe.allowFullscreen = true;
   iframe.style.width = '100%';
   iframe.style.height = '100%';
@@ -134,9 +153,9 @@ function ensureIframePlayer(playerContainer, videoId, query) {
     createFallbackIframe(playerContainer, query);
   }
   if (videoId) {
-    playerIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+    playerIframe.src = getEmbedUrl(videoId, query);
   } else {
-    playerIframe.src = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+    playerIframe.src = getEmbedUrl(null, query);
   }
 }
 
@@ -153,6 +172,7 @@ function renderSongList(videos, resultDiv, query, playerContainer) {
     const title = escapeHtml(video.title || '제목 없음');
     const channel = escapeHtml(video.channelTitle || '');
     const videoId = video.videoId || '';
+    const watchUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : '#';
     return `
       <li>
         <button class="play-btn" data-video-id="${videoId}">재생</button>
@@ -160,6 +180,7 @@ function renderSongList(videos, resultDiv, query, playerContainer) {
           <span class="song-title-text">${title}</span>
           <span class="song-channel">${channel}</span>
         </div>
+        <a class="yt-link" href="${watchUrl}" target="_blank" rel="noopener">유튜브</a>
       </li>
     `;
   }).join('');
@@ -555,10 +576,15 @@ function sanitizeAiResponse(md) {
   const fortunes = {};
   let cleanedLines = [];
   let inFortune = false;
+  let currentFortune = null;
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (!line) {
+      if (inFortune && currentFortune) {
+        fortunes[currentFortune] = `${fortunes[currentFortune]}\n`;
+        continue;
+      }
       cleanedLines.push(rawLine);
       continue;
     }
@@ -567,30 +593,31 @@ function sanitizeAiResponse(md) {
       continue;
     }
 
-    if (/^#+\s*운세/.test(line) || /운세\s*카드/.test(line)) {
+    const isFortuneHeader = /^#+\s*운세/.test(line) || /운세\s*카드/.test(line);
+    if (isFortuneHeader) {
       inFortune = true;
+      currentFortune = null;
       continue;
-    }
-
-    if (inFortune && /^#+\s*/.test(line)) {
-      inFortune = false;
     }
 
     const fortuneMatch = rawLine.match(/^\s*[-*]\s*(건강운|연애운|재물운|직업운|학업운|성장운|대인운)\s*[:：]\s*(.+)\s*$/);
     if (fortuneMatch) {
       fortunes[fortuneMatch[1]] = fortuneMatch[2].trim();
+      currentFortune = fortuneMatch[1];
+      inFortune = true;
       continue;
     }
 
     if (inFortune) {
-      if (/^\s*[-*]\s*/.test(rawLine)) {
+      if (/^#+\s*/.test(line)) {
+        inFortune = false;
+        currentFortune = null;
+      } else {
+        if (currentFortune) {
+          fortunes[currentFortune] = `${fortunes[currentFortune]}\n${line}`;
+        }
         continue;
       }
-      if (!line) {
-        cleanedLines.push(rawLine);
-        continue;
-      }
-      inFortune = false;
     }
 
     if (/요약\s*카드/.test(line)) {

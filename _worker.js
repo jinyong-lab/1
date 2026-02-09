@@ -25,6 +25,7 @@ async function handleYouTubeRequest(request, env) {
   const url = new URL(request.url);
   const query = url.searchParams.get('query');
   const YOUTUBE_API_KEY = env.YOUTUBE_API_KEY;
+  const region = request.cf?.country || 'US';
 
   if (!query) {
     return new Response(JSON.stringify({ error: { message: 'Missing query parameter.' } }), {
@@ -49,6 +50,7 @@ async function handleYouTubeRequest(request, env) {
     safeSearch: 'moderate',
     videoEmbeddable: 'true',
     videoSyndicated: 'true',
+    regionCode: region,
     key: YOUTUBE_API_KEY,
   }).toString();
 
@@ -79,7 +81,42 @@ async function handleYouTubeRequest(request, env) {
     });
   }
 
-  return new Response(JSON.stringify({ items }), {
+  const idParam = items.map(item => item.videoId).join(',');
+  const detailUrl = new URL('https://www.googleapis.com/youtube/v3/videos');
+  detailUrl.search = new URLSearchParams({
+    part: 'status,contentDetails',
+    id: idParam,
+    key: YOUTUBE_API_KEY,
+  }).toString();
+
+  let filteredItems = items;
+  try {
+    const detailResponse = await fetch(detailUrl.toString());
+    const detailData = await detailResponse.json();
+    if (detailResponse.ok && Array.isArray(detailData.items)) {
+      const detailMap = new Map();
+      detailData.items.forEach(item => {
+        detailMap.set(item.id, {
+          embeddable: item?.status?.embeddable !== false,
+          blocked: item?.contentDetails?.regionRestriction?.blocked || []
+        });
+      });
+      filteredItems = items.filter(item => {
+        const detail = detailMap.get(item.videoId);
+        if (!detail) return true;
+        if (!detail.embeddable) return false;
+        if (Array.isArray(detail.blocked) && detail.blocked.includes(region)) return false;
+        return true;
+      });
+      if (!filteredItems.length) {
+        filteredItems = items;
+      }
+    }
+  } catch (_err) {
+    filteredItems = items;
+  }
+
+  return new Response(JSON.stringify({ items: filteredItems }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
@@ -91,7 +128,7 @@ function getSajuPrompt(sajuData, question) {
   const calLabel = sajuData.cal === 'lunar' ? '음력' : '양력';
   const genderLabel = sajuData.gender === 'female' ? '여자' : '남자';
 
-  let userPrompt = `아래 정보를 바탕으로 상세하고 깊이 있는 사주 분석을 작성해주세요.\n\n**사용자 정보**\n- 생년월일: ${sajuData.year}-${sajuData.month}-${sajuData.day} (${sajuData.b_time_ext})\n- 달력: ${calLabel}\n- 성별: ${genderLabel}\n- 출생지: ${sajuData.place || '미입력'}\n\n**사주 구성 표기 규칙**\n- 반드시 한자 + 한글 병기: 예) 년주: 壬寅(임인)\n- 로마자 표기는 사용하지 마세요.\n- 영어 문장은 절대 출력하지 마세요.\n\n**요약 카드 (정확히 아래 형식 사용)**\n- 한줄 요약: ...\n- 키워드: ..., ..., ...\n- 행운 색: ...\n- 행운 숫자: ...\n- 행운 방향: ...\n- 추천 행동: ...\n- 추천 음악: ...\n\n**상세 분석**\n1. **사주 구성과 핵심 포인트**: 사주 구성(연·월·일·시)을 한자+한글로 제시하고 인상적인 특징을 짚어주세요.\n2. **오행(목·화·토·금·수) 균형**: 강약, 결핍, 과다 요소와 성향을 자세히 설명하고, 반드시 \"목 N개, 화 N개, 토 N개, 금 N개, 수 N개\" 형태로 개수를 한 줄로 명시하세요.\n3. **성격과 기질**: 장점, 단점, 대인관계 스타일을 예시와 함께 자세히 설명해주세요.\n4. **연애/관계운**: 관계에서의 강점과 주의점, 추천 커뮤니케이션 방식을 알려주세요.\n5. **진로/재물운**: 어울리는 분야, 성향에 맞는 일 스타일, 재정 관리 팁을 제시해주세요.\n6. **건강운**: 취약 포인트와 생활습관 조언을 포함해주세요.\n7. **시기별 운의 흐름**: 단기/중기/장기 흐름을 자세히 요약해주세요.\n8. **오늘을 위한 한 줄 조언**: 긍정적인 메시지로 마무리해주세요.\n\n**운세 카드 (정확히 아래 형식 사용)**\n- 건강운: ...\n- 연애운: ...\n- 재물운: ...\n- 직업운: ...\n- 성장운: ...\n\n**작성 팁**\n- 각 섹션 끝에 \"핵심 포인트\" 불릿 1~2개를 넣어주세요.\n- 감성적이고 컬러풀한 표현(예: 따뜻한 골드, 청량한 블루)을 섞어주세요.\n- 운세 카드는 각 항목을 한 줄 안에 4~6문장으로 길게 작성하고, 실천 팁 1~2개를 문장 속에 포함하세요.\n\n마지막에 반드시 다음 줄을 추가하세요.\n### 오행: [목/화/토/금/수]`;
+  let userPrompt = `아래 정보를 바탕으로 상세하고 깊이 있는 사주 분석을 작성해주세요.\n\n**사용자 정보**\n- 생년월일: ${sajuData.year}-${sajuData.month}-${sajuData.day} (${sajuData.b_time_ext})\n- 달력: ${calLabel}\n- 성별: ${genderLabel}\n- 출생지: ${sajuData.place || '미입력'}\n\n**사주 구성 표기 규칙**\n- 반드시 한자 + 한글 병기: 예) 년주: 壬寅(임인)\n- 로마자 표기는 사용하지 마세요.\n- 영어 문장은 절대 출력하지 마세요.\n\n**요약 카드 (정확히 아래 형식 사용)**\n- 한줄 요약: ...\n- 키워드: ..., ..., ...\n- 행운 색: ...\n- 행운 숫자: ...\n- 행운 방향: ...\n- 추천 행동: ...\n- 추천 음악: ...\n\n**상세 분석**\n1. **사주 구성과 핵심 포인트**: 사주 구성(연·월·일·시)을 한자+한글로 제시하고 인상적인 특징을 짚어주세요.\n2. **오행(목·화·토·금·수) 균형**: 강약, 결핍, 과다 요소와 성향을 자세히 설명하고, 반드시 \"목 N개, 화 N개, 토 N개, 금 N개, 수 N개\" 형태로 개수를 한 줄로 명시하세요.\n3. **성격과 기질**: 장점, 단점, 대인관계 스타일을 예시와 함께 자세히 설명해주세요.\n4. **연애/관계운**: 관계에서의 강점과 주의점, 추천 커뮤니케이션 방식을 알려주세요.\n5. **진로/재물운**: 어울리는 분야, 성향에 맞는 일 스타일, 재정 관리 팁을 제시해주세요.\n6. **건강운**: 취약 포인트와 생활습관 조언을 포함해주세요.\n7. **시기별 운의 흐름**: 단기/중기/장기 흐름을 자세히 요약해주세요.\n8. **오늘을 위한 한 줄 조언**: 긍정적인 메시지로 마무리해주세요.\n\n**운세 카드 (정확히 아래 형식 사용)**\n- 건강운: ... (첫 줄에 간결 요약)\n  이어지는 줄에는 2~3문단으로 상세 해설을 작성하세요. 줄바꿈을 사용하고, 각 문단은 2~3문장으로 구성하세요. 불릿은 사용하지 마세요.\n- 연애운: ...\n  이어지는 줄에는 상세 해설을 작성하세요.\n- 재물운: ...\n  이어지는 줄에는 상세 해설을 작성하세요.\n- 직업운: ...\n  이어지는 줄에는 상세 해설을 작성하세요.\n- 성장운: ...\n  이어지는 줄에는 상세 해설을 작성하세요.\n\n**작성 팁**\n- 각 섹션 끝에 \"핵심 포인트\" 불릿 1~2개를 넣어주세요.\n- 감성적이고 컬러풀한 표현(예: 따뜻한 골드, 청량한 블루)을 섞어주세요.\n- 운세 카드는 사주 보고서 톤으로, 각 항목 최소 5문장 이상, 200자 이상으로 길게 작성하고 실천 팁 1~2개를 문장 속에 포함하세요.\n\n마지막에 반드시 다음 줄을 추가하세요.\n### 오행: [목/화/토/금/수]`;
 
   if (question) {
     userPrompt += `\n\n---\n**사용자의 추가 질문**: "${question}"\n\n질문에 대해 공감하며 구체적으로 답변해주세요.`;

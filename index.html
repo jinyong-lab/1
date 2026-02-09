@@ -187,26 +187,85 @@
     .compat-big-score{font-family:var(--font-serif);font-size:48px;font-weight:800}
     .compat-grade{font-size:16px;color:var(--muted);margin-top:4px}
     .compat-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-    .fortune-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
-    .fortune-btn{border:none;border-radius:12px;padding:14px 8px;background:var(--fortune-bg);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition: all 0.3s ease;width:auto;margin:0}
-    .fortune-btn:hover{background:var(--fortune-hover);transform:translateY(-2px)}
-    .fortune-btn.active{background:var(--accent);color:#fff}
-    .fortune-btn .f-icon{font-size:24px;display:block;margin-bottom:4px}
-    .fortune-content{margin-top:12px;display:none}
+    .fortune-grid{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:10px;
+      margin-top:12px;
+    }
+    .fortune-btn{
+      border:none;
+      border-radius:14px;
+      padding:14px 10px;
+      background:linear-gradient(135deg, rgba(124,102,217,0.16), rgba(76,201,240,0.1));
+      color:var(--text);
+      font-size:13px;
+      font-weight:600;
+      cursor:pointer;
+      text-align:left;
+      transition: all 0.3s ease;
+      width:auto;
+      margin:0;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      border:1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    }
+    [data-theme="light"] .fortune-btn{
+      background:linear-gradient(135deg, rgba(90,72,163,0.12), rgba(29,155,240,0.08));
+      border-color:rgba(0,0,0,0.08);
+    }
+    .fortune-btn:hover{
+      transform:translateY(-2px);
+      background:linear-gradient(135deg, rgba(124,102,217,0.28), rgba(255,138,101,0.18));
+    }
+    .fortune-btn.active{
+      background:linear-gradient(135deg, rgba(124,102,217,0.55), rgba(76,201,240,0.45));
+      color:#fff;
+      border-color:rgba(255,255,255,0.25);
+    }
+    .fortune-btn .f-icon{
+      font-size:22px;
+      width:28px;
+      height:28px;
+      display:grid;
+      place-items:center;
+      border-radius:10px;
+      background:rgba(255,255,255,0.12);
+    }
+    .fortune-content{
+      margin-top:14px;
+      display:none;
+      border:1px solid var(--analysis-border);
+      border-radius:16px;
+      padding:16px;
+      background:linear-gradient(135deg, rgba(124,102,217,0.12), rgba(11,16,32,0.6));
+      line-height:1.85;
+      font-size:14px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    [data-theme="light"] .fortune-content{
+      background:linear-gradient(135deg, rgba(90,72,163,0.08), rgba(255,255,255,0.95));
+    }
     .fortune-content.active{display:block}
+    .fortune-content p{margin:0 0 10px}
+    .fortune-content p:last-child{margin-bottom:0}
+    .fortune-content strong{color:var(--accent-3)}
+    .fortune-content ul{list-style:none;padding:0;margin:10px 0}
+    .fortune-content ul li{padding-left:18px;position:relative;margin:6px 0}
+    .fortune-content ul li::before{
+      content:"✦";
+      position:absolute;
+      left:0;
+      color:var(--accent-2);
+    }
     .fortune-shell{
       background:linear-gradient(145deg, rgba(124,102,217,0.18), rgba(11,16,32,0.65));
       border:1px solid var(--line);
     }
     [data-theme="light"] .fortune-shell{
       background:linear-gradient(145deg, rgba(90,72,163,0.12), rgba(255,255,255,0.95));
-    }
-    .fortune-content{
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:12px 14px;
-      background:linear-gradient(120deg, rgba(76,201,240,0.1), rgba(255,138,101,0.08));
-      line-height:1.7;
     }
     .element-shell{
       background:linear-gradient(145deg, rgba(249,199,79,0.12), rgba(76,201,240,0.12));
@@ -777,6 +836,20 @@
       font-size:12px;
       color:var(--muted);
     }
+    .yt-link{
+      font-size:11px;
+      font-weight:600;
+      color:var(--link);
+      text-decoration:none;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.04);
+      white-space:nowrap;
+    }
+    .yt-link:hover{
+      background:rgba(255,255,255,0.1);
+    }
     .music-actions{
       display:flex;
       justify-content:center;
@@ -877,6 +950,6 @@
     <div id="lastModified" style="font-size: 10px; margin-top: 10px;"></div>
   </footer>
 <script src="https://www.youtube.com/iframe_api"></script>
-<script src="script.js?v=9" defer></script>
+<script src="script.js?v=10" defer></script>
 </body>
 </html>
