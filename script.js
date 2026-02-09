@@ -828,6 +828,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   };
 
   const aiResponse = await getAiResponse(aiPayload);
+  const summary = parseSummary(aiResponse);
   const sanitized = sanitizeAiResponse(aiResponse);
   const cleanedResponse = injectPillarHanja(sanitized.cleaned);
 
