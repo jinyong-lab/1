@@ -1,148 +1,331 @@
-
-const bY = document.getElementById('bY');
+﻿const bY = document.getElementById('bY');
 const bM = document.getElementById('bM');
 const bD = document.getElementById('bD');
+const bT = document.getElementById('bT');
+const bP = document.getElementById('bP');
 const cY1 = document.getElementById('cY1');
 const cM1 = document.getElementById('cM1');
 const cD1 = document.getElementById('cD1');
+const cT1 = document.getElementById('cT1');
 const cY2 = document.getElementById('cY2');
 const cM2 = document.getElementById('cM2');
 const cD2 = document.getElementById('cD2');
+const cT2 = document.getElementById('cT2');
+const themeToggle = document.getElementById('themeToggle');
+
+let currentQuery = 'korean ballad playlist';
 
 function updateDays(year, month, daySelect) {
-    if (!year || !month) {
-        daySelect.innerHTML = '<option value="">선택</option>';
-        return;
-    }
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const selectedDay = daySelect.value;
-    daySelect.innerHTML = '<option value="">선택</option>';
-    for (let i = 1; i <= daysInMonth; i++) {
-        const option = document.createElement('option');
-        option.value = i;
-        option.textContent = i + '일';
-        daySelect.appendChild(option);
-    }
-    if (selectedDay && selectedDay <= daysInMonth) {
-        daySelect.value = selectedDay;
-    }
+  if (!daySelect) return;
+  daySelect.innerHTML = '<option value="">선택</option>';
+  if (!year || !month) {
+    return;
+  }
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const selectedDay = daySelect.value;
+  for (let i = 1; i <= daysInMonth; i++) {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = `${i}일`;
+    daySelect.appendChild(option);
+  }
+  if (selectedDay && Number(selectedDay) <= daysInMonth) {
+    daySelect.value = selectedDay;
+  }
+}
+
+function setThemeLabel(theme) {
+  themeToggle.textContent = theme === 'dark' ? '라이트 모드' : '다크 모드';
 }
 
 function setupEventListeners() {
-    // Add event listeners to all date fields
-    bY.addEventListener('change', () => updateDays(parseInt(bY.value, 10), parseInt(bM.value, 10), bD));
-    bM.addEventListener('change', () => updateDays(parseInt(bY.value, 10), parseInt(bM.value, 10), bD));
-    cY1.addEventListener('change', () => updateDays(parseInt(cY1.value, 10), parseInt(cM1.value, 10), cD1));
-    cM1.addEventListener('change', () => updateDays(parseInt(cY1.value, 10), parseInt(cM1.value, 10), cD1));
-    cY2.addEventListener('change', () => updateDays(parseInt(cY2.value, 10), parseInt(cM2.value, 10), cD2));
-    cM2.addEventListener('change', () => updateDays(parseInt(cY2.value, 10), parseInt(cM2.value, 10), cD2));
+  bY.addEventListener('change', () => updateDays(parseInt(bY.value, 10), parseInt(bM.value, 10), bD));
+  bM.addEventListener('change', () => updateDays(parseInt(bY.value, 10), parseInt(bM.value, 10), bD));
+  cY1.addEventListener('change', () => updateDays(parseInt(cY1.value, 10), parseInt(cM1.value, 10), cD1));
+  cM1.addEventListener('change', () => updateDays(parseInt(cY1.value, 10), parseInt(cM1.value, 10), cD1));
+  cY2.addEventListener('change', () => updateDays(parseInt(cY2.value, 10), parseInt(cM2.value, 10), cD2));
+  cM2.addEventListener('change', () => updateDays(parseInt(cY2.value, 10), parseInt(cM2.value, 10), cD2));
 
-    // --- Let's try the robust default date logic again ---
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
 
-    if (!bY.value) bY.value = currentYear;
-    if (!bM.value) bM.value = currentMonth;
-    
-    updateDays(parseInt(bY.value, 10), parseInt(bM.value, 10), bD);
+  if (!bY.value) bY.value = currentYear;
+  if (!bM.value) bM.value = currentMonth;
+  updateDays(parseInt(bY.value, 10), parseInt(bM.value, 10), bD);
 
-    updateDays(null, null, cD1);
-    updateDays(null, null, cD2);
-    
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelector('.tab-btn.active').classList.remove('active');
-            btn.classList.add('active');
-            document.querySelector('.tab-pane.active').classList.remove('active');
-            document.getElementById(btn.dataset.tab).classList.add('active');
-        });
+  updateDays(null, null, cD1);
+  updateDays(null, null, cD2);
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelector('.tab-btn.active').classList.remove('active');
+      btn.classList.add('active');
+      document.querySelector('.tab-pane.active').classList.remove('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
     });
+  });
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
-        const newTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.dataset.theme = newTheme;
-        document.getElementById('themeToggle').textContent = newTheme === 'dark' ? '라이트 모드' : '다크 모드';
-    });
+  themeToggle.addEventListener('click', () => {
+    const newTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = newTheme;
+    setThemeLabel(newTheme);
+  });
+
+  setThemeLabel(document.documentElement.dataset.theme || 'dark');
 }
 
 setupEventListeners();
 
-// 오행에 따른 검색어 매핑
-const elQueries = {
-  "목": "calm acoustic playlist",
-  "화": "upbeat pop music playlist",
-  "토": "comfortable easy listening playlist",
-  "금": "powerful epic music playlist",
-  "수": "chill lofi hiphop playlist"
+const elementQueries = {
+  '목': 'calm acoustic playlist',
+  '화': 'upbeat pop playlist',
+  '토': 'cozy easy listening playlist',
+  '금': 'epic cinematic playlist',
+  '수': 'chill lofi hiphop playlist'
 };
 
-// --- YouTube IFrame API 로딩을 위한 준비 ---
-let player;
-// YouTube API 스크립트가 로드되면 이 Promise가 resolve됩니다.
-const ytApiReady = new Promise(resolve => {
-  // 이미 API가 로드되었다면 즉시 resolve합니다.
-  if (window.YT && window.YT.Player) {
-    resolve(window.YT);
-  } else {
-    // 그렇지 않다면, API가 로드될 때 resolve 하도록 전역 콜백을 설정합니다.
-    window.onYouTubeIframeAPIReady = () => resolve(window.YT);
-  }
-});
+let playerIframe = null;
 
-// 노래 플레이어를 생성하거나 업데이트하는 함수
+function resetPlayer() {
+  playerIframe = null;
+}
+
+function createFallbackIframe(playerContainer, query) {
+  if (!playerContainer) return;
+  const iframe = document.createElement('iframe');
+  const src = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  iframe.src = src;
+  iframe.allow = 'autoplay; encrypted-media';
+  iframe.allowFullscreen = true;
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
+  playerContainer.innerHTML = '';
+  playerContainer.appendChild(iframe);
+  playerIframe = iframe;
+}
+
+function ensureIframePlayer(playerContainer, videoId, query) {
+  if (!playerContainer) return;
+  if (!playerIframe || !playerContainer.contains(playerIframe)) {
+    createFallbackIframe(playerContainer, query);
+  }
+  if (videoId) {
+    playerIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  } else {
+    playerIframe.src = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  }
+}
+
+function renderSongList(videos, resultDiv, query, playerContainer) {
+  const list = resultDiv.querySelector('[data-role="song-list"]');
+  if (!list) return;
+
+  if (!videos.length) {
+    list.innerHTML = '<li class="fallback-note">추천 목록을 불러오지 못했습니다. 검색 재생으로 대신합니다.</li>';
+    return;
+  }
+
+  list.innerHTML = videos.map(video => {
+    const title = escapeHtml(video.title || '제목 없음');
+    const channel = escapeHtml(video.channelTitle || '');
+    const videoId = video.videoId || '';
+    return `
+      <li>
+        <button class="play-btn" data-video-id="${videoId}">재생</button>
+        <div class="song-info">
+          <span class="song-title-text">${title}</span>
+          <span class="song-channel">${channel}</span>
+        </div>
+      </li>
+    `;
+  }).join('');
+
+  list.onclick = event => {
+    const button = event.target.closest('[data-video-id]');
+    if (!button) return;
+    const videoId = button.dataset.videoId;
+    if (!videoId) return;
+    ensureIframePlayer(playerContainer, videoId, query);
+  };
+}
+
 async function getSongs(sajuElement, resultDiv) {
   const musicBox = resultDiv.querySelector('.music-box');
   const playerContainer = resultDiv.querySelector('#player-container');
-  
+  const musicMeta = resultDiv.querySelector('.music-meta');
+
   if (!musicBox || !playerContainer) {
-    console.error("Music box or player container not found");
+    console.error('Music box or player container not found');
     return;
   }
-  
-  playerContainer.style.display = 'block';
 
-  // 사주 결과에서 나온 오행 키워드를 사용합니다.
-  const query = elQueries[sajuElement] || "korean ballad playlist";
+  playerContainer.style.display = 'block';
+  createFallbackIframe(playerContainer, query);
+
+  const query = elementQueries[sajuElement] || 'korean ballad playlist';
+  currentQuery = query;
+
+  let videoData = null;
+  try {
+    videoData = await fetchYouTubeVideos(query);
+  } catch (error) {
+    console.error('YouTube fetch error:', error);
+  }
+
+  const videoItems = Array.isArray(videoData?.items)
+    ? videoData.items
+    : (videoData?.videoId ? [videoData] : []);
+  const primaryVideo = videoItems[0];
+
+  renderSongList(videoItems, resultDiv, query, playerContainer);
+
+  if (musicMeta) {
+    if (videoData?.error) {
+      musicMeta.textContent = `추천 정보를 불러오지 못했습니다. (${videoData.error})`;
+    } else if (primaryVideo?.title) {
+      const channelText = primaryVideo.channelTitle ? ` · ${primaryVideo.channelTitle}` : '';
+      musicMeta.textContent = `추천 영상: ${primaryVideo.title}${channelText}`;
+    } else {
+      musicMeta.textContent = '추천 영상을 찾지 못해 플레이리스트 검색으로 재생합니다.';
+    }
+  }
 
   try {
-    // API가 준비될 때까지 기다립니다.
-    const YT = await ytApiReady;
-
-    // 플레이어가 이미 있다면 새 플레이리스트를 로드하고, 없다면 새로 생성합니다.
-    if (player && typeof player.loadPlaylist === 'function') {
-      player.loadPlaylist({
-        listType: 'search',
-        list: query
-      });
-    } else {
-      player = new YT.Player('player-container', {
-        height: '390',
-        width: '100%',
-        playerVars: {
-          listType: 'search',
-          list: query,
-          autoplay: 1,
-          loop: 1,
-        },
-        events: {
-          'onReady': (event) => event.target.playVideo(),
-        }
-      });
-    }
+    ensureIframePlayer(playerContainer, primaryVideo?.videoId || null, query);
   } catch (error) {
-    console.error("YouTube Player Error:", error);
-    playerContainer.innerHTML = "<p>노래 플레이어를 로드하는 중 오류가 발생했습니다.</p>";
+    console.error('YouTube Player Error:', error);
+    playerContainer.innerHTML = '<p>노래 플레이어를 로드하는 중 오류가 발생했습니다.</p>';
+    createFallbackIframe(playerContainer, query);
   }
 }
 
 function showError(message, boxId) {
-    const errBox = document.getElementById(boxId);
-    errBox.textContent = message;
-    errBox.style.display = 'block';
+  const errBox = document.getElementById(boxId);
+  errBox.textContent = message;
+  errBox.style.display = 'block';
 }
 
-// AI 응답을 요청하는 통합 함수
+function escapeHtml(value) {
+  if (!value) return '';
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function truncateText(value, maxLength) {
+  if (!value) return '';
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength)}…`;
+}
+
+function parseSummary(md) {
+  const summary = {
+    oneLine: '',
+    keywords: [],
+    luckyColor: '',
+    luckyNumber: '',
+    luckyDirection: '',
+    action: '',
+    music: ''
+  };
+
+  if (!md) return summary;
+  const lines = md.split('\n');
+  const labelMap = {
+    '한줄요약': 'oneLine',
+    '요약': 'oneLine',
+    '키워드': 'keywords',
+    '핵심키워드': 'keywords',
+    '행운색': 'luckyColor',
+    '행운색상': 'luckyColor',
+    '행운숫자': 'luckyNumber',
+    '행운번호': 'luckyNumber',
+    '행운방향': 'luckyDirection',
+    '추천행동': 'action',
+    '추천음악': 'music'
+  };
+
+  for (const line of lines) {
+    const match = line.match(/^\s*[-*]\s*([^:：]+)\s*[:：]\s*(.+)\s*$/);
+    if (!match) continue;
+
+    const rawLabel = match[1].replace(/[\s()\[\]{}]/g, '');
+    const rawValue = match[2].replace(/[*_`]/g, '').trim();
+    const key = labelMap[rawLabel];
+
+    if (!key) continue;
+    if (key === 'keywords') {
+      summary.keywords = rawValue
+        .split(/[,/·•|]/)
+        .map(item => item.trim())
+        .filter(Boolean)
+        .slice(0, 8);
+    } else {
+      summary[key] = rawValue;
+    }
+  }
+
+  return summary;
+}
+
+function buildSummaryHtml(summary) {
+  const hasSummary = summary.oneLine || summary.keywords.length || summary.luckyColor || summary.luckyNumber || summary.luckyDirection || summary.action || summary.music;
+  if (!hasSummary) return '';
+
+  const keywordHtml = summary.keywords.length
+    ? `<div class="summary-item">
+         <div class="summary-label">키워드</div>
+         <div class="summary-keywords">
+           ${summary.keywords.map((word, index) => `<span class="summary-keyword tone-${(index % 5) + 1}">${escapeHtml(word)}</span>`).join('')}
+         </div>
+       </div>`
+    : '';
+
+  const items = [];
+  if (summary.luckyColor) items.push({ label: '행운 색', value: summary.luckyColor });
+  if (summary.luckyNumber) items.push({ label: '행운 숫자', value: summary.luckyNumber });
+  if (summary.luckyDirection) items.push({ label: '행운 방향', value: summary.luckyDirection });
+  if (summary.action) items.push({ label: '추천 행동', value: summary.action });
+  if (summary.music) items.push({ label: '추천 음악', value: summary.music });
+
+  const itemHtml = items.map(item => `
+      <div class="summary-item">
+        <div class="summary-label">${escapeHtml(item.label)}</div>
+        <div class="summary-value">${escapeHtml(item.value)}</div>
+      </div>
+    `).join('');
+
+  return `
+    <div class="summary-card">
+      ${summary.oneLine ? `<p class="summary-line">${escapeHtml(summary.oneLine)}</p>` : ''}
+      <div class="summary-grid">
+        ${keywordHtml}
+        ${itemHtml}
+      </div>
+    </div>
+  `;
+}
+
+async function fetchYouTubeVideos(query) {
+  const apiUrl = `/api/youtube?query=${encodeURIComponent(query)}`;
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    if (!response.ok) {
+      console.error('YouTube API Error:', data);
+      return { error: data?.error?.message || 'YouTube API error' };
+    }
+    return data;
+  } catch (error) {
+    console.error('YouTube API Request Failed:', error);
+    return { error: 'Network error' };
+  }
+}
+
 async function getAiResponse(payload) {
   const params = new URLSearchParams(payload);
   const apiPath = `/api/saju?${params.toString()}`;
@@ -152,142 +335,670 @@ async function getAiResponse(payload) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("API Error:", data);
-      return `**오류 발생:** ${data.error?.message || 'API로부터 답변을 받아오는 중 오류가 발생했습니다.'}`;
+      console.error('API Error:', data);
+      return `**오류 발생:** ${data.error?.message || 'API 응답을 받는 중 오류가 발생했습니다.'}`;
     }
     return data.choices[0].message.content;
   } catch (error) {
     console.error('Error calling worker function:', error);
     if (error instanceof SyntaxError) {
-      return "**오류 발생:** 서버 응답 형식이 잘못되었습니다. API가 올바르게 배포되었는지 확인해주세요.";
+      return '**오류 발생:** 서버 응답 형식이 올바르지 않습니다. API가 정상적으로 배포되었는지 확인해주세요.';
     }
     return '**오류 발생:** 서버와 통신하는 중 오류가 발생했습니다.';
   }
 }
 
-// 마크다운을 HTML로 렌더링하는 간단한 유틸리티
 function renderMarkdown(md) {
-    // Bold, Italic
-    md = md.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    md = md.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    // Headings
-    md = md.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    md = md.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    md = md.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-    // List items
-    md = md.replace(/^\* (.*$)/gim, '<li>$1</li>');
-    // Replace newlines with <br> for paragraphs
-    md = md.replace(/\n/g, '<br>');
-    return md;
+  if (!md) return '';
+  let html = md.replace(/\r\n/g, '\n').trim();
+
+  html = html.replace(/^###\s+(.*)$/gim, '<h3>$1</h3>');
+  html = html.replace(/^##\s+(.*)$/gim, '<h2>$1</h2>');
+  html = html.replace(/^#\s+(.*)$/gim, '<h1>$1</h1>');
+  html = html.replace(/^---$/gim, '<hr>');
+
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  html = html.replace(/^(?:\s*[-*]\s+.*(?:\n|$))+?/gm, match => {
+    const items = match
+      .trim()
+      .split('\n')
+      .map(line => line.replace(/^\s*[-*]\s+/, '').trim())
+      .filter(Boolean);
+    return `<ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>`;
+  });
+
+  html = html.replace(/^(?:\s*\d+\.\s+.*(?:\n|$))+?/gm, match => {
+    const items = match
+      .trim()
+      .split('\n')
+      .map(line => line.replace(/^\s*\d+\.\s+/, '').trim())
+      .filter(Boolean);
+    return `<ol>${items.map(item => `<li>${item}</li>`).join('')}</ol>`;
+  });
+
+  html = html.replace(/^(?:>\s?.*(?:\n|$))+?/gm, match => {
+    const lines = match
+      .trim()
+      .split('\n')
+      .map(line => line.replace(/^>\s?/, ''));
+    return `<blockquote>${lines.join('<br>')}</blockquote>`;
+  });
+
+  const blocks = html.split(/\n{2,}/).map(block => {
+    const trimmed = block.trim();
+    if (!trimmed) return '';
+    if (/^<h\d|^<ul>|^<ol>|^<blockquote>|^<hr>/.test(trimmed)) {
+      return trimmed;
+    }
+    return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
+  });
+
+  return blocks.join('');
 }
 
+function enhanceCallouts(container) {
+  if (!container) return;
+  const paragraphs = Array.from(container.querySelectorAll('p'));
+  paragraphs.forEach(p => {
+    const text = (p.textContent || '').trim();
+    if (!text) return;
+    if (text.length <= 120 && /(오늘|한 줄|조언|키워드|핵심|행운|추천)/.test(text)) {
+      p.classList.add('callout');
+    }
+  });
+}
+
+function sanitizeAiResponse(md) {
+  if (!md) return { cleaned: '', fortunes: {} };
+  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  const banned = [
+    /^User's Information:/i,
+    /^Birth Date:/i,
+    /^Calendar:/i,
+    /^Gender:/i,
+    /^Your Analysis/i
+  ];
+  const summaryLabels = [
+    '한줄 요약', '키워드', '행운 색', '행운 숫자', '행운 방향', '추천 행동', '추천 음악'
+  ];
+
+  const fortunes = {};
+  let cleanedLines = [];
+  let inFortune = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      cleanedLines.push(rawLine);
+      continue;
+    }
+
+    if (banned.some(rx => rx.test(line))) {
+      continue;
+    }
+
+    if (/^#+\s*운세/.test(line) || /운세\s*카드/.test(line)) {
+      inFortune = true;
+      continue;
+    }
+
+    if (inFortune && /^#+\s*/.test(line)) {
+      inFortune = false;
+    }
+
+    const fortuneMatch = rawLine.match(/^\s*[-*]\s*(건강운|연애운|재물운|직업운|학업운|성장운|대인운)\s*[:：]\s*(.+)\s*$/);
+    if (fortuneMatch) {
+      fortunes[fortuneMatch[1]] = fortuneMatch[2].trim();
+      continue;
+    }
+
+    if (inFortune) {
+      if (/^\s*[-*]\s*/.test(rawLine)) {
+        continue;
+      }
+      if (!line) {
+        cleanedLines.push(rawLine);
+        continue;
+      }
+      inFortune = false;
+    }
+
+    if (/요약\s*카드/.test(line)) {
+      continue;
+    }
+    if (summaryLabels.some(label => new RegExp(`^[-*]\\s*${label}\\s*[:：]`).test(line))) {
+      continue;
+    }
+
+    cleanedLines.push(rawLine);
+  }
+
+  return { cleaned: cleanedLines.join('\n').trim(), fortunes };
+}
+
+function injectPillarHanja(md) {
+  if (!md) return md;
+  const ganMap = {
+    '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊',
+    '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸'
+  };
+  const jiMap = {
+    '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳',
+    '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥'
+  };
+  const hanjaRegex = /[甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥]/;
+  const hangulPairToHanja = (hangul) => {
+    if (!hangul || hangul.length < 2) return '';
+    const g = hangul[0];
+    const j = hangul[1];
+    return `${ganMap[g] || ''}${jiMap[j] || ''}`;
+  };
+
+  let normalized = md.replace(/([A-Za-z]+)\s*([A-Za-z]+)\s*\(([가-힣]{2})\)/g, (_m, _a, _b, hangul) => {
+    const hanja = hangulPairToHanja(hangul);
+    return hanja ? `${hangul}(${hanja})` : hangul;
+  });
+
+  normalized = normalized.replace(/([A-Za-z]+)\s*([A-Za-z]+)\s*\(([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])\)/g, (_m, _a, _b, hanja) => {
+    const hangul = `${Object.entries(ganMap).find(([, v]) => v === hanja[0])?.[0] || ''}${Object.entries(jiMap).find(([, v]) => v === hanja[1])?.[0] || ''}`;
+    return hangul ? `${hangul}(${hanja})` : hanja;
+  });
+  normalized = normalized.replace(/([A-Za-z]+)\s*\(([가-힣])\)/g, (_m, _a, hangul) => {
+    const hanja = ganMap[hangul] || jiMap[hangul] || '';
+    return hanja ? `${hangul}(${hanja})` : hangul;
+  });
+
+  return normalized.split('\n').map(line => {
+    if (!/(년주|월주|일주|시주)/.test(line)) return line;
+    if (hanjaRegex.test(line)) return line;
+    let updated = line.replace(/:\s*[A-Za-z]+\s*\(([^)]+)\)/, ': $1');
+    updated = updated.replace(/([갑을병정무기경신임계])([자축인묘진사오미신유술해])/g, (match, g, j) => {
+      const hanja = `${ganMap[g]}${jiMap[j]}`;
+      return `${g}${j}(${hanja})`;
+    });
+    return updated;
+  }).join('\n');
+}
+
+function extractPillars(md) {
+  if (!md) return [];
+  const ganToHanja = {
+    '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊',
+    '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸'
+  };
+  const jiToHanja = {
+    '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳',
+    '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥'
+  };
+  const hanjaToGan = Object.fromEntries(Object.entries(ganToHanja).map(([k, v]) => [v, k]));
+  const hanjaToJi = Object.fromEntries(Object.entries(jiToHanja).map(([k, v]) => [v, k]));
+
+  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  const results = [];
+
+  for (const rawLine of lines) {
+    const match = rawLine.match(/(년주|월주|일주|시주)\s*[:：]\s*(.+)/);
+    if (!match) continue;
+    const label = match[1];
+    const value = match[2];
+    const hanjaMatch = value.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/);
+    const hangulMatch = value.match(/[갑을병정무기경신임계][자축인묘진사오미신유술해]/);
+
+    let hanja = hanjaMatch ? hanjaMatch[0] : '';
+    let hangul = hangulMatch ? hangulMatch[0] : '';
+
+    if (!hanja && hangul) {
+      hanja = `${ganToHanja[hangul[0]] || ''}${jiToHanja[hangul[1]] || ''}`;
+    }
+    if (!hangul && hanja) {
+      hangul = `${hanjaToGan[hanja[0]] || ''}${hanjaToJi[hanja[1]] || ''}`;
+    }
+
+    if (hanja || hangul) {
+      results.push({ label, hanja, hangul });
+    }
+  }
+
+  return results;
+}
+
+function getStampSvg(tone = 1) {
+  const tones = {
+    1: ['var(--accent-1)', 'var(--accent-3)'],
+    2: ['var(--accent-2)', 'var(--accent-4)'],
+    3: ['var(--accent-3)', 'var(--accent-5)'],
+    4: ['var(--accent-4)', 'var(--accent-2)'],
+    5: ['var(--accent-5)', 'var(--accent-1)']
+  };
+  const [c1, c2] = tones[tone] || tones[1];
+  return `
+    <svg class="seal-svg" viewBox="0 0 120 120" aria-hidden="true">
+      <defs>
+        <linearGradient id="seal-grad-${tone}" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${c1}" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="${c2}" stop-opacity="0.7"/>
+        </linearGradient>
+      </defs>
+      <rect x="14" y="14" width="92" height="92" rx="18" fill="url(#seal-grad-${tone})" opacity="0.22"/>
+      <rect x="22" y="22" width="76" height="76" rx="14" fill="none" stroke="${c1}" stroke-width="3" opacity="0.6"/>
+      <path d="M30 64 L90 64" stroke="${c2}" stroke-width="2" opacity="0.5"/>
+      <path d="M60 30 L60 90" stroke="${c2}" stroke-width="2" opacity="0.5"/>
+      <circle cx="60" cy="60" r="10" fill="${c1}" opacity="0.35"/>
+    </svg>
+  `;
+}
+
+function buildPillarBoard(pillars) {
+  if (!pillars.length) return '';
+  const cards = pillars.map((pillar, index) => {
+    const tone = (index % 5) + 1;
+    return `
+      <div class="pillar-card" data-tone="${tone}">
+        <div class="pillar-seal">${getStampSvg(tone)}</div>
+        <div class="pillar-label">${pillar.label}</div>
+        <div class="pillar-hanja">${escapeHtml(pillar.hanja || '')}</div>
+        <div class="pillar-hangul">${escapeHtml(pillar.hangul || '')}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="section result-shell pillar-shell">
+      <div class="analysis-header">
+        <div>
+          <p class="analysis-eyebrow">🪷 사주 네 기둥</p>
+          <h3 class="analysis-title">기운의 패턴을 그림처럼 읽기</h3>
+        </div>
+      </div>
+      <div class="pillar-board">
+        ${cards}
+      </div>
+    </div>
+  `;
+}
+
+function getElementSvg(key) {
+  const palette = {
+    '목': ['#90be6d', '#4cc9f0'],
+    '화': ['#ff6f59', '#f9c74f'],
+    '토': ['#f4a261', '#e9c46a'],
+    '금': ['#bfc0c0', '#8d99ae'],
+    '수': ['#1d9bf0', '#5ad0ff']
+  };
+  const [c1, c2] = palette[key] || palette['목'];
+  if (key === '목') {
+    return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><circle cx="40" cy="40" r="28" fill="url(#g)" opacity="0.35"/><path d="M40 16 C30 26 26 38 26 48 C26 58 34 66 40 66 C46 66 54 58 54 48 C54 38 50 26 40 16 Z" fill="url(#g)"/></svg>`;
+  }
+  if (key === '화') {
+    return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M40 12 C48 22 52 30 52 40 C52 52 44 64 40 68 C36 64 28 52 28 40 C28 30 32 22 40 12 Z" fill="url(#g)"/><circle cx="40" cy="44" r="10" fill="${c2}" opacity="0.6"/></svg>`;
+  }
+  if (key === '토') {
+    return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M14 56 L40 20 L66 56 Z" fill="url(#g)"/><rect x="20" y="56" width="40" height="10" rx="5" fill="${c2}" opacity="0.7"/></svg>`;
+  }
+  if (key === '금') {
+    return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect x="20" y="16" width="40" height="48" rx="8" fill="url(#g)"/><path d="M24 30 L56 30" stroke="#fff" stroke-width="3" opacity="0.4"/><path d="M24 42 L56 42" stroke="#fff" stroke-width="3" opacity="0.3"/></svg>`;
+  }
+  return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M12 50 C20 40 30 40 40 50 C50 60 60 60 68 50" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round"/><path d="M16 60 C24 52 32 52 40 60 C48 68 56 68 64 60" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" opacity="0.7"/></svg>`;
+}
+
+function buildElementGallery(activeKey) {
+  const elements = [
+    { key: '목', label: '목', name: 'Wood' },
+    { key: '화', label: '화', name: 'Fire' },
+    { key: '토', label: '토', name: 'Earth' },
+    { key: '금', label: '금', name: 'Metal' },
+    { key: '수', label: '수', name: 'Water' }
+  ];
+
+  const cards = elements.map(el => {
+    const active = el.key === activeKey ? 'active' : '';
+    return `
+      <div class="element-card ${active}" data-key="${el.key}">
+        <div class="element-illustration">${getElementSvg(el.key)}</div>
+        <div class="element-label">${el.label}</div>
+        <div class="element-name">${el.name}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="section result-shell element-shell">
+      <div class="analysis-header">
+        <div>
+          <p class="analysis-eyebrow">🎨 오행 컬러맵</p>
+          <h3 class="analysis-title">당신의 기운을 그림으로</h3>
+        </div>
+      </div>
+      <div class="element-gallery">
+        ${cards}
+      </div>
+    </div>
+  `;
+}
+
+function buildFortuneHtml(fortunes) {
+  const fortuneDefs = [
+    { key: '건강운', label: '건강운', icon: '🩺' },
+    { key: '연애운', label: '연애운', icon: '❤️' },
+    { key: '재물운', label: '재물운', icon: '💰' },
+    { key: '직업운', label: '직업운', icon: '💼' },
+    { key: '성장운', label: '성장운', icon: '🌱' }
+  ];
+  const hasAny = fortuneDefs.some(def => fortunes[def.key]);
+  if (!hasAny) return '';
+
+  const buttons = fortuneDefs.map((def, index) => {
+    const active = index === 0 ? 'active' : '';
+    return `<button class="fortune-btn ${active}" data-fortune="${def.key}"><span class="f-icon">${def.icon}</span>${def.label}</button>`;
+  }).join('');
+
+  const contents = fortuneDefs.map((def, index) => {
+    const active = index === 0 ? 'active' : '';
+    const text = fortunes[def.key] || '준비 중입니다.';
+    const safeText = escapeHtml(text).replace(/\n/g, '<br>');
+    return `<div class="fortune-content ${active}" data-fortune="${def.key}"><p>${safeText}</p></div>`;
+  }).join('');
+
+  return `
+    <div class="section result-shell fortune-shell">
+      <div class="analysis-header">
+        <div>
+          <p class="analysis-eyebrow">🔔 오늘의 운세</p>
+          <h3 class="analysis-title">클릭해서 확인하기</h3>
+        </div>
+      </div>
+      <div class="fortune-grid">
+        ${buttons}
+      </div>
+      ${contents}
+    </div>
+  `;
+}
+
+function bindFortuneTabs(container) {
+  const buttons = Array.from(container.querySelectorAll('.fortune-btn'));
+  const contents = Array.from(container.querySelectorAll('.fortune-content'));
+  if (!buttons.length || !contents.length) return;
+
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      buttons.forEach(btn => btn.classList.remove('active'));
+      contents.forEach(content => content.classList.remove('active'));
+      button.classList.add('active');
+      const target = container.querySelector(`.fortune-content[data-fortune="${button.dataset.fortune}"]`);
+      if (target) target.classList.add('active');
+    });
+  });
+}
+
+function applyAccordion(container) {
+  if (!container) return;
+
+  const elements = Array.from(container.children);
+  const hasH2 = elements.some(el => el.tagName === 'H2');
+  if (!hasH2) return;
+
+  const accordion = document.createElement('div');
+  accordion.className = 'accordion';
+  let current = null;
+
+  const flush = () => {
+    if (!current) return;
+    const details = document.createElement('details');
+    details.className = 'accordion-item';
+    if (!accordion.children.length) {
+      details.open = true;
+    }
+
+    details.dataset.tone = String((accordion.children.length % 5) + 1);
+
+    const summary = document.createElement('summary');
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'accordion-title';
+    titleSpan.textContent = current.title || '섹션';
+    summary.appendChild(titleSpan);
+
+    const body = document.createElement('div');
+    body.className = 'accordion-body';
+    current.nodes.forEach(node => body.appendChild(node));
+
+    details.appendChild(summary);
+    details.appendChild(body);
+    accordion.appendChild(details);
+    current = null;
+  };
+
+  elements.forEach(el => {
+    if (el.tagName === 'H2') {
+      flush();
+      current = { title: el.textContent.trim(), nodes: [] };
+    } else {
+      if (!current) {
+        current = { title: '핵심 정리', nodes: [] };
+      }
+      current.nodes.push(el);
+    }
+  });
+
+  flush();
+  container.innerHTML = '';
+  container.appendChild(accordion);
+}
+
+function badge(text, tone) {
+  return `<span class="badge" data-tone="${tone}">${escapeHtml(text)}</span>`;
+}
 
 // --- 이벤트 리스너 ---
 
-document.getElementById("btnGo").addEventListener("click", async () => {
-    const errBox = document.getElementById('errBox');
-    errBox.style.display = 'none';
+document.getElementById('btnGo').addEventListener('click', async () => {
+  const errBox = document.getElementById('errBox');
+  errBox.style.display = 'none';
 
-    const sajuData = {
-      year: document.getElementById('bY').value,
-      month: document.getElementById('bM').value,
-      day: document.getElementById('bD').value,
-      time: document.getElementById('bT').value,
-      gender: document.querySelector('input[name="gender"]:checked').value,
-      cal: document.querySelector('input[name="cal"]:checked').value,
-      b_time_ext: document.querySelector('#bT option:checked').textContent,
-    };
-    const userQuestion = document.getElementById('bQ').value;
+  const sajuData = {
+    year: bY.value,
+    month: bM.value,
+    day: bD.value,
+    time: bT.value,
+    gender: document.querySelector('input[name="gender"]:checked').value,
+    cal: document.querySelector('input[name="cal"]:checked').value,
+    place: bP.value,
+    b_time_ext: document.querySelector('#bT option:checked').textContent,
+  };
+  const userQuestion = document.getElementById('bQ').value || '';
 
-    if (!sajuData.year || !sajuData.month || !sajuData.day || !sajuData.time) {
-        showError('모든 정보를 입력해주세요.', 'errBox');
-        return;
-    }
+  if (!sajuData.year || !sajuData.month || !sajuData.day || !sajuData.time) {
+    showError('모든 정보를 입력해주세요.', 'errBox');
+    return;
+  }
 
-    const resultDiv = document.getElementById("result");
-    resultDiv.style.display = 'block';
-    resultDiv.innerHTML = `<div class="section"><p>사주를 분석하고 있습니다. 잠시만 기다려주세요...</p></div>`;
-    resultDiv.scrollIntoView({ behavior: "smooth" });
-    
-    // AI에 보낼 요청 데이터를 구성합니다.
-    const aiPayload = {
-      type: 'saju',
-      sajuData: JSON.stringify(sajuData),
-      question: userQuestion
-    };
-    
-    const aiResponse = await getAiResponse(aiPayload);
+  const resultDiv = document.getElementById('result');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div class="section"><p>사주를 분석하고 있습니다. 잠시만 기다려주세요...</p></div>';
+  resultDiv.scrollIntoView({ behavior: 'smooth' });
 
-    // AI 응답에서 핵심 오행(키워드)을 추출합니다. (예: "목")
-    const elementMatch = aiResponse.match(/핵심오행: (\[[가-힣]\])/);
-    const sajuElement = elementMatch ? elementMatch[1].replace(/[\[\]]/g, "") : "목";
+  resetPlayer();
 
-    // 결과를 표시할 HTML 구조 생성
-    resultDiv.innerHTML = `
-        <div class="section">
-            <h3 class="section-title" style="font-family: var(--font-serif);">📜 나의 사주 분석 결과</h3>
-            <div class="info-card" style="white-space: normal;">${renderMarkdown(aiResponse)}</div>
+  const aiPayload = {
+    type: 'saju',
+    sajuData: JSON.stringify(sajuData),
+    question: userQuestion
+  };
+
+  const aiResponse = await getAiResponse(aiPayload);
+  const sanitized = sanitizeAiResponse(aiResponse);
+  const cleanedResponse = injectPillarHanja(sanitized.cleaned);
+
+  const elementMatch = cleanedResponse.match(/(?:###\s*오행|오행)\s*[:：]\s*\[?(목|화|토|금|수)\]?/);
+  const sajuElement = elementMatch ? elementMatch[1] : '목';
+  const calLabel = document.querySelector('input[name="cal"]:checked').value === 'solar' ? '양력' : '음력';
+  const genderLabel = document.querySelector('input[name="gender"]:checked').value === 'male' ? '남자' : '여자';
+  const birthLabel = `${sajuData.year}.${sajuData.month}.${sajuData.day}`;
+  const timeLabel = sajuData.b_time_ext || '시간 미입력';
+  const questionPreview = truncateText(userQuestion.trim(), 36);
+  const questionChip = questionPreview
+    ? `<span class="meta-chip">질문: ${escapeHtml(questionPreview)}</span>`
+    : '';
+  const elementBadge = sajuElement ? badge(`오행 ${sajuElement}`, 1) : '';
+
+  const fortuneHtml = buildFortuneHtml(sanitized.fortunes);
+
+  resultDiv.innerHTML = `
+    <div class="section result-shell">
+      <div class="analysis-header">
+        <div>
+          <p class="analysis-eyebrow">🔮 사주 리딩</p>
+          <h3 class="analysis-title">당신의 사주 분석 결과</h3>
         </div>
-        <div class="section">
-            <h3 class="section-title" style="font-family: var(--font-serif);">🎵 행운의 노래 추천</h3>
-            <div class="music-box">
-                <div class="player-wrap">
-                    <div id="player-container"></div>
-                </div>
-                <p style="font-size:12px; text-align:center; color: var(--muted); margin-top:10px;">'${sajuElement}'의 기운에 맞는 플레이리스트가 자동 재생됩니다.</p>
-            </div>
+        <div class="analysis-badges">
+          ${elementBadge}
+          ${badge(calLabel, 2)}
+          ${badge(genderLabel, 3)}
         </div>
-    `;
-
-    // 노래 추천 함수 호출
-    getSongs(sajuElement, resultDiv);
-});
-
-document.getElementById("btnCompat").addEventListener("click", async () => {
-    const errBox = document.getElementById('errBox2');
-    errBox.style.display = 'none';
-
-    const person1 = {
-        year: document.getElementById('cY1').value,
-        month: document.getElementById('cM1').value,
-        day: document.getElementById('cD1').value,
-        time: document.getElementById('cT1').value,
-    };
-     const person2 = {
-        year: document.getElementById('cY2').value,
-        month: document.getElementById('cM2').value,
-        day: document.getElementById('cD2').value,
-        time: document.getElementById('cT2').value,
-    };
-    const userQuestion = document.getElementById('cQ').value;
-
-    if (!person1.year || !person1.month || !person1.day || !person2.year || !person2.month || !person2.day) {
-        showError('나와 상대방의 년, 월, 일을 모두 입력해주세요.', 'errBox2');
-        return;
-    }
-
-    const resultDiv = document.getElementById("compatResult");
-    resultDiv.style.display = 'block';
-    resultDiv.innerHTML = `<div class="section"><p>궁합을 분석하고 있습니다. 잠시만 기다려주세요...</p></div>`;
-    resultDiv.scrollIntoView({ behavior: "smooth" });
-
-    const aiPayload = {
-      type: 'compat',
-      person1: JSON.stringify(person1),
-      person2: JSON.stringify(person2),
-      question: userQuestion
-    };
-
-    const aiResponse = await getAiResponse(aiPayload);
-    
-    resultDiv.innerHTML = `
-      <div class="section">
-        <h3 class="section-title" style="font-family: var(--font-serif);">💌 우리 궁합 분석 결과</h3>
-        <div class="info-card" style="white-space: normal;">${renderMarkdown(aiResponse)}</div>
       </div>
-    `;
+      <div class="analysis-meta">
+        <span class="meta-chip">생년월일 ${birthLabel}</span>
+        <span class="meta-chip">시간 ${escapeHtml(timeLabel)}</span>
+        ${questionChip}
+      </div>
+      ${buildSummaryHtml(summary)}
+      <div class="pillar-slot" data-role="pillar-slot"></div>
+      <div class="element-slot" data-role="element-slot"></div>
+      <div class="analysis-body" data-role="analysis-body"></div>
+    </div>
+    ${fortuneHtml}
+    <div class="section result-shell music-shell">
+      <div class="analysis-header">
+        <div>
+          <p class="analysis-eyebrow">🎧 음악 추천</p>
+          <h3 class="analysis-title">오늘의 분위기 맞춤 플레이</h3>
+        </div>
+        <div class="analysis-badges">
+          ${badge(`키워드 ${sajuElement}`, 2)}
+        </div>
+      </div>
+      <div class="music-box">
+        <div class="player-wrap">
+          <div id="player-container"></div>
+        </div>
+        <p class="music-meta" style="font-size:12px; text-align:center; color: var(--muted); margin-top:10px;"></p>
+        <p class="song-list-title">추천 리스트</p>
+        <ul class="song-list" data-role="song-list"></ul>
+        <div class="music-actions">
+          <button class="refresh-btn" data-role="refresh-songs">다시 추천</button>
+        </div>
+        <p style="font-size:12px; text-align:center; color: var(--muted); margin-top:10px;">'${sajuElement}' 기운에 어울리는 플레이리스트를 자동으로 재생합니다.</p>
+      </div>
+    </div>
+  `;
+
+  const analysisBody = resultDiv.querySelector('[data-role="analysis-body"]');
+  if (analysisBody) {
+    analysisBody.innerHTML = renderMarkdown(cleanedResponse);
+    enhanceCallouts(analysisBody);
+    applyAccordion(analysisBody);
+  }
+
+  const pillarSlot = resultDiv.querySelector('[data-role="pillar-slot"]');
+  if (pillarSlot) {
+    const pillars = extractPillars(cleanedResponse);
+    pillarSlot.innerHTML = buildPillarBoard(pillars);
+  }
+
+  const elementSlot = resultDiv.querySelector('[data-role="element-slot"]');
+  if (elementSlot) {
+    elementSlot.innerHTML = buildElementGallery(sajuElement);
+  }
+
+  bindFortuneTabs(resultDiv);
+
+  const refreshBtn = resultDiv.querySelector('[data-role="refresh-songs"]');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => getSongs(sajuElement, resultDiv));
+  }
+
+  getSongs(sajuElement, resultDiv);
 });
 
+document.getElementById('btnCompat').addEventListener('click', async () => {
+  const errBox = document.getElementById('errBox2');
+  errBox.style.display = 'none';
 
-// ...
-document.getElementById('lastModified').textContent = 'Last modified: ' + new Date().toLocaleString();
+  const person1 = {
+    year: cY1.value,
+    month: cM1.value,
+    day: cD1.value,
+    time: cT1.value,
+  };
+  const person2 = {
+    year: cY2.value,
+    month: cM2.value,
+    day: cD2.value,
+    time: cT2.value,
+  };
+  const userQuestion = document.getElementById('cQ').value || '';
+
+  if (!person1.year || !person1.month || !person1.day || !person2.year || !person2.month || !person2.day) {
+    showError('두 분의 생년월일을 모두 입력해주세요.', 'errBox2');
+    return;
+  }
+
+  const resultDiv = document.getElementById('compatResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = '<div class="section"><p>궁합을 분석하고 있습니다. 잠시만 기다려주세요...</p></div>';
+  resultDiv.scrollIntoView({ behavior: 'smooth' });
+
+  const aiPayload = {
+    type: 'compat',
+    person1: JSON.stringify(person1),
+    person2: JSON.stringify(person2),
+    question: userQuestion
+  };
+
+  const aiResponse = await getAiResponse(aiPayload);
+  const summary = parseSummary(aiResponse);
+  const sanitized = sanitizeAiResponse(aiResponse);
+  const cleanedResponse = injectPillarHanja(sanitized.cleaned);
+  const time1Label = person1.time ? document.querySelector('#cT1 option:checked').textContent : '시간 미입력';
+  const time2Label = person2.time ? document.querySelector('#cT2 option:checked').textContent : '시간 미입력';
+  const person1Label = `${person1.year}.${person1.month}.${person1.day}`;
+  const person2Label = `${person2.year}.${person2.month}.${person2.day}`;
+  const questionPreview = truncateText(userQuestion.trim(), 36);
+  const questionChip = questionPreview
+    ? `<span class="meta-chip">질문: ${escapeHtml(questionPreview)}</span>`
+    : '';
+
+  resultDiv.innerHTML = `
+    <div class="section result-shell">
+      <div class="analysis-header">
+        <div>
+          <p class="analysis-eyebrow">💞 궁합 리딩</p>
+          <h3 class="analysis-title">두 분의 궁합 분석 결과</h3>
+        </div>
+        <div class="analysis-badges">
+          ${badge('궁합 리딩', 1)}
+        </div>
+      </div>
+      <div class="analysis-meta">
+        <span class="meta-chip">나 ${person1Label} · ${escapeHtml(time1Label)}</span>
+        <span class="meta-chip">상대 ${person2Label} · ${escapeHtml(time2Label)}</span>
+        ${questionChip}
+      </div>
+      <div class="analysis-body" data-role="analysis-body"></div>
+    </div>
+  `;
+
+  const analysisBody = resultDiv.querySelector('[data-role="analysis-body"]');
+  if (analysisBody) {
+    analysisBody.innerHTML = renderMarkdown(cleanedResponse);
+    enhanceCallouts(analysisBody);
+    applyAccordion(analysisBody);
+  }
+});
+
+const lastModified = document.getElementById('lastModified');
+if (lastModified) {
+  lastModified.textContent = '마지막 업데이트: ' + new Date().toLocaleString();
+}

@@ -1,16 +1,16 @@
-// _worker.js - This file acts as the main server for the Cloudflare Pages site.
+﻿// _worker.js - This file acts as the main server for the Cloudflare Pages site.
 
 async function callOpenAi(apiKey, messages) {
   const apiRequestBody = {
-    model: "gpt-3.5-turbo",
+    model: 'gpt-3.5-turbo',
     messages: messages,
   };
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
     headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(apiRequestBody)
   });
@@ -21,76 +21,103 @@ async function callOpenAi(apiKey, messages) {
   });
 }
 
+async function handleYouTubeRequest(request, env) {
+  const url = new URL(request.url);
+  const query = url.searchParams.get('query');
+  const YOUTUBE_API_KEY = env.YOUTUBE_API_KEY;
+
+  if (!query) {
+    return new Response(JSON.stringify({ error: { message: 'Missing query parameter.' } }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (!YOUTUBE_API_KEY) {
+    return new Response(JSON.stringify({ error: { message: 'Server configuration error: YOUTUBE_API_KEY is not set.' } }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const apiUrl = new URL('https://www.googleapis.com/youtube/v3/search');
+  apiUrl.search = new URLSearchParams({
+    part: 'snippet',
+    type: 'video',
+    maxResults: '5',
+    q: query,
+    safeSearch: 'moderate',
+    videoEmbeddable: 'true',
+    videoSyndicated: 'true',
+    key: YOUTUBE_API_KEY,
+  }).toString();
+
+  const response = await fetch(apiUrl.toString());
+  const data = await response.json();
+
+  if (!response.ok) {
+    return new Response(JSON.stringify({ error: { message: data.error?.message || 'YouTube API error.' } }), {
+      status: response.status,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const rawItems = Array.isArray(data.items) ? data.items : [];
+  const items = rawItems
+    .map(item => ({
+      videoId: item?.id?.videoId,
+      title: item?.snippet?.title || '',
+      channelTitle: item?.snippet?.channelTitle || '',
+      thumbnail: item?.snippet?.thumbnails?.medium?.url || item?.snippet?.thumbnails?.default?.url || ''
+    }))
+    .filter(item => item.videoId);
+
+  if (!items.length) {
+    return new Response(JSON.stringify({ error: { message: 'No results found.' } }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  return new Response(JSON.stringify({ items }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 function getSajuPrompt(sajuData, question) {
-  const systemPrompt = "You are an expert fortune teller specializing in Saju (Four Pillars of Destiny, 사주팔자). Your tone should be wise, empathetic, and insightful. Provide detailed explanations with easy-to-understand examples. Format your entire response in Markdown, using headings, bold text, and lists where appropriate for readability.";
-  
-  let userPrompt = `Please provide a detailed and comprehensive Saju reading for the user with the following information. Structure your response clearly with the following sections, ensuring rich content and easy-to-understand explanations with examples:
+  const systemPrompt = `당신은 사주(四柱) 전문 상담가입니다. 따뜻하고 공감하는 말투로 존댓말을 사용하세요.\n- 응답은 한국어로만 작성합니다. 영어 문구(예: User's Information)는 절대 쓰지 마세요.\n- 마크다운 형식을 사용하되 표는 사용하지 마세요.\n- 섹션 제목 앞에 이모티콘을 넣고, 핵심 키워드는 **굵게** 표시하세요.\n- 각 섹션은 5~7문장으로 풍부하게 쓰고, 마지막에 1~2개의 불릿 요약을 추가하세요.\n- 감성적인 분위기와 색감을 떠올릴 수 있는 표현을 섞어주세요.\n- 구체적인 예시를 1개 이상 포함해주세요.\n- 천간/지지 의미 설명은 추상적이지 않게, 생활 사례와 연결해 상세히 쓰세요.`;
 
-**User's Information:**
-*   Birth Date: ${sajuData.year}-${sajuData.month}-${sajuData.day} (${sajuData.b_time_ext})
-*   Calendar: ${sajuData.cal}
-*   Gender: ${sajuData.gender}
+  const calLabel = sajuData.cal === 'lunar' ? '음력' : '양력';
+  const genderLabel = sajuData.gender === 'female' ? '여자' : '남자';
 
-**Your Analysis (in Korean):**
-1.  **사주팔자 구성 및 특징**: 사용자의 사주팔자(년주, 월주, 일주, 시주)를 정확히 명시하고, 각 주의 천간(天干)과 지지(地支)의 의미를 설명해주세요. 일간(日干)의 특징과 성격을 상세히 분석해주세요.
-2.  **오행(五行) 분석 및 균형**: 사주 내 오행(木, 火, 土, 金, 水)의 분포와 강약을 분석하고, 오행의 상생(相生)과 상극(相剋) 관계를 통해 성격, 운세에 미치는 영향을 설명해주세요. 부족하거나 과도한 오행이 있다면 어떤 영향을 미 주는지 예시를 들어 설명해주세요.
-3.  **주요 신살(神殺) 분석**: 도화살(桃花殺), 역마살(驛馬殺), 화개살(華蓋殺) 등 주요 길흉신살(吉凶神殺)과 천을귀인(天乙貴人) 같은 귀인(貴人)이 있다면 그 의미와 사용자 삶에 미칠 영향을 구체적인 예시와 함께 설명해주세요. (사용자에게 해당하는 신살/귀인만 언급)
-4.  **초년운(初年運) / 중년운(中年運) / 말년운(末年運)**: 각 시기별 운세의 흐름과 특징을 설명하고, 각 시기에 주의할 점이나 기회를 잡을 방법에 대한 조언을 해주세요.
-5.  **건강/재물/직업운 조언**: 사주를 바탕으로 건강, 재물, 직업과 관련하여 특별히 주의할 점이나 발전시킬 수 있는 부분에 대한 실질적인 조언을 제공해주세요.
-6.  **가족 관계 및 대인운**: 조상, 부모, 배우자, 자식과의 관계에서 나타날 수 있는 운세의 특징과 원만한 관계를 위한 조언을 해주세요.
-7.  **종합 운세 총평**: 전체 사주 분석 내용을 바탕으로 사용자의 삶에 대한 전반적인 운세 총평과 함께 긍정적인 메시지 및 발전적인 방향을 제시해주세요.
-8.  **핵심 오행 키워드**: 응답의 맨 마지막 줄에는 다음과 같은 형식으로 사용자의 사주에서 가장 중요한 핵심 오행을 한글로 제시해주세요. (예: ### 핵심오행: [목])
-`;
+  let userPrompt = `아래 정보를 바탕으로 상세하고 깊이 있는 사주 분석을 작성해주세요.\n\n**사용자 정보**\n- 생년월일: ${sajuData.year}-${sajuData.month}-${sajuData.day} (${sajuData.b_time_ext})\n- 달력: ${calLabel}\n- 성별: ${genderLabel}\n- 출생지: ${sajuData.place || '미입력'}\n\n**사주 구성 표기 규칙**\n- 반드시 한자 + 한글 병기: 예) 년주: 壬寅(임인)\n- 로마자 표기는 사용하지 마세요.\n\n**요약 카드 (정확히 아래 형식 사용)**\n- 한줄 요약: ...\n- 키워드: ..., ..., ...\n- 행운 색: ...\n- 행운 숫자: ...\n- 행운 방향: ...\n- 추천 행동: ...\n- 추천 음악: ...\n\n**상세 분석**\n1. **사주 구성과 핵심 포인트**: 사주 구성(연·월·일·시)을 한자+한글로 제시하고 인상적인 특징을 짚어주세요.\n2. **오행(목·화·토·금·수) 균형**: 강약, 결핍, 과다 요소와 성향을 자세히 설명해주세요.\n3. **성격과 기질**: 장점, 단점, 대인관계 스타일을 예시와 함께 자세히 설명해주세요.\n4. **연애/관계운**: 관계에서의 강점과 주의점, 추천 커뮤니케이션 방식을 알려주세요.\n5. **진로/재물운**: 어울리는 분야, 성향에 맞는 일 스타일, 재정 관리 팁을 제시해주세요.\n6. **건강운**: 취약 포인트와 생활습관 조언을 포함해주세요.\n7. **시기별 운의 흐름**: 단기/중기/장기 흐름을 자세히 요약해주세요.\n8. **오늘을 위한 한 줄 조언**: 긍정적인 메시지로 마무리해주세요.\n\n**운세 카드 (정확히 아래 형식 사용)**\n- 건강운: ...\n- 연애운: ...\n- 재물운: ...\n- 직업운: ...\n- 성장운: ...\n\n**작성 팁**\n- 각 섹션 끝에 \"핵심 포인트\" 불릿 1~2개를 넣어주세요.\n- 감성적이고 컬러풀한 표현(예: 따뜻한 골드, 청량한 블루)을 섞어주세요.\n\n마지막에 반드시 다음 줄을 추가하세요.\n### 오행: [목/화/토/금/수]`;
 
   if (question) {
-    userPrompt += `
----
-**사용자의 추가 질문**: "${question}"
-
-위의 종합적인 분석을 바탕으로, 사용자의 질문에 대해 신중하게 답변해주세요.`;
+    userPrompt += `\n\n---\n**사용자의 추가 질문**: "${question}"\n\n질문에 대해 공감하며 구체적으로 답변해주세요.`;
   }
 
   return [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt }
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
   ];
 }
 
 function getCompatPrompt(person1, person2, question) {
-    const systemPrompt = "You are an expert in marital and relationship compatibility based on Saju (궁합). Your tone should be balanced, providing both positive aspects and points to be mindful of. Format your entire response in Markdown.";
+  const systemPrompt = `당신은 사주 궁합 전문 상담가입니다. 따뜻하고 공감하는 말투로 존댓말을 사용하세요.\n- 응답은 한국어로만 작성합니다. 영어 문구는 쓰지 마세요.\n- 마크다운 형식을 사용하되 표는 사용하지 마세요.\n- 섹션 제목 앞에 이모티콘을 넣고, 핵심 키워드는 **굵게** 표시하세요.\n- 각 섹션은 5~7문장으로 풍부하게 쓰고, 마지막에 1~2개의 불릿 요약을 추가하세요.\n- 감성적인 분위기와 색감을 떠올릴 수 있는 표현을 섞어주세요.\n- 현실적인 조언을 포함해주세요.`;
 
-    let userPrompt = `Please provide a detailed compatibility reading (궁합) between the two people below.
+  let userPrompt = `아래 두 사람의 정보를 바탕으로 궁합 분석을 작성해주세요.\n\n**Person 1**\n- 생년월일: ${person1.year}-${person1.month}-${person1.day} (시간: ${person1.time || '미입력'})\n\n**Person 2**\n- 생년월일: ${person2.year}-${person2.month}-${person2.day} (시간: ${person2.time || '미입력'})\n\n**작성 구조**\n1. **오행 궁합**: 서로의 기운이 어떻게 보완/충돌하는지 설명해주세요.\n2. **성격 합과 생활 리듬**: 잘 맞는 부분과 주의할 부분을 비교해주세요.\n3. **강점 포인트**: 두 분의 시너지를 강조해주세요.\n4. **갈등 포인트와 해결법**: 실천 가능한 조언을 주세요.\n5. **궁합 점수**: 100점 만점 점수 + 등급(A/B/C) + 한 줄 총평을 주세요.\n\n**작성 팁**\n- 각 섹션 끝에 \"핵심 포인트\" 불릿 1~2개를 넣어주세요.\n- 감성적이고 컬러풀한 표현을 섞어주세요.`;
 
-**Person 1:**
-*   ${person1.year}-${person1.month}-${person1.day} (Time: ${person1.time})
+  if (question) {
+    userPrompt += `\n\n---\n**사용자의 추가 질문**: "${question}"\n\n질문에 대해 공감하며 구체적으로 답변해주세요.`;
+  }
 
-**Person 2:**
-*   ${person2.year}-${person2.month}-${person2.day} (Time: ${person2.time})
-
-**Your Analysis (in Korean):**
-1.  **오행 궁합**: Analyze the harmony and clash between the Five Elements of both individuals.
-2.  **일간(日干) 관계**: Analyze the relationship between their Day Masters.
-3.  **긍정적인 궁합 요소**: Highlight the strengths and synergistic aspects of their relationship.
-4.  **주의 및 조언**: Point out potential challenges or areas for caution, and provide constructive advice for a harmonious relationship.
-5.  **궁합 총평 및 점수**: Provide a final summary and a compatibility score out of 100.
-`;
-
-    if (question) {
-        userPrompt += `
----
-**사용자의 추가 질문**: "${question}"
-
-Based on the compatibility analysis, please provide a thoughtful answer to their specific question.`;
-    }
-
-    return [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-    ];
+  return [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ];
 }
 
-
-// Main API handler
 async function handleApiRequest(request, env) {
   try {
     const url = new URL(request.url);
@@ -124,7 +151,7 @@ async function handleApiRequest(request, env) {
     return callOpenAi(OPENAI_API_KEY, messages);
 
   } catch (error) {
-    console.error("Worker function error:", error);
+    console.error('Worker function error:', error);
     return new Response(JSON.stringify({ error: { message: 'An internal server error occurred.' } }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -132,7 +159,6 @@ async function handleApiRequest(request, env) {
   }
 }
 
-// Main fetch handler for all requests
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -141,10 +167,12 @@ export default {
       if (url.pathname === '/api/saju') {
         return handleApiRequest(request, env);
       }
+      if (url.pathname === '/api/youtube') {
+        return handleYouTubeRequest(request, env);
+      }
       return new Response('Not Found', { status: 404 });
     }
 
-    // For all other requests, serve the static assets
     return env.ASSETS.fetch(request);
   },
 };
