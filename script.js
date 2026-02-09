@@ -85,6 +85,29 @@ const elementQueries = {
   '수': 'chill lofi hiphop playlist'
 };
 
+const elementPhotos = {
+  '목': 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80',
+  '화': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+  '토': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80',
+  '금': 'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1200&q=80',
+  '수': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80'
+};
+
+const pillarPhotos = [
+  'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80'
+];
+
+const heroPhotos = {
+  '목': 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1400&q=80',
+  '화': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1400&q=80',
+  '토': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1400&q=80',
+  '금': 'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1400&q=80',
+  '수': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80'
+};
+
 let playerIframe = null;
 
 function resetPlayer() {
@@ -160,11 +183,11 @@ async function getSongs(sajuElement, resultDiv) {
     return;
   }
 
-  playerContainer.style.display = 'block';
-  createFallbackIframe(playerContainer, query);
-
   const query = elementQueries[sajuElement] || 'korean ballad playlist';
   currentQuery = query;
+
+  playerContainer.style.display = 'block';
+  createFallbackIframe(playerContainer, query);
 
   let videoData = null;
   try {
@@ -398,6 +421,111 @@ function renderMarkdown(md) {
   return blocks.join('');
 }
 
+function renderMarkdownSafe(md) {
+  return renderMarkdown(escapeHtml(md || ''));
+}
+
+function initElementCounts() {
+  return { '목': 0, '화': 0, '토': 0, '금': 0, '수': 0 };
+}
+
+function getElementCountsFromPillars(pillars) {
+  const counts = initElementCounts();
+  if (!pillars || !pillars.length) return counts;
+
+  const ganToElement = {
+    '갑': '목', '을': '목', '병': '화', '정': '화', '무': '토',
+    '기': '토', '경': '금', '신': '금', '임': '수', '계': '수',
+    '甲': '목', '乙': '목', '丙': '화', '丁': '화', '戊': '토',
+    '己': '토', '庚': '금', '辛': '금', '壬': '수', '癸': '수'
+  };
+  const jiToElement = {
+    '자': '수', '축': '토', '인': '목', '묘': '목', '진': '토', '사': '화',
+    '오': '화', '미': '토', '신': '금', '유': '금', '술': '토', '해': '수',
+    '子': '수', '丑': '토', '寅': '목', '卯': '목', '辰': '토', '巳': '화',
+    '午': '화', '未': '토', '申': '금', '酉': '금', '戌': '토', '亥': '수'
+  };
+
+  pillars.forEach(pillar => {
+    const hangul = pillar.hangul || '';
+    const hanja = pillar.hanja || '';
+    const g = hangul[0] || hanja[0];
+    const j = hangul[1] || hanja[1];
+    const gEl = ganToElement[g];
+    const jEl = jiToElement[j];
+    if (gEl) counts[gEl] += 1;
+    if (jEl) counts[jEl] += 1;
+  });
+
+  return counts;
+}
+
+function getElementCountsFromText(md) {
+  const counts = initElementCounts();
+  if (!md) return counts;
+  const text = md.replace(/\r\n/g, '\n');
+  const patterns = [
+    { key: '목', rx: /(목|나무|木)\s*[:：]?\s*(\d+)\s*개?/g },
+    { key: '화', rx: /(화|불|火)\s*[:：]?\s*(\d+)\s*개?/g },
+    { key: '토', rx: /(토|흙|土)\s*[:：]?\s*(\d+)\s*개?/g },
+    { key: '금', rx: /(금|金)\s*[:：]?\s*(\d+)\s*개?/g },
+    { key: '수', rx: /(수|물|水)\s*[:：]?\s*(\d+)\s*개?/g }
+  ];
+
+  patterns.forEach(({ key, rx }) => {
+    let match;
+    while ((match = rx.exec(text)) !== null) {
+      const value = parseInt(match[2], 10);
+      if (!Number.isNaN(value)) {
+        counts[key] = value;
+      }
+    }
+  });
+
+  return counts;
+}
+
+function getElementCounts(md, pillars) {
+  const fromPillars = getElementCountsFromPillars(pillars);
+  const total = Object.values(fromPillars).reduce((sum, val) => sum + val, 0);
+  if (total > 0) return fromPillars;
+  return getElementCountsFromText(md);
+}
+
+function buildElementStats(counts) {
+  const total = Object.values(counts).reduce((sum, val) => sum + val, 0) || 8;
+  const order = ['목', '화', '토', '금', '수'];
+  return order.map((key, index) => {
+    const value = counts[key] || 0;
+    const pct = Math.round((value / total) * 100);
+    return `
+      <div class="saju-stat" data-tone="${(index % 5) + 1}">
+        <div class="stat-label">${key}</div>
+        <div class="stat-value">${value}<span class="stat-total">/${total}</span></div>
+        <div class="stat-meter"><span style="width:${pct}%"></span></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function buildSajuHero(sajuElement, counts) {
+  const photo = heroPhotos[sajuElement] || heroPhotos['목'];
+  return `
+    <div class="saju-hero" style="--hero-photo:url('${photo}')">
+      <div class="saju-hero-inner">
+        <div class="saju-hero-copy">
+          <p class="saju-hero-eyebrow">🌙 사주 시그니처</p>
+          <h4 class="saju-hero-title">오행 분포와 기운의 무드</h4>
+          <p class="saju-hero-desc">오행 비중을 한눈에 보고, 지금 흐르는 에너지의 톤을 확인하세요.</p>
+        </div>
+        <div class="saju-hero-stats">
+          ${buildElementStats(counts)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function enhanceCallouts(container) {
   if (!container) return;
   const paragraphs = Array.from(container.querySelectorAll('p'));
@@ -594,8 +722,9 @@ function buildPillarBoard(pillars) {
   if (!pillars.length) return '';
   const cards = pillars.map((pillar, index) => {
     const tone = (index % 5) + 1;
+    const photo = pillarPhotos[index % pillarPhotos.length];
     return `
-      <div class="pillar-card" data-tone="${tone}">
+      <div class="pillar-card" data-tone="${tone}" style="--pillar-photo:url('${photo}')">
         <div class="pillar-seal">${getStampSvg(tone)}</div>
         <div class="pillar-label">${pillar.label}</div>
         <div class="pillar-hanja">${escapeHtml(pillar.hanja || '')}</div>
@@ -643,7 +772,7 @@ function getElementSvg(key) {
   return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M12 50 C20 40 30 40 40 50 C50 60 60 60 68 50" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round"/><path d="M16 60 C24 52 32 52 40 60 C48 68 56 68 64 60" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" opacity="0.7"/></svg>`;
 }
 
-function buildElementGallery(activeKey) {
+function buildElementGallery(activeKey, counts) {
   const elements = [
     { key: '목', label: '목', name: 'Wood' },
     { key: '화', label: '화', name: 'Fire' },
@@ -651,14 +780,20 @@ function buildElementGallery(activeKey) {
     { key: '금', label: '금', name: 'Metal' },
     { key: '수', label: '수', name: 'Water' }
   ];
+  const total = Object.values(counts || {}).reduce((sum, val) => sum + val, 0) || 8;
 
   const cards = elements.map(el => {
     const active = el.key === activeKey ? 'active' : '';
+    const photo = elementPhotos[el.key] || elementPhotos['목'];
+    const value = counts && typeof counts[el.key] === 'number' ? counts[el.key] : 0;
+    const pct = Math.round((value / total) * 100);
     return `
-      <div class="element-card ${active}" data-key="${el.key}">
-        <div class="element-illustration">${getElementSvg(el.key)}</div>
+      <div class="element-card ${active}" data-key="${el.key}" style="--el-photo:url('${photo}')">
+        <div class="element-photo" aria-hidden="true"></div>
         <div class="element-label">${el.label}</div>
         <div class="element-name">${el.name}</div>
+        <div class="element-count">${value} / ${total}</div>
+        <div class="element-meter"><span style="width:${pct}%"></span></div>
       </div>
     `;
   }).join('');
@@ -697,8 +832,8 @@ function buildFortuneHtml(fortunes) {
   const contents = fortuneDefs.map((def, index) => {
     const active = index === 0 ? 'active' : '';
     const text = fortunes[def.key] || '준비 중입니다.';
-    const safeText = escapeHtml(text).replace(/\n/g, '<br>');
-    return `<div class="fortune-content ${active}" data-fortune="${def.key}"><p>${safeText}</p></div>`;
+    const safeHtml = renderMarkdownSafe(text);
+    return `<div class="fortune-content ${active}" data-fortune="${def.key}">${safeHtml}</div>`;
   }).join('');
 
   return `
@@ -828,9 +963,11 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   };
 
   const aiResponse = await getAiResponse(aiPayload);
-  const summary = parseSummary(aiResponse);
+  const analysisSummary = parseSummary(aiResponse);
   const sanitized = sanitizeAiResponse(aiResponse);
   const cleanedResponse = injectPillarHanja(sanitized.cleaned);
+  const pillars = extractPillars(cleanedResponse);
+  const elementCounts = getElementCounts(cleanedResponse, pillars);
 
   const elementMatch = cleanedResponse.match(/(?:###\s*오행|오행)\s*[:：]\s*\[?(목|화|토|금|수)\]?/);
   const sajuElement = elementMatch ? elementMatch[1] : '목';
@@ -864,7 +1001,8 @@ document.getElementById('btnGo').addEventListener('click', async () => {
         <span class="meta-chip">시간 ${escapeHtml(timeLabel)}</span>
         ${questionChip}
       </div>
-      ${buildSummaryHtml(summary)}
+      ${buildSummaryHtml(analysisSummary)}
+      ${buildSajuHero(sajuElement, elementCounts)}
       <div class="pillar-slot" data-role="pillar-slot"></div>
       <div class="element-slot" data-role="element-slot"></div>
       <div class="analysis-body" data-role="analysis-body"></div>
@@ -904,13 +1042,12 @@ document.getElementById('btnGo').addEventListener('click', async () => {
 
   const pillarSlot = resultDiv.querySelector('[data-role="pillar-slot"]');
   if (pillarSlot) {
-    const pillars = extractPillars(cleanedResponse);
     pillarSlot.innerHTML = buildPillarBoard(pillars);
   }
 
   const elementSlot = resultDiv.querySelector('[data-role="element-slot"]');
   if (elementSlot) {
-    elementSlot.innerHTML = buildElementGallery(sajuElement);
+    elementSlot.innerHTML = buildElementGallery(sajuElement, elementCounts);
   }
 
   bindFortuneTabs(resultDiv);
