@@ -1213,7 +1213,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
 
   const analysisBody = resultDiv.querySelector('[data-role="analysis-body"]');
   if (analysisBody) {
-    analysisBody.innerHTML = renderMarkdown(cleanedResponse);
+    analysisBody.innerHTML = renderMarkdownSafe(cleanedResponse);
     enhanceCallouts(analysisBody);
     applyAccordion(analysisBody);
   }
@@ -1343,7 +1343,7 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
 
   const analysisBody = resultDiv.querySelector('[data-role="analysis-body"]');
   if (analysisBody) {
-    analysisBody.innerHTML = renderMarkdown(cleanedResponse);
+    analysisBody.innerHTML = renderMarkdownSafe(cleanedResponse);
     enhanceCallouts(analysisBody);
     applyAccordion(analysisBody);
   }
@@ -1413,7 +1413,7 @@ async function loadFortuneTab(tabType) {
 
     container.innerHTML = `
       <div class="section result-shell fade-in">
-        <div class="analysis-body">${renderMarkdown(sanitized.cleaned)}</div>
+        <div class="analysis-body">${renderMarkdownSafe(sanitized.cleaned)}</div>
       </div>
     `;
 
@@ -1432,30 +1432,11 @@ async function loadFortuneTab(tabType) {
     container.innerHTML = `
       <div class="section result-shell fade-in" style="padding:24px;">
         <p style="color:var(--muted);text-align:center;">운세를 불러오는데 실패했습니다. 다시 시도해주세요.</p>
-        <p style="color:var(--danger);text-align:center;font-size:12px;margin-top:10px;">오류: ${error.message}</p>
+        <p style="color:var(--danger);text-align:center;font-size:12px;margin-top:10px;">오류: ${escapeHtml(error.message)}</p>
       </div>
     `;
   }
 }
-
-// Attach fortune tab click handlers
-document.querySelectorAll('.tab-btn[data-tab^="tab"]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const tabId = btn.dataset.tab;
-    const fortuneTypes = {
-      'tabTomorrow': 'tomorrow',
-      'tabTraditional': 'traditional',
-      'tabLove': 'love',
-      'tabHealth': 'health',
-      'tabWealth': 'wealth'
-    };
-
-    const fortuneType = fortuneTypes[tabId];
-    if (fortuneType) {
-      loadFortuneTab(fortuneType);
-    }
-  });
-});
 
 const lastModified = document.getElementById('lastModified');
 if (lastModified) {

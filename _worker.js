@@ -41,7 +41,6 @@ function parseDuration(duration) {
   const minutes = parseInt(match[2] || 0);
   const seconds = parseInt(match[3] || 0);
   const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-  console.log(`Parsed duration ${duration} -> ${totalSeconds}s`);
   return totalSeconds;
 }
 
@@ -57,8 +56,12 @@ setInterval(() => {
 function sanitizeQuestion(text) {
   if (!text) return '';
   return text
-    .replace(/```[\s\S]*?```/g, '')  // Remove code blocks
-    .replace(/\b(system|assistant)\s*:/gi, '')  // Remove role markers
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/\b(system|assistant|user|human|ai|claude|gpt)\s*[:：]/gi, '')
+    .replace(/\[INST\]|\[\/INST\]|<\|im_start\|>|<\|im_end\|>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/[^\p{L}\p{N}\s.,!?·~()（）\-]/gu, '')
+    .trim()
     .slice(0, 500);
 }
 
@@ -334,7 +337,6 @@ async function handleYouTubeRequest(request, env) {
         if (Array.isArray(detail.blocked) && detail.blocked.includes(region)) return false;
         // Filter out videos longer than 5 minutes (300 seconds)
         if (detail.duration > 300) {
-          console.log(`Filtering out ${item.title} (${detail.duration}s > 300s)`);
           return false;
         }
         return true;
@@ -346,7 +348,8 @@ async function handleYouTubeRequest(request, env) {
       }
     }
   } catch (_err) {
-    filteredItems = items;
+    console.warn('YouTube detail fetch failed, returning empty results');
+    filteredItems = [];
   }
 
   return apiResponse({ items: filteredItems }, 200);

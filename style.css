@@ -15,7 +15,7 @@
       --bg: var(--bg-pattern), var(--bg-gradient);
       --card: rgba(18, 26, 51, 0.85);
       --line: rgba(173, 191, 255, 0.15);
-      --muted: rgba(255, 255, 255, 0.65);
+      --muted: rgba(255, 255, 255, 0.75);
       --text: #f0f2f5;
       --accent-glow: 0 0 24px 0 rgba(124, 102, 217, 0.5);
       --danger: rgba(255, 80, 80, 0.18);
@@ -47,7 +47,7 @@
       --bg: linear-gradient(180deg, #f0f5ff, #e6e9f0);
       --card:#fff;
       --line:rgba(0,0,0,.10);
-      --muted:rgba(0,0,0,.50);
+      --muted:rgba(0,0,0,.65);
       --text:#1a1a1a;
       --accent-glow: 0 0 20px 0 rgba(90, 72, 163, 0.3);
       --danger:rgba(255,80,80,.12);
@@ -102,7 +102,7 @@
     .theme-toggle:hover{transform:translateY(-2px)}
     .subtitle{font-size:13px;color:var(--muted);margin-bottom:14px}
     .tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:2px solid var(--line);padding-bottom:0}
-    .tab-btn{border:none;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;margin-bottom:-2px;width:auto;margin-top:0; font-family: var(--font-sans);}
+    .tab-btn{border:none;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;margin-bottom:-2px;width:auto;margin-top:0; font-family: var(--font-sans);min-height:44px;}
     .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
     .tab-pane{display:none}.tab-pane.active{display:block}
     .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
@@ -961,3 +961,6 @@
     @media(max-width:400px){.form-grid{grid-template-columns:1fr}.fortune-grid{grid-template-columns:repeat(2,1fr)}.saju-hero-stats{grid-template-columns:repeat(2,1fr)}.card{padding:14px}}
     .skip-nav{position:absolute;top:-100px;left:0;background:var(--accent);color:#fff;padding:8px 16px;z-index:100;font-size:14px;text-decoration:none;border-radius:0 0 8px 0}
     .skip-nav:focus{top:0}
+    .tab-btn:focus-visible{outline:2px solid var(--accent-1);outline-offset:2px;border-radius:8px}
+    .tab-btn:focus-visible:not(:focus-visible){outline:none}
+    input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent-1);outline-offset:1px}
