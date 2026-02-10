@@ -86,25 +86,25 @@ const elementQueries = {
 };
 
 const elementPhotos = {
-  '목': 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80',
-  '화': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-  '토': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80',
+  '목': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+  '화': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1200&q=80',
+  '토': 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=80',
   '금': 'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1200&q=80',
   '수': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80'
 };
 
 const pillarPhotos = [
-  'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80'
+  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=900&q=80'
 ];
 
 const heroPhotos = {
-  '목': 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1400&q=80',
+  '목': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80',
   '화': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1400&q=80',
-  '토': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1400&q=80',
-  '금': 'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1400&q=80',
+  '토': 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1400&q=80',
+  '금': 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1400&q=80',
   '수': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1400&q=80'
 };
 
@@ -852,15 +852,21 @@ function buildFortuneHtml(fortunes) {
   if (!hasAny) return '';
 
   const buttons = fortuneDefs.map((def, index) => {
-    const active = index === 0 ? 'active' : '';
-    return `<button class="fortune-btn ${active}" data-fortune="${def.key}"><span class="f-icon">${def.icon}</span>${def.label}</button>`;
+    return `<button class="fortune-btn" data-fortune="${def.key}"><span class="f-icon">${def.icon}</span>${def.label}</button>`;
   }).join('');
 
-  const contents = fortuneDefs.map((def, index) => {
-    const active = index === 0 ? 'active' : '';
+  const contents = fortuneDefs.map(def => {
     const text = fortunes[def.key] || '준비 중입니다.';
     const safeHtml = renderMarkdownSafe(text);
-    return `<div class="fortune-content ${active}" data-fortune="${def.key}">${safeHtml}</div>`;
+    return `
+      <div class="fortune-content" data-fortune="${def.key}">
+        <div class="fortune-report-header">
+          <span class="fortune-report-label">${def.label}</span>
+          <span class="fortune-report-sub">사주 리포트</span>
+        </div>
+        ${safeHtml}
+      </div>
+    `;
   }).join('');
 
   return `
@@ -874,6 +880,7 @@ function buildFortuneHtml(fortunes) {
       <div class="fortune-grid">
         ${buttons}
       </div>
+      <div class="fortune-placeholder">카드를 눌러 상세 리포트를 확인하세요.</div>
       ${contents}
     </div>
   `;
@@ -882,6 +889,7 @@ function buildFortuneHtml(fortunes) {
 function bindFortuneTabs(container) {
   const buttons = Array.from(container.querySelectorAll('.fortune-btn'));
   const contents = Array.from(container.querySelectorAll('.fortune-content'));
+  const placeholder = container.querySelector('.fortune-placeholder');
   if (!buttons.length || !contents.length) return;
 
   buttons.forEach(button => {
@@ -891,6 +899,7 @@ function bindFortuneTabs(container) {
       button.classList.add('active');
       const target = container.querySelector(`.fortune-content[data-fortune="${button.dataset.fortune}"]`);
       if (target) target.classList.add('active');
+      if (placeholder) placeholder.style.display = 'none';
     });
   });
 }

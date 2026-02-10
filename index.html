@@ -51,6 +51,7 @@
       --analysis-body-bg: linear-gradient(160deg, rgba(124,102,217,0.10), rgba(8,12,24,0.85)), var(--analysis-paper);
       --analysis-border: rgba(124,102,217,0.25);
       --badge-bg: linear-gradient(135deg, rgba(124,102,217,0.35), rgba(76,201,240,0.35));
+      --hanja-pattern: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><rect width='160' height='160' fill='none'/><text x='10' y='48' font-size='22' fill='rgba(255,255,255,0.18)' font-family='serif'>天地</text><text x='78' y='88' font-size='24' fill='rgba(255,255,255,0.14)' font-family='serif'>玄黃</text><text x='18' y='130' font-size='20' fill='rgba(255,255,255,0.16)' font-family='serif'>陰陽</text></svg>");
     }
     :root[data-theme="light"]{
       --bg: linear-gradient(180deg, #f0f5ff, #e6e9f0);
@@ -87,6 +88,7 @@
       --accent-3:#1d9bf0;
       --accent-4:#f4a261;
       --accent-5:#2a9d8f;
+      --hanja-pattern: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><rect width='160' height='160' fill='none'/><text x='10' y='48' font-size='22' fill='rgba(90,72,163,0.18)' font-family='serif'>天地</text><text x='78' y='88' font-size='24' fill='rgba(90,72,163,0.14)' font-family='serif'>玄黃</text><text x='18' y='130' font-size='20' fill='rgba(90,72,163,0.16)' font-family='serif'>陰陽</text></svg>");
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--text);min-height:100vh;display:grid;place-items:center;padding:20px;transition:color .3s, background .3s}
@@ -234,6 +236,16 @@
       border-radius:10px;
       background:rgba(255,255,255,0.12);
     }
+    .fortune-placeholder{
+      margin-top:14px;
+      padding:12px;
+      text-align:center;
+      font-size:13px;
+      color:var(--muted);
+      border:1px dashed var(--line);
+      border-radius:12px;
+      background:rgba(255,255,255,0.03);
+    }
     .fortune-content{
       margin-top:14px;
       display:none;
@@ -259,6 +271,25 @@
       position:absolute;
       left:0;
       color:var(--accent-2);
+    }
+    .fortune-report-header{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+      padding-bottom:8px;
+      border-bottom:1px solid rgba(255,255,255,0.12);
+    }
+    .fortune-report-label{
+      font-family: var(--font-serif);
+      font-size:16px;
+      font-weight:700;
+    }
+    .fortune-report-sub{
+      font-size:10px;
+      letter-spacing:0.25em;
+      text-transform:uppercase;
+      color:var(--muted);
     }
     .fortune-shell{
       background:linear-gradient(145deg, rgba(124,102,217,0.18), rgba(11,16,32,0.65));
@@ -298,9 +329,11 @@
     .element-photo{
       height:86px;
       border-radius:12px;
-      background-image: var(--el-photo);
-      background-size: cover;
-      background-position: center;
+      background-image: var(--el-photo), var(--hanja-pattern);
+      background-size: cover, 160px;
+      background-position: center, center;
+      background-repeat: no-repeat, repeat;
+      background-blend-mode: overlay;
       margin-bottom:8px;
       position:relative;
       overflow:hidden;
@@ -365,9 +398,11 @@
       content:"";
       position:absolute;
       inset:0;
-      background-image:var(--pillar-photo);
-      background-size:cover;
-      background-position:center;
+      background-image:var(--pillar-photo), var(--hanja-pattern);
+      background-size:cover, 180px;
+      background-position:center, center;
+      background-repeat:no-repeat, repeat;
+      background-blend-mode:overlay;
       opacity:0.22;
     }
     .pillar-card::after{
@@ -532,9 +567,11 @@
       content:"";
       position:absolute;
       inset:0;
-      background-image:var(--hero-photo);
-      background-size:cover;
-      background-position:center;
+      background-image:var(--hero-photo), var(--hanja-pattern);
+      background-size:cover, 200px;
+      background-position:center, center;
+      background-repeat:no-repeat, repeat;
+      background-blend-mode:overlay;
       filter:saturate(1.05) contrast(1.05);
       opacity:0.55;
     }
@@ -950,6 +987,6 @@
     <div id="lastModified" style="font-size: 10px; margin-top: 10px;"></div>
   </footer>
 <script src="https://www.youtube.com/iframe_api"></script>
-<script src="script.js?v=10" defer></script>
+<script src="script.js?v=11" defer></script>
 </body>
 </html>
