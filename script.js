@@ -14,6 +14,7 @@ const cT2 = document.getElementById('cT2');
 const themeToggle = document.getElementById('themeToggle');
 
 let currentQuery = 'korean ballad playlist';
+let currentSajuData = null; // Store saju data for fortune tabs
 
 // --- Theme Persistence ---
 (function() {
@@ -107,6 +108,21 @@ function setupEventListeners() {
       btn.classList.add('active');
       document.querySelector('.tab-pane.active').classList.remove('active');
       document.getElementById(btn.dataset.tab).classList.add('active');
+
+      // fortune 탭 클릭 시 자동 로드
+      const tabId = btn.dataset.tab;
+      const fortuneTypes = {
+        'tabTomorrow': 'tomorrow',
+        'tabTraditional': 'traditional',
+        'tabLove': 'love',
+        'tabHealth': 'health',
+        'tabWealth': 'wealth'
+      };
+      const fortuneType = fortuneTypes[tabId];
+      if (fortuneType && currentSajuData) {
+        loadFortuneTab(fortuneType);
+      }
+
       // Update ARIA
       document.querySelectorAll('.tab-btn').forEach(b => b.setAttribute('aria-selected', b === btn ? 'true' : 'false'));
     });
@@ -1085,7 +1101,10 @@ document.getElementById('btnGo').addEventListener('click', async () => {
     return;
   }
 
-  const resultDiv = document.getElementById('result');
+  // Store saju data globally for fortune tabs
+  currentSajuData = sajuData;
+
+  const resultDiv = document.getElementById('basicResult');
   resultDiv.style.display = 'block';
   resultDiv.innerHTML = `
     <div class="section result-shell fade-in" style="padding:24px;">
@@ -1225,6 +1244,17 @@ document.getElementById('btnGo').addEventListener('click', async () => {
 
   getSongs(sajuElement, resultDiv);
 
+  // Show fortune tabs after basic analysis is complete
+  const fortuneTabs = document.getElementById('fortuneTabs');
+  if (fortuneTabs) {
+    fortuneTabs.style.display = 'block';
+
+    // 첫 번째 탭(내일의 운세) 자동 로드
+    setTimeout(() => {
+      loadFortuneTab('tomorrow');
+    }, 300);
+  }
+
   trackEvent('saju_analysis_complete', { event_category: 'engagement', element: sajuElement || 'unknown' });
 
   try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
@@ -1321,6 +1351,110 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
   trackEvent('compat_analysis_complete', { event_category: 'engagement' });
 
   try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+});
+
+// --- Fortune Tab Handlers ---
+const fortuneTabCache = {}; // Cache fortune results
+
+async function loadFortuneTab(tabType) {
+  if (!currentSajuData) {
+    showToast('먼저 사주 분석을 완료해주세요.');
+    return;
+  }
+
+  // Return cached result if available
+  if (fortuneTabCache[tabType]) {
+    console.log(`Using cached result for ${tabType}`);
+    return;
+  }
+
+  const resultContainers = {
+    'tomorrow': 'tomorrowResult',
+    'traditional': 'traditionalResult',
+    'love': 'loveResult',
+    'health': 'healthResult',
+    'wealth': 'wealthResult'
+  };
+
+  const containerId = resultContainers[tabType];
+  if (!containerId) {
+    console.error(`Unknown tab type: ${tabType}`);
+    return;
+  }
+
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(`Container not found: ${containerId}`);
+    return;
+  }
+
+  // Show loading
+  container.innerHTML = `
+    <div class="section result-shell fade-in" style="padding:24px;">
+      <div class="skeleton" style="height:24px;width:200px;margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:14px;width:80%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:14px;width:60%;margin-bottom:20px;"></div>
+      <div class="skeleton" style="height:200px;margin-bottom:14px;"></div>
+      <p class="loading-text">운세를 분석하고 있습니다<span class="loading-dots"></span></p>
+    </div>
+  `;
+
+  try {
+    console.log(`Loading fortune tab: ${tabType}`);
+    const aiPayload = {
+      type: tabType,
+      sajuData: JSON.stringify(currentSajuData)
+    };
+
+    const aiResponse = await getAiResponse(aiPayload);
+    console.log(`Received response for ${tabType}`);
+
+    const sanitized = sanitizeAiResponse(aiResponse);
+
+    container.innerHTML = `
+      <div class="section result-shell fade-in">
+        <div class="analysis-body">${renderMarkdown(sanitized.cleaned)}</div>
+      </div>
+    `;
+
+    const analysisBody = container.querySelector('.analysis-body');
+    if (analysisBody) {
+      enhanceCallouts(analysisBody);
+      applyAccordion(analysisBody);
+    }
+
+    // Cache the result
+    fortuneTabCache[tabType] = true;
+
+    trackEvent(`fortune_${tabType}_complete`, { event_category: 'engagement' });
+  } catch (error) {
+    console.error(`Error loading fortune tab ${tabType}:`, error);
+    container.innerHTML = `
+      <div class="section result-shell fade-in" style="padding:24px;">
+        <p style="color:var(--muted);text-align:center;">운세를 불러오는데 실패했습니다. 다시 시도해주세요.</p>
+        <p style="color:var(--danger);text-align:center;font-size:12px;margin-top:10px;">오류: ${error.message}</p>
+      </div>
+    `;
+  }
+}
+
+// Attach fortune tab click handlers
+document.querySelectorAll('.tab-btn[data-tab^="tab"]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tabId = btn.dataset.tab;
+    const fortuneTypes = {
+      'tabTomorrow': 'tomorrow',
+      'tabTraditional': 'traditional',
+      'tabLove': 'love',
+      'tabHealth': 'health',
+      'tabWealth': 'wealth'
+    };
+
+    const fortuneType = fortuneTypes[tabId];
+    if (fortuneType) {
+      loadFortuneTab(fortuneType);
+    }
+  });
 });
 
 const lastModified = document.getElementById('lastModified');

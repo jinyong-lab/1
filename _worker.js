@@ -29,6 +29,22 @@ function checkRateLimit(ip) {
   return record.count <= RATE_LIMIT;
 }
 
+// Parse ISO 8601 duration (PT4M13S) to seconds
+function parseDuration(duration) {
+  if (!duration) return 0;
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) {
+    console.warn(`Failed to parse duration: ${duration}`);
+    return 0;
+  }
+  const hours = parseInt(match[1] || 0);
+  const minutes = parseInt(match[2] || 0);
+  const seconds = parseInt(match[3] || 0);
+  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  console.log(`Parsed duration ${duration} -> ${totalSeconds}s`);
+  return totalSeconds;
+}
+
 // Periodic cleanup to prevent memory leak (every 5 minutes)
 setInterval(() => {
   const now = Date.now();
@@ -202,6 +218,8 @@ async function callOpenAi(apiKey, messages) {
   const apiRequestBody = {
     model: 'gpt-4o-mini',
     messages: messages,
+    temperature: 0,      // 일관된 결과를 위해 0으로 설정
+    seed: 42,            // 재현 가능성을 위한 고정 seed
   };
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -244,15 +262,17 @@ async function handleYouTubeRequest(request, env) {
   }
 
   const apiUrl = new URL('https://www.googleapis.com/youtube/v3/search');
+  // Add Korean music preference to query
+  const enhancedQuery = `${query} 한국 노래 K-pop Korean music`;
   apiUrl.search = new URLSearchParams({
     part: 'snippet',
     type: 'video',
-    maxResults: '5',
-    q: query,
+    maxResults: '10', // Increased to get more results before filtering
+    q: enhancedQuery,
     safeSearch: 'moderate',
     videoEmbeddable: 'true',
     videoSyndicated: 'true',
-    regionCode: region,
+    regionCode: 'KR', // Prefer Korean region
     key: YOUTUBE_API_KEY,
   }).toString();
 
@@ -272,7 +292,12 @@ async function handleYouTubeRequest(request, env) {
       channelTitle: item?.snippet?.channelTitle || '',
       thumbnail: item?.snippet?.thumbnails?.medium?.url || item?.snippet?.thumbnails?.default?.url || ''
     }))
-    .filter(item => item.videoId);
+    .filter(item => item.videoId)
+    .filter(item => {
+      const title = item.title.toLowerCase();
+      const excludeKeywords = ['medley', 'mix', 'mashup', 'compilation', '메들리', '믹스', '모음', '합본', '연속듣기'];
+      return !excludeKeywords.some(keyword => title.includes(keyword));
+    });
 
   if (!items.length) {
     return apiResponse({ error: { message: 'No results found.' } }, 404);
@@ -295,18 +320,29 @@ async function handleYouTubeRequest(request, env) {
       detailData.items.forEach(item => {
         detailMap.set(item.id, {
           embeddable: item?.status?.embeddable !== false,
-          blocked: item?.contentDetails?.regionRestriction?.blocked || []
+          blocked: item?.contentDetails?.regionRestriction?.blocked || [],
+          duration: parseDuration(item?.contentDetails?.duration)
         });
       });
       filteredItems = items.filter(item => {
         const detail = detailMap.get(item.videoId);
-        if (!detail) return true;
+        if (!detail) {
+          console.warn(`No detail for ${item.videoId}, excluding`);
+          return false;  // detail 없으면 제외
+        }
         if (!detail.embeddable) return false;
         if (Array.isArray(detail.blocked) && detail.blocked.includes(region)) return false;
+        // Filter out videos longer than 5 minutes (300 seconds)
+        if (detail.duration > 300) {
+          console.log(`Filtering out ${item.title} (${detail.duration}s > 300s)`);
+          return false;
+        }
         return true;
-      });
+      }).slice(0, 5); // Limit to 5 results
+      // 필터링 후 결과가 없으면 빈 배열 반환 (긴 영상 반환 방지)
       if (!filteredItems.length) {
-        filteredItems = items;
+        console.warn('All videos filtered out due to duration/embeddability');
+        filteredItems = [];
       }
     }
   } catch (_err) {
@@ -375,12 +411,15 @@ function getSajuPrompt(sajuData, question) {
 **본 분석**
 1. **사주 기둥의 핵심 하이라이트**: 사주 기둥(년주·월주·일주·시주)를 한자+한글로 정확하게 표기하고, 각 기둥의 특징을 짚어주세요.
 2. **오행(목·화·토·금·수) 분석**: 강약, 균형, 보완 요소를 자세히 설명하고, 반드시 "목 N개, 화 N개, 토 N개, 금 N개, 수 N개" 형태로 정리한 후 바로 설명하세요.
-3. **성격과 재능**: 일주, 일간, 십이운성이 나타내는 성향과 함께 자세히 분석해주세요.
-4. **관계/대인관계**: 어울리는 사람의 특징과, 추천 커뮤니케이션 방법을 알려주세요.
-5. **직업/재물운**: 적성 분야, 시기에 맞는 돈 흐름과, 재무 관리 방법을 제공해주세요.
-6. **건강운**: 취약 포인트와 생활밀착 관리법을 제공해주세요.
-7. **시기별 운세 흐름**: 단기/중기/장기 흐름을 자세히 알려주세요.
-8. **마무리 조언 및 한 줄 메시지**: 따뜻한 메시지를 남겨주세요.
+3. **살(煞) 분석**: 사주에 존재하는 살(도화살, 역마살, 백호살, 과숙살, 현침살 등)을 정확히 찾아내고, 각 살의 의미와 영향, 대처 방법을 자세히 설명해주세요.
+4. **귀인(貴人) 분석**: 사주에 존재하는 귀인(천을귀인, 천덕귀인, 월덕귀인, 문창귀인 등)을 찾아내고, 각 귀인이 가져다주는 도움과 복을 설명해주세요.
+5. **대운(大運) 분석**: 현재 대운 시기와 향후 주요 대운 전환기를 명시하고, 각 시기별 운세 흐름과 주의사항을 자세히 알려주세요. (예: 현재 N세~N세 대운, 다음 대운 전환기 등)
+6. **성격과 재능**: 일주, 일간, 십이운성이 나타내는 성향과 함께 자세히 분석해주세요.
+7. **관계/대인관계**: 어울리는 사람의 특징과, 추천 커뮤니케이션 방법을 알려주세요.
+8. **직업/재물운**: 적성 분야, 시기에 맞는 돈 흐름과, 재무 관리 방법을 제공해주세요.
+9. **건강운**: 취약 포인트와 생활밀착 관리법을 제공해주세요.
+10. **시기별 운세 흐름**: 단기/중기/장기 흐름을 자세히 알려주세요.
+11. **마무리 조언 및 한 줄 메시지**: 따뜻한 메시지를 남겨주세요.
 
 **운세 카드 (정확히 아래 형식 준수)**
 - 건강운: ... (첫 줄에 요약 작성)
@@ -450,6 +489,261 @@ function getCompatPrompt(person1, person2, question) {
   ];
 }
 
+function getTomorrowFortunePrompt(sajuData) {
+  const systemPrompt = `당신은 사주 기반 일운(日運) 분석 전문가입니다. 내일의 운세를 상세하고 실용적으로 한국어로 제공하세요.`;
+
+  const calculatedSaju = calculateAccurateSaju(sajuData);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = `${tomorrow.getFullYear()}년 ${tomorrow.getMonth()+1}월 ${tomorrow.getDate()}일`;
+
+  const userPrompt = `${tomorrowStr} 내일의 운세를 다음 형식으로 작성해주세요:
+
+**🔮 내일의 전체 운세**
+- 내일의 기운과 흐름을 5~7문장으로 설명하고, 실천 가능한 조언을 추가하세요.
+
+**💖 연애운**
+- 6~8문장으로 내일의 연애운을 상세히 설명하고, 구체적인 행동 팁 2~3가지를 제공하세요.
+
+**💰 재물운**
+- 6~8문장으로 내일의 재물운을 설명하고, 금전 관리 팁과 주의사항을 알려주세요.
+
+**💼 직업/업무운**
+- 6~8문장으로 내일의 업무운을 분석하고, 효율적인 업무 처리 방법을 제시하세요.
+
+**🏥 건강운**
+- 6~8문장으로 건강 상태를 체크하고, 주의해야 할 신체 부위와 관리법을 알려주세요.
+
+**🎯 추천 행동**
+- 시간대별 길한 시간
+- 추천 색상
+- 추천 방향
+- 피해야 할 것
+
+각 섹션마다 속담이나 격언 1개씩 포함하고, 따뜻하고 희망적인 톤으로 작성해주세요.`;
+
+  return [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ];
+}
+
+function getTraditionalSajuPrompt(sajuData) {
+  const systemPrompt = `당신은 정통 명리학 전문가입니다. 고전 명리학 이론에 근거한 깊이있는 사주 분석을 한국어로 제공하세요.`;
+
+  const calculatedSaju = calculateAccurateSaju(sajuData);
+
+  const userPrompt = `정통 명리학에 기반한 상세한 사주 분석을 다음 형식으로 작성해주세요:
+
+**📜 사주 기본 정보**
+- 사주팔자를 한자+한글로 정확히 표기
+- 대운, 세운, 월운 정보
+- 십신 구성 및 배치
+
+**🔥 격국(格局) 분석**
+- 사주의 격국을 판정하고 (정격/변격)
+- 격국의 특징과 의미를 8~10문장으로 상세 설명
+- 격국에 따른 인생 방향성 제시
+
+**⭐ 용신(用神) 분석**
+- 용신, 희신, 기신, 구신을 명확히 제시
+- 각각의 역할과 영향을 7~9문장으로 설명
+- 용신을 활용한 개운 방법 제공
+
+**🌟 십성(十星) 상세 분석**
+- 비견, 겁재, 식신, 상관, 편재, 정재, 편관, 정관, 편인, 정인의 배치와 강약
+- 각 십성이 인생에 미치는 영향을 상세히 설명 (8~10문장)
+
+**🎭 신살(神煞) 분석**
+- 길신: 천을귀인, 천덕귀인, 월덕귀인, 문창귀인 등
+- 흉살: 도화살, 역마살, 백호살, 과숙살, 현침살 등
+- 각 신살의 작용과 대처법을 7~9문장으로 설명
+
+**🔮 대운(大運) 흐름**
+- 현재 대운과 이전/이후 대운 분석
+- 각 대운 시기별 특징과 주의사항 (10~12문장)
+- 대운 전환기의 중요성과 준비 방법
+
+**💎 천간지지 상생상극**
+- 천간 합충형해 분석
+- 지지 합충형해파 분석
+- 상생상극이 미치는 실질적 영향 (7~9문장)
+
+**🎯 개운 방법**
+- 방위, 색상, 숫자, 직업, 인간관계 등
+- 구체적이고 실천 가능한 방법 제시 (8~10문장)
+
+각 섹션마다 고전 명리학 원전의 격언이나 문구를 인용하고, 학술적이면서도 이해하기 쉽게 설명해주세요.`;
+
+  return [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ];
+}
+
+function getLoveFortunePrompt(sajuData) {
+  const systemPrompt = `당신은 사주 기반 연애운 분석 전문가입니다. 애정운과 인연운을 깊이있게 분석하여 한국어로 제공하세요.`;
+
+  const calculatedSaju = calculateAccurateSaju(sajuData);
+  const genderLabel = sajuData.gender === 'female' ? '여자' : '남자';
+
+  const userPrompt = `연애운과 애정운을 다음 형식으로 상세히 작성해주세요:
+
+**💖 전체 연애운 개요**
+- 사주에 나타난 연애 성향과 패턴을 8~10문장으로 분석
+- ${genderLabel}로서의 매력 포인트와 연애 스타일
+
+**👥 이상형 분석**
+- 어울리는 상대의 사주적 특징 (천간, 지지, 오행)
+- 좋은 인연의 시기와 만남의 장소
+- 피해야 할 상대의 특징
+(각 항목 6~8문장)
+
+**💑 연애 패턴 및 주의사항**
+- 연애할 때 나타나는 습관과 패턴
+- 연애에서 겪을 수 있는 어려움
+- 극복 방법과 개선점
+(8~10문장)
+
+**💍 결혼운**
+- 결혼 적령기와 좋은 시기
+- 배우자의 특징과 만남의 인연
+- 결혼 후 생활 패턴
+(8~10문장)
+
+**🌹 월별/시기별 연애운**
+- 올해 남은 기간의 연애운 흐름
+- 좋은 달과 조심해야 할 달
+- 각 시기별 연애 전략
+(10~12문장)
+
+**💝 연애 개운 방법**
+- 연애운을 높이는 색상, 장소, 패션
+- 데이트 추천 장소와 시간대
+- 고백/프러포즈 좋은 시기
+(7~9문장)
+
+각 섹션마다 사랑과 인연에 관한 속담이나 명언을 포함하고, 희망적이고 따뜻한 톤으로 작성해주세요.`;
+
+  return [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ];
+}
+
+function getHealthFortunePrompt(sajuData) {
+  const systemPrompt = `당신은 사주 기반 건강운 분석 전문가입니다. 오행 균형과 사주 구조를 통해 건강 상태를 분석하여 한국어로 제공하세요.`;
+
+  const calculatedSaju = calculateAccurateSaju(sajuData);
+
+  const userPrompt = `건강운을 다음 형식으로 상세히 작성해주세요:
+
+**🏥 전체 건강운 개요**
+- 사주의 오행 균형으로 본 체질과 건강 특성
+- 선천적인 강점과 약점
+(8~10문장)
+
+**🫀 취약 장기 및 주의사항**
+- 오행별 대응 장기 분석 (목-간담, 화-심장, 토-비위, 금-폐대장, 수-신장방광)
+- 특히 주의해야 할 장기와 질환
+- 계절별, 시기별 건강 주의점
+(10~12문장)
+
+**💊 체질 맞춤 건강 관리법**
+- 체질에 맞는 음식과 피해야 할 음식
+- 적합한 운동과 생활 습관
+- 수면, 스트레스 관리 방법
+(9~11문장)
+
+**🌿 사주로 보는 질병 예방**
+- 대운, 세운별 건강 취약 시기
+- 예방을 위한 정기 검진 항목
+- 건강 관리 타이밍
+(8~10문장)
+
+**🧘 정신 건강 및 스트레스**
+- 사주에 나타난 스트레스 패턴
+- 심리적 안정을 위한 방법
+- 명상, 휴식의 적기
+(7~9문장)
+
+**⚕️ 연령대별 건강 로드맵**
+- 현재부터 노년까지 건강 흐름
+- 각 시기별 주의사항과 관리 포인트
+- 장수 비결과 건강한 노후 준비
+(10~12문장)
+
+각 섹션마다 건강에 관한 속담이나 한의학 격언을 포함하고, 예방과 관리에 중점을 둔 실용적인 조언을 제공해주세요.`;
+
+  return [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ];
+}
+
+function getWealthFortunePrompt(sajuData) {
+  const systemPrompt = `당신은 사주 기반 재물운 분석 전문가입니다. 재성, 식상, 비겁 등을 종합하여 재물운을 분석하고 실용적인 재테크 조언을 한국어로 제공하세요.`;
+
+  const calculatedSaju = calculateAccurateSaju(sajuData);
+
+  const userPrompt = `재물운을 다음 형식으로 상세히 작성해주세요:
+
+**💰 전체 재물운 개요**
+- 사주의 재성(정재, 편재) 분석
+- 돈을 버는 방식과 재물 축적 패턴
+- 재물운의 강약과 특징
+(9~11문장)
+
+**📈 수입원 및 재물 획득 방법**
+- 주수입원(월급, 사업, 투자 등) 적성 분석
+- 부수입 창출 가능성
+- 재물이 들어오는 경로와 시기
+- 대박운 여부와 타이밍
+(10~12문장)
+
+**💎 재테크 성향 및 전략**
+- 투자 성향 (안정형/공격형/균형형)
+- 적합한 투자 방법 (부동산, 주식, 저축 등)
+- 투자 성공 확률이 높은 분야
+- 투자 주의 시기
+(9~11문장)
+
+**🏦 재물 관리 및 저축**
+- 돈 관리 습관과 소비 패턴
+- 저축 성공 전략
+- 낭비 주의 포인트
+- 재물 축적 방법
+(8~10문장)
+
+**📊 시기별 재물운 흐름**
+- 대운별 재물운 변화
+- 올해 및 향후 3년간 재물운
+- 재물운이 좋은 시기와 투자 적기
+- 재물운이 약한 시기와 대처법
+(10~12문장)
+
+**🎯 재물 증대 개운법**
+- 재물운을 높이는 방위, 색상, 숫자
+- 돈을 부르는 습관과 행동
+- 재물신을 모시는 방법
+- 기부와 나눔의 효과
+(8~10문장)
+
+**⚠️ 재물 손실 주의사항**
+- 돈이 새는 구멍과 원인
+- 사기, 손실 주의 시기
+- 보증, 투자 실패 방지법
+- 재물 트러블 예방책
+(7~9문장)
+
+각 섹션마다 돈과 재물에 관한 속담이나 격언을 포함하고, 현실적이고 실천 가능한 조언을 제공해주세요.`;
+
+  return [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ];
+}
+
 async function handleApiRequest(request, env) {
   try {
     const url = new URL(request.url);
@@ -508,6 +802,71 @@ async function handleApiRequest(request, env) {
 
       const question = sanitizeQuestion(url.searchParams.get('question'));
       messages = getCompatPrompt(person1, person2, question);
+
+    } else if (type === 'tomorrow') {
+      let sajuData;
+      try {
+        sajuData = JSON.parse(url.searchParams.get('sajuData'));
+      } catch (_e) {
+        return apiResponse({ error: { message: 'Invalid sajuData JSON.' } }, 400);
+      }
+      const dateError = validateDateFields(sajuData, 'sajuData');
+      if (dateError) {
+        return apiResponse({ error: { message: dateError } }, 400);
+      }
+      messages = getTomorrowFortunePrompt(sajuData);
+
+    } else if (type === 'traditional') {
+      let sajuData;
+      try {
+        sajuData = JSON.parse(url.searchParams.get('sajuData'));
+      } catch (_e) {
+        return apiResponse({ error: { message: 'Invalid sajuData JSON.' } }, 400);
+      }
+      const dateError = validateDateFields(sajuData, 'sajuData');
+      if (dateError) {
+        return apiResponse({ error: { message: dateError } }, 400);
+      }
+      messages = getTraditionalSajuPrompt(sajuData);
+
+    } else if (type === 'love') {
+      let sajuData;
+      try {
+        sajuData = JSON.parse(url.searchParams.get('sajuData'));
+      } catch (_e) {
+        return apiResponse({ error: { message: 'Invalid sajuData JSON.' } }, 400);
+      }
+      const dateError = validateDateFields(sajuData, 'sajuData');
+      if (dateError) {
+        return apiResponse({ error: { message: dateError } }, 400);
+      }
+      messages = getLoveFortunePrompt(sajuData);
+
+    } else if (type === 'health') {
+      let sajuData;
+      try {
+        sajuData = JSON.parse(url.searchParams.get('sajuData'));
+      } catch (_e) {
+        return apiResponse({ error: { message: 'Invalid sajuData JSON.' } }, 400);
+      }
+      const dateError = validateDateFields(sajuData, 'sajuData');
+      if (dateError) {
+        return apiResponse({ error: { message: dateError } }, 400);
+      }
+      messages = getHealthFortunePrompt(sajuData);
+
+    } else if (type === 'wealth') {
+      let sajuData;
+      try {
+        sajuData = JSON.parse(url.searchParams.get('sajuData'));
+      } catch (_e) {
+        return apiResponse({ error: { message: 'Invalid sajuData JSON.' } }, 400);
+      }
+      const dateError = validateDateFields(sajuData, 'sajuData');
+      if (dateError) {
+        return apiResponse({ error: { message: dateError } }, 400);
+      }
+      messages = getWealthFortunePrompt(sajuData);
 
     } else {
       return apiResponse({ error: { message: 'Invalid request type.' } }, 400);
