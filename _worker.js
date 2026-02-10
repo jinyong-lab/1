@@ -1,5 +1,18 @@
 // _worker.js - Cloudflare Pages Worker for Saju Analysis Site
 
+import { calculateSaju, lunarToSolar } from '@fullstackfamily/manseryeok';
+
+// --- Element Mapping Constants ---
+const STEM_ELEMENTS = {
+  '甲': '목', '乙': '목', '丙': '화', '丁': '화', '戊': '토',
+  '己': '토', '庚': '금', '辛': '금', '壬': '수', '癸': '수'
+};
+
+const BRANCH_ELEMENTS = {
+  '子': '수', '丑': '토', '寅': '목', '卯': '목', '辰': '토', '巳': '화',
+  '午': '화', '未': '토', '申': '금', '酉': '금', '戌': '토', '亥': '수'
+};
+
 // --- Rate Limiting (in-memory) ---
 const rateLimitMap = new Map();
 const RATE_LIMIT = 10; // requests per minute per IP
@@ -97,6 +110,93 @@ function validateDateFields(obj, label) {
 }
 
 // --- Core Business Logic (unchanged) ---
+
+/**
+ * Calculate accurate saju using the manseryeok library
+ * @param {Object} sajuData - Object containing year, month, day, time, cal (calendar type)
+ * @returns {Object} Calculated saju with yearPillar, monthPillar, dayPillar, hourPillar, elements
+ */
+function calculateAccurateSaju(sajuData) {
+  try {
+    // Map time value to hour and minute
+    // time 0 = 23:30 (자시), time 1 = 01:30 (축시), time 2 = 03:30 (인시), etc.
+    // time -1 (모름) = use 12:00 as default
+    const timeToHourMin = {
+      '-1': [12, 0],  // 모름
+      '0': [23, 30],  // 자시 (23:00-01:00)
+      '1': [1, 30],   // 축시 (01:00-03:00)
+      '2': [3, 30],   // 인시 (03:00-05:00)
+      '3': [5, 30],   // 묘시 (05:00-07:00)
+      '4': [7, 30],   // 진시 (07:00-09:00)
+      '5': [9, 30],   // 사시 (09:00-11:00)
+      '6': [11, 30],  // 오시 (11:00-13:00)
+      '7': [13, 30],  // 미시 (13:00-15:00)
+      '8': [15, 30],  // 신시 (15:00-17:00)
+      '9': [17, 30],  // 유시 (17:00-19:00)
+      '10': [19, 30], // 술시 (19:00-21:00)
+      '11': [21, 30], // 해시 (21:00-23:00)
+    };
+
+    const [hour, minute] = timeToHourMin[String(sajuData.time)] || [12, 0];
+
+    let year = Number(sajuData.year);
+    let month = Number(sajuData.month);
+    let day = Number(sajuData.day);
+
+    // Convert lunar to solar if needed
+    if (sajuData.cal === 'lunar') {
+      const lunarResult = lunarToSolar(year, month, day);
+      if (lunarResult && lunarResult.solar) {
+        year = lunarResult.solar.year;
+        month = lunarResult.solar.month;
+        day = lunarResult.solar.day;
+      }
+    }
+
+    // Calculate saju using Seoul longitude
+    const result = calculateSaju(year, month, day, hour, minute, { longitude: 126.978 });
+
+    // Extract pillars from result (format: yearPillar, monthPillar, dayPillar, hourPillar)
+    // Each pillar is a string like "甲子"
+    const extractPillar = (pillarStr) => {
+      if (!pillarStr || pillarStr.length !== 2) return null;
+      const stem = pillarStr[0];
+      const branch = pillarStr[1];
+      const stemElement = STEM_ELEMENTS[stem] || '?';
+      const branchElement = BRANCH_ELEMENTS[branch] || '?';
+      return { stem, branch, stemElement, branchElement };
+    };
+
+    const yearPillar = extractPillar(result.yearPillarHanja);
+    const monthPillar = extractPillar(result.monthPillarHanja);
+    const dayPillar = extractPillar(result.dayPillarHanja);
+    const hourPillar = extractPillar(result.hourPillarHanja);
+
+    // Count elements from all 8 characters (4 stems + 4 branches)
+    const elements = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
+    const pillars = [yearPillar, monthPillar, dayPillar, hourPillar];
+
+    pillars.forEach(pillar => {
+      if (pillar) {
+        const stemElement = STEM_ELEMENTS[pillar.stem];
+        const branchElement = BRANCH_ELEMENTS[pillar.branch];
+        if (stemElement) elements[stemElement] = (elements[stemElement] || 0) + 1;
+        if (branchElement) elements[branchElement] = (elements[branchElement] || 0) + 1;
+      }
+    });
+
+    return {
+      yearPillar,
+      monthPillar,
+      dayPillar,
+      hourPillar,
+      elements
+    };
+  } catch (error) {
+    console.error('calculateAccurateSaju error:', error);
+    return null;  // Fallback to old behavior
+  }
+}
 
 async function callOpenAi(apiKey, messages) {
   const apiRequestBody = {
@@ -229,18 +329,39 @@ function getSajuPrompt(sajuData, question) {
   const calLabel = sajuData.cal === 'lunar' ? '음력' : '양력';
   const genderLabel = sajuData.gender === 'female' ? '여자' : '남자';
 
+  // Calculate accurate saju
+  const calculatedSaju = calculateAccurateSaju(sajuData);
+
   let userPrompt = `아래 정보를 바탕으로 깊이있고 폭이 넓은 사주 분석을 작성해주세요.
 
 **사용자 정보**
 - 생년월일: ${sajuData.year}년 ${sajuData.month}월 ${sajuData.day}일 (${sajuData.b_time_ext})
 - 달력: ${calLabel}
 - 성별: ${genderLabel}
-- 출생지: ${sajuData.place || '미입력'}
+- 출생지: ${sajuData.place || '미입력'}`;
+
+  // Add calculated saju information if available
+  if (calculatedSaju && calculatedSaju.yearPillar) {
+    userPrompt += `
+
+**정확하게 계산된 사주**
+- 년주(年柱): ${calculatedSaju.yearPillar.stem}${calculatedSaju.yearPillar.branch} (천간: ${calculatedSaju.yearPillar.stemElement}, 지지: ${calculatedSaju.yearPillar.branchElement})
+- 월주(月柱): ${calculatedSaju.monthPillar.stem}${calculatedSaju.monthPillar.branch} (천간: ${calculatedSaju.monthPillar.stemElement}, 지지: ${calculatedSaju.monthPillar.branchElement})
+- 일주(日柱): ${calculatedSaju.dayPillar.stem}${calculatedSaju.dayPillar.branch} (천간: ${calculatedSaju.dayPillar.stemElement}, 지지: ${calculatedSaju.dayPillar.branchElement})
+- 시주(時柱): ${calculatedSaju.hourPillar.stem}${calculatedSaju.hourPillar.branch} (천간: ${calculatedSaju.hourPillar.stemElement}, 지지: ${calculatedSaju.hourPillar.branchElement})
+- 오행 분포: 목 ${calculatedSaju.elements.목}개, 화 ${calculatedSaju.elements.화}개, 토 ${calculatedSaju.elements.토}개, 금 ${calculatedSaju.elements.금}개, 수 ${calculatedSaju.elements.수}개
+
+아래 정확하게 계산된 사주를 해석해주세요.`;
+  } else {
+    userPrompt += `
 
 **사주 표기 규칙**
 - 반드시 한자 + 한글 병기: 예) 년주: 갑자(甲子)
 - 로마자 표기는 사용하지 마세요.
-- 사주 정보는 항상 정확하게 계산하세요.
+- 사주 정보는 항상 정확하게 계산하세요.`;
+  }
+
+  userPrompt += `
 
 **요약 카드 (정확히 아래 형식 준수)**
 - 한줄요약: ...

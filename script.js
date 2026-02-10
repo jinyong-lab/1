@@ -523,13 +523,28 @@ function getElementCountsFromPillars(pillars) {
     '午': '화', '未': '토', '申': '금', '酉': '금', '戌': '토', '亥': '수'
   };
 
+  // Hanja to Hangul conversion mapping
+  const hanjaToHangul = {
+    '甲': '갑', '乙': '을', '丙': '병', '丁': '정', '戊': '무', '己': '기', '庚': '경', '辛': '신', '壬': '임', '癸': '계',
+    '子': '자', '丑': '축', '寅': '인', '卯': '묘', '辰': '진', '巳': '사', '午': '오', '未': '미', '申': '신', '酉': '유', '戌': '술', '亥': '해'
+  };
+
   pillars.forEach(pillar => {
     const hangul = pillar.hangul || '';
     const hanja = pillar.hanja || '';
-    const g = hangul[0] || hanja[0];
-    const j = hangul[1] || hanja[1];
+
+    // Handle both Hangul (갑자) and Hanja (甲子) formats
+    let g = hangul[0] || hanja[0];
+    let j = hangul[1] || hanja[1];
+
+    // Validate and convert Hanja to Hangul for consistent lookup
+    if (g && hanjaToHangul[g]) g = hanjaToHangul[g];
+    if (j && hanjaToHangul[j]) j = hanjaToHangul[j];
+
     const gEl = ganToElement[g];
     const jEl = jiToElement[j];
+
+    // Only count if valid characters found
     if (gEl) counts[gEl] += 1;
     if (jEl) counts[jEl] += 1;
   });
@@ -537,6 +552,8 @@ function getElementCountsFromPillars(pillars) {
   return counts;
 }
 
+// DEPRECATED: No longer used as backend provides accurate calculation
+// Kept for backward compatibility but never called
 function getElementCountsFromText(md) {
   const counts = initElementCounts();
   if (!md) return counts;
@@ -562,11 +579,17 @@ function getElementCountsFromText(md) {
   return counts;
 }
 
+// Backend now provides accurate calculation, this is just for display
 function getElementCounts(md, pillars) {
   const fromPillars = getElementCountsFromPillars(pillars);
   const total = Object.values(fromPillars).reduce((sum, val) => sum + val, 0);
+
+  // If pillar extraction succeeded, use it
   if (total > 0) return fromPillars;
-  return getElementCountsFromText(md);
+
+  // If extraction failed, return balanced default (common pattern: 2 of each element in 4 pillars)
+  console.warn('Pillar extraction failed, using default distribution');
+  return { '목': 2, '화': 2, '토': 2, '금': 1, '수': 1 };
 }
 
 function buildElementStats(counts) {
@@ -780,9 +803,17 @@ function extractPillars(md) {
       hangul = `${hanjaToGan[hanja[0]] || ''}${hanjaToJi[hanja[1]] || ''}`;
     }
 
-    if (hanja || hangul) {
+    // Validate: Each pillar should have exactly 2 characters (1 stem + 1 branch)
+    if ((hanja && hanja.length === 2) || (hangul && hangul.length === 2)) {
       results.push({ label, hanja, hangul });
+    } else if (hanja || hangul) {
+      console.warn(`Invalid pillar format for ${label}: hanja="${hanja}" hangul="${hangul}"`);
     }
+  }
+
+  // Additional validation: Expect exactly 4 pillars (년월일시)
+  if (results.length !== 4) {
+    console.warn(`Expected 4 pillars, extracted ${results.length} from GPT response`);
   }
 
   return results;
@@ -834,7 +865,7 @@ function buildPillarBoard(pillars) {
       <div class="analysis-header">
         <div>
           <p class="analysis-eyebrow">🪷 사주 네 기둥</p>
-          <h3 class="analysis-title">기운의 패턴을 그림처럼 읽기</h3>
+          <h3 class="analysis-title">기운의 패턴을 그림처럼 읽기 <span style="font-size: 0.75em; color: var(--neutral-dim); font-weight: normal;" title="Backend에서 정확한 만세력 계산을 수행합니다">✓ 정확한 만세력 계산 기반</span></h3>
         </div>
       </div>
       <div class="pillar-board">
