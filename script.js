@@ -1003,7 +1003,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
 
   const resultDiv = document.getElementById('result');
   resultDiv.style.display = 'block';
-  resultDiv.innerHTML = '<div class="section"><p>사주를 분석하고 있습니다. 잠시만 기다려주세요...</p></div>';
+  resultDiv.innerHTML = '<div class="section"><p class="loading-text">사주를 분석하고 있습니다<span class="loading-dots"></span></p></div>';
   resultDiv.scrollIntoView({ behavior: 'smooth' });
 
   resetPlayer();
@@ -1036,7 +1036,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   const fortuneHtml = buildFortuneHtml(sanitized.fortunes);
 
   resultDiv.innerHTML = `
-    <div class="section result-shell">
+    <div class="section result-shell fade-in">
       <div class="analysis-header">
         <div>
           <p class="analysis-eyebrow">🔮 사주 리딩</p>
@@ -1137,7 +1137,7 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
 
   const resultDiv = document.getElementById('compatResult');
   resultDiv.style.display = 'block';
-  resultDiv.innerHTML = '<div class="section"><p>궁합을 분석하고 있습니다. 잠시만 기다려주세요...</p></div>';
+  resultDiv.innerHTML = '<div class="section"><p class="loading-text">궁합을 분석하고 있습니다<span class="loading-dots"></span></p></div>';
   resultDiv.scrollIntoView({ behavior: 'smooth' });
 
   const aiPayload = {
@@ -1161,7 +1161,7 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
     : '';
 
   resultDiv.innerHTML = `
-    <div class="section result-shell">
+    <div class="section result-shell fade-in">
       <div class="analysis-header">
         <div>
           <p class="analysis-eyebrow">💞 궁합 리딩</p>

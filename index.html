@@ -3,6 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="AI 기반 사주 분석과 맞춤 음악 추천. 생년월일로 운세, 궁합, 오행을 분석하고 당신에게 어울리는 음악을 찾아보세요." />
+  <meta name="keywords" content="사주, 사주분석, 운세, 궁합, 오행, 음악추천, AI운세" />
+  <meta property="og:title" content="사주 분석 + 노래 추천 | AI 운세 서비스" />
+  <meta property="og:description" content="AI가 분석하는 나만의 사주 리딩과 맞춤 음악 추천" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="사주 분석 + 노래 추천" />
+  <meta name="twitter:description" content="AI가 분석하는 나만의 사주 리딩과 맞춤 음악 추천" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>" />
   <title>사주 분석 + 노래 추천 v3.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -932,15 +941,21 @@
     footer a{color:var(--muted);text-decoration:none}
     footer a:hover{text-decoration:underline}
     footer nav{margin-top:8px}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .loading-text{animation:pulse 1.5s ease-in-out infinite;text-align:center;padding:40px 20px;font-size:15px;color:var(--muted)}
+    .loading-dots::after{content:'';animation:dots 1.5s steps(3,end) infinite}
+    @keyframes dots{0%{content:''}33%{content:'.'}66%{content:'..'}100%{content:'...'}}
+    .fade-in{animation:fadeIn .6s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
   </style>
 </head>
 <body>
 <div class="card">
   <div class="top-bar">
-    <h1>사주 분석 v3.0 (최종 수정본) ✨</h1>
+    <h1>사주로 보는 나의 운명 🔮</h1>
     <button class="theme-toggle" id="themeToggle">라이트 모드</button>
   </div>
-  <div class="subtitle">사주를 깊이 있게 분석하고, 어울리는 음악까지 자동 추천해요. 🎵</div>
+  <div class="subtitle">AI가 분석하는 사주 리딩과 당신에게 어울리는 음악을 찾아보세요</div>
   <div class="tabs">
     <button class="tab-btn active" data-tab="tabMain">내 사주</button>
     <button class="tab-btn" data-tab="tabCompat">궁합 보기</button>
@@ -991,7 +1006,7 @@
   </div>
 </div>
   <footer>
-    <p>&copy; 2026 사주 분석 + 노래 추천. All rights reserved.</p>
+    <p>&copy; 2026 사주로 보는 나의 운명. All rights reserved.</p>
     <nav>
       <a href="/privacy-policy.html">개인정보처리방침</a> |
       <a href="/contact.html">문의하기</a>
