@@ -114,7 +114,7 @@ function resetPlayer() {
   playerIframe = null;
 }
 
-function getEmbedUrl(videoId, query) {
+function getEmbedUrl(videoId) {
   const base = 'https://www.youtube-nocookie.com/embed';
   const params = new URLSearchParams({
     autoplay: '1',
@@ -125,18 +125,24 @@ function getEmbedUrl(videoId, query) {
   if (window.location && window.location.origin) {
     params.set('origin', window.location.origin);
   }
-  if (videoId) {
-    return `${base}/${videoId}?${params.toString()}`;
-  }
-  params.set('listType', 'search');
-  params.set('list', query);
-  return `${base}?${params.toString()}`;
+  if (!videoId) return '';
+  return `${base}/${videoId}?${params.toString()}`;
 }
 
-function createFallbackIframe(playerContainer, query) {
+function renderPlayerPlaceholder(playerContainer, message) {
   if (!playerContainer) return;
+  playerContainer.innerHTML = `<div class="player-placeholder">${escapeHtml(message)}</div>`;
+  playerIframe = null;
+}
+
+function createPlayerIframe(playerContainer, videoId) {
+  if (!playerContainer) return;
+  if (!videoId) {
+    renderPlayerPlaceholder(playerContainer, '추천 영상을 불러오지 못했습니다.');
+    return;
+  }
   const iframe = document.createElement('iframe');
-  iframe.src = getEmbedUrl(null, query);
+  iframe.src = getEmbedUrl(videoId);
   iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
   iframe.referrerPolicy = 'origin-when-cross-origin';
   iframe.allowFullscreen = true;
@@ -147,50 +153,50 @@ function createFallbackIframe(playerContainer, query) {
   playerIframe = iframe;
 }
 
-function ensureIframePlayer(playerContainer, videoId, query) {
+function ensureIframePlayer(playerContainer, videoId) {
   if (!playerContainer) return;
+  if (!videoId) {
+    renderPlayerPlaceholder(playerContainer, '추천 영상을 불러오지 못했습니다.');
+    return;
+  }
   if (!playerIframe || !playerContainer.contains(playerIframe)) {
-    createFallbackIframe(playerContainer, query);
+    createPlayerIframe(playerContainer, videoId);
+    return;
   }
-  if (videoId) {
-    playerIframe.src = getEmbedUrl(videoId, query);
-  } else {
-    playerIframe.src = getEmbedUrl(null, query);
-  }
+  playerIframe.src = getEmbedUrl(videoId);
 }
 
-function renderSongList(videos, resultDiv, query, playerContainer) {
+function renderSongList(videos, resultDiv, playerContainer) {
   const list = resultDiv.querySelector('[data-role="song-list"]');
   if (!list) return;
 
   if (!videos.length) {
-    list.innerHTML = '<li class="fallback-note">추천 목록을 불러오지 못했습니다. 검색 재생으로 대신합니다.</li>';
+    list.innerHTML = '<li class="fallback-note">추천 곡을 불러오지 못했습니다.</li>';
     return;
   }
 
-  list.innerHTML = videos.map(video => {
-    const title = escapeHtml(video.title || '제목 없음');
-    const channel = escapeHtml(video.channelTitle || '');
-    const videoId = video.videoId || '';
-    const watchUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : '#';
-    return `
-      <li>
-        <button class="play-btn" data-video-id="${videoId}">재생</button>
-        <div class="song-info">
-          <span class="song-title-text">${title}</span>
-          <span class="song-channel">${channel}</span>
-        </div>
-        <a class="yt-link" href="${watchUrl}" target="_blank" rel="noopener">유튜브</a>
-      </li>
-    `;
-  }).join('');
+  const video = videos[0];
+  const title = escapeHtml(video.title || '제목 없음');
+  const channel = escapeHtml(video.channelTitle || '');
+  const videoId = video.videoId || '';
+  const watchUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : '#';
+  list.innerHTML = `
+    <li>
+      <button class="play-btn" data-video-id="${videoId}">재생</button>
+      <div class="song-info">
+        <span class="song-title-text">${title}</span>
+        <span class="song-channel">${channel}</span>
+      </div>
+      <a class="yt-link" href="${watchUrl}" target="_blank" rel="noopener">유튜브</a>
+    </li>
+  `;
 
   list.onclick = event => {
     const button = event.target.closest('[data-video-id]');
     if (!button) return;
     const videoId = button.dataset.videoId;
     if (!videoId) return;
-    ensureIframePlayer(playerContainer, videoId, query);
+    ensureIframePlayer(playerContainer, videoId);
   };
 }
 
@@ -207,9 +213,6 @@ async function getSongs(sajuElement, resultDiv) {
   const query = elementQueries[sajuElement] || 'korean ballad playlist';
   currentQuery = query;
 
-  playerContainer.style.display = 'block';
-  createFallbackIframe(playerContainer, query);
-
   let videoData = null;
   try {
     videoData = await fetchYouTubeVideos(query);
@@ -222,7 +225,7 @@ async function getSongs(sajuElement, resultDiv) {
     : (videoData?.videoId ? [videoData] : []);
   const primaryVideo = videoItems[0];
 
-  renderSongList(videoItems, resultDiv, query, playerContainer);
+  renderSongList(videoItems, resultDiv, playerContainer);
 
   if (musicMeta) {
     if (videoData?.error) {
@@ -231,16 +234,16 @@ async function getSongs(sajuElement, resultDiv) {
       const channelText = primaryVideo.channelTitle ? ` · ${primaryVideo.channelTitle}` : '';
       musicMeta.textContent = `추천 영상: ${primaryVideo.title}${channelText}`;
     } else {
-      musicMeta.textContent = '추천 영상을 찾지 못해 플레이리스트 검색으로 재생합니다.';
+      musicMeta.textContent = '추천 영상을 찾지 못했습니다. 다시 시도해주세요.';
     }
   }
 
   try {
-    ensureIframePlayer(playerContainer, primaryVideo?.videoId || null, query);
+    playerContainer.style.display = 'block';
+    ensureIframePlayer(playerContainer, primaryVideo?.videoId || null);
   } catch (error) {
     console.error('YouTube Player Error:', error);
-    playerContainer.innerHTML = '<p>노래 플레이어를 로드하는 중 오류가 발생했습니다.</p>';
-    createFallbackIframe(playerContainer, query);
+    renderPlayerPlaceholder(playerContainer, '노래 플레이어를 로드하는 중 오류가 발생했습니다.');
   }
 }
 
@@ -559,6 +562,14 @@ function enhanceCallouts(container) {
   });
 }
 
+function sanitizeVisibleText(text) {
+  if (!text) return '';
+  const allowedHanja = new Set(['甲','乙','丙','丁','戊','己','庚','辛','壬','癸','子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']);
+  let cleaned = text.replace(/[\u3400-\u9FFF]/g, ch => (allowedHanja.has(ch) ? ch : ''));
+  cleaned = cleaned.replace(/[^\p{Script=Hangul}\p{Script=Latin}0-9\s\p{P}\p{Extended_Pictographic}\u3400-\u9FFF]/gu, '');
+  return cleaned;
+}
+
 function sanitizeAiResponse(md) {
   if (!md) return { cleaned: '', fortunes: {} };
   const lines = md.replace(/\r\n/g, '\n').split('\n');
@@ -630,7 +641,12 @@ function sanitizeAiResponse(md) {
     cleanedLines.push(rawLine);
   }
 
-  return { cleaned: cleanedLines.join('\n').trim(), fortunes };
+  const cleaned = sanitizeVisibleText(cleanedLines.join('\n').trim());
+  const sanitizedFortunes = {};
+  Object.keys(fortunes).forEach(key => {
+    sanitizedFortunes[key] = sanitizeVisibleText(fortunes[key]);
+  });
+  return { cleaned, fortunes: sanitizedFortunes };
 }
 
 function injectPillarHanja(md) {
@@ -1059,7 +1075,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
           <div id="player-container"></div>
         </div>
         <p class="music-meta" style="font-size:12px; text-align:center; color: var(--muted); margin-top:10px;"></p>
-        <p class="song-list-title">추천 리스트</p>
+        <p class="song-list-title">오늘의 추천곡</p>
         <ul class="song-list" data-role="song-list"></ul>
         <div class="music-actions">
           <button class="refresh-btn" data-role="refresh-songs">다시 추천</button>
