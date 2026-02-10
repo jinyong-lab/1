@@ -17,8 +17,5 @@
   "bugs": {
     "url": "https://github.com/jinyong-lab/1/issues"
   },
-  "homepage": "https://github.com/jinyong-lab/1#readme",
-  "dependencies": {
-    "node-fetch": "^2.7.0"
-  }
+  "homepage": "https://github.com/jinyong-lab/1#readme"
 }

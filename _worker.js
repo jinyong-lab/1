@@ -1,5 +1,103 @@
 // _worker.js - Cloudflare Pages Worker for Saju Analysis Site
 
+// --- Rate Limiting (in-memory) ---
+const rateLimitMap = new Map();
+const RATE_LIMIT = 10; // requests per minute per IP
+const RATE_WINDOW = 60000; // 1 minute in ms
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  if (!record || now - record.start > RATE_WINDOW) {
+    rateLimitMap.set(ip, { start: now, count: 1 });
+    return true;
+  }
+  record.count++;
+  return record.count <= RATE_LIMIT;
+}
+
+// Periodic cleanup to prevent memory leak (every 5 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitMap) {
+    if (now - record.start > RATE_WINDOW) rateLimitMap.delete(ip);
+  }
+}, 300000);
+
+// --- Prompt Injection Sanitization ---
+function sanitizeQuestion(text) {
+  if (!text) return '';
+  return text
+    .replace(/```[\s\S]*?```/g, '')  // Remove code blocks
+    .replace(/\b(system|assistant)\s*:/gi, '')  // Remove role markers
+    .slice(0, 500);
+}
+
+// --- Security Headers ---
+const BASE_SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+};
+
+const CSP_VALUE = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://www.youtube.com https://www.googletagmanager.com https://www.google-analytics.com https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https: blob:; frame-src https://www.youtube-nocookie.com https://www.youtube.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google; connect-src 'self' https://pagead2.googlesyndication.com https://www.google-analytics.com https://www.googletagmanager.com;";
+
+function addSecurityHeaders(response, isHtml = false) {
+  const newResponse = new Response(response.body, response);
+  for (const [key, value] of Object.entries(BASE_SECURITY_HEADERS)) {
+    newResponse.headers.set(key, value);
+  }
+  if (isHtml) {
+    newResponse.headers.set('Content-Security-Policy', CSP_VALUE);
+  }
+  return newResponse;
+}
+
+function apiResponse(data, status = 200) {
+  const body = JSON.stringify(data);
+  const response = new Response(body, {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+  for (const [key, value] of Object.entries(BASE_SECURITY_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
+// --- Input Validation Helpers ---
+function validateUrlParams(url) {
+  for (const [, value] of url.searchParams) {
+    if (value && value.length > 2000) {
+      return 'URL parameter exceeds maximum allowed length.';
+    }
+  }
+  return null;
+}
+
+function validateDateFields(obj, label) {
+  if (typeof obj !== 'object' || obj === null) {
+    return `${label}: invalid data structure.`;
+  }
+  const year = Number(obj.year);
+  const month = Number(obj.month);
+  const day = Number(obj.day);
+  if (!Number.isFinite(year) || year < 1900 || year > 2100) {
+    return `${label}: year must be between 1900 and 2100.`;
+  }
+  if (!Number.isFinite(month) || month < 1 || month > 12) {
+    return `${label}: month must be between 1 and 12.`;
+  }
+  if (!Number.isFinite(day) || day < 1 || day > 31) {
+    return `${label}: day must be between 1 and 31.`;
+  }
+  return null;
+}
+
+// --- Core Business Logic (unchanged) ---
+
 async function callOpenAi(apiKey, messages) {
   const apiRequestBody = {
     model: 'gpt-4o-mini',
@@ -15,10 +113,14 @@ async function callOpenAi(apiKey, messages) {
     body: JSON.stringify(apiRequestBody)
   });
 
-  return new Response(response.body, {
+  const openAiResponse = new Response(response.body, {
     status: response.status,
     headers: { 'Content-Type': 'application/json' }
   });
+  for (const [key, value] of Object.entries(BASE_SECURITY_HEADERS)) {
+    openAiResponse.headers.set(key, value);
+  }
+  return openAiResponse;
 }
 
 async function handleYouTubeRequest(request, env) {
@@ -28,17 +130,17 @@ async function handleYouTubeRequest(request, env) {
   const region = request.cf?.country || 'US';
 
   if (!query) {
-    return new Response(JSON.stringify({ error: { message: 'Missing query parameter.' } }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ error: { message: 'Missing query parameter.' } }, 400);
+  }
+
+  // Input validation: limit query length
+  if (query.length > 200) {
+    return apiResponse({ error: { message: 'Query exceeds maximum length of 200 characters.' } }, 400);
   }
 
   if (!YOUTUBE_API_KEY) {
-    return new Response(JSON.stringify({ error: { message: 'Server configuration error: YOUTUBE_API_KEY is not set.' } }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('YOUTUBE_API_KEY is not set.');
+    return apiResponse({ error: { message: 'Internal server error.' } }, 500);
   }
 
   const apiUrl = new URL('https://www.googleapis.com/youtube/v3/search');
@@ -58,10 +160,8 @@ async function handleYouTubeRequest(request, env) {
   const data = await response.json();
 
   if (!response.ok) {
-    return new Response(JSON.stringify({ error: { message: data.error?.message || 'YouTube API error.' } }), {
-      status: response.status,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('YouTube API error:', data.error?.message || 'Unknown');
+    return apiResponse({ error: { message: 'YouTube search failed.' } }, response.status);
   }
 
   const rawItems = Array.isArray(data.items) ? data.items : [];
@@ -75,10 +175,7 @@ async function handleYouTubeRequest(request, env) {
     .filter(item => item.videoId);
 
   if (!items.length) {
-    return new Response(JSON.stringify({ error: { message: 'No results found.' } }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ error: { message: 'No results found.' } }, 404);
   }
 
   const idParam = items.map(item => item.videoId).join(',');
@@ -116,10 +213,7 @@ async function handleYouTubeRequest(request, env) {
     filteredItems = items;
   }
 
-  return new Response(JSON.stringify({ items: filteredItems }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse({ items: filteredItems }, 200);
 }
 
 function getSajuPrompt(sajuData, question) {
@@ -241,38 +335,68 @@ async function handleApiRequest(request, env) {
     const type = url.searchParams.get('type');
     const OPENAI_API_KEY = env.OPENAI_API_KEY;
 
+    // Validate URL param lengths
+    const paramError = validateUrlParams(url);
+    if (paramError) {
+      return apiResponse({ error: { message: paramError } }, 400);
+    }
+
     if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: { message: 'Server configuration error: OPENAI_API_KEY is not set.' } }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      console.error('OPENAI_API_KEY is not set.');
+      return apiResponse({ error: { message: 'Internal server error.' } }, 500);
     }
 
     let messages;
     if (type === 'saju') {
-      const sajuData = JSON.parse(url.searchParams.get('sajuData'));
-      const question = url.searchParams.get('question');
+      let sajuData;
+      try {
+        sajuData = JSON.parse(url.searchParams.get('sajuData'));
+      } catch (_e) {
+        return apiResponse({ error: { message: 'Invalid sajuData JSON.' } }, 400);
+      }
+
+      const dateError = validateDateFields(sajuData, 'sajuData');
+      if (dateError) {
+        return apiResponse({ error: { message: dateError } }, 400);
+      }
+
+      const question = sanitizeQuestion(url.searchParams.get('question'));
       messages = getSajuPrompt(sajuData, question);
+
     } else if (type === 'compat') {
-      const person1 = JSON.parse(url.searchParams.get('person1'));
-      const person2 = JSON.parse(url.searchParams.get('person2'));
-      const question = url.searchParams.get('question');
+      let person1, person2;
+      try {
+        person1 = JSON.parse(url.searchParams.get('person1'));
+      } catch (_e) {
+        return apiResponse({ error: { message: 'Invalid person1 JSON.' } }, 400);
+      }
+      try {
+        person2 = JSON.parse(url.searchParams.get('person2'));
+      } catch (_e) {
+        return apiResponse({ error: { message: 'Invalid person2 JSON.' } }, 400);
+      }
+
+      const p1Error = validateDateFields(person1, 'person1');
+      if (p1Error) {
+        return apiResponse({ error: { message: p1Error } }, 400);
+      }
+      const p2Error = validateDateFields(person2, 'person2');
+      if (p2Error) {
+        return apiResponse({ error: { message: p2Error } }, 400);
+      }
+
+      const question = sanitizeQuestion(url.searchParams.get('question'));
       messages = getCompatPrompt(person1, person2, question);
+
     } else {
-      return new Response(JSON.stringify({ error: { message: 'Invalid request type.' } }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return apiResponse({ error: { message: 'Invalid request type.' } }, 400);
     }
 
     return callOpenAi(OPENAI_API_KEY, messages);
 
   } catch (error) {
     console.error('Worker function error:', error);
-    return new Response(JSON.stringify({ error: { message: 'An internal server error occurred.' } }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ error: { message: 'An internal server error occurred.' } }, 500);
   }
 }
 
@@ -281,15 +405,23 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/')) {
+      // Rate limiting for API routes
+      const clientIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
+      if (!checkRateLimit(clientIp)) {
+        return apiResponse({ error: { message: 'Too many requests. Please try again later.' } }, 429);
+      }
+
       if (url.pathname === '/api/saju') {
         return handleApiRequest(request, env);
       }
       if (url.pathname === '/api/youtube') {
         return handleYouTubeRequest(request, env);
       }
-      return new Response('Not Found', { status: 404 });
+      return apiResponse({ error: { message: 'Not Found' } }, 404);
     }
 
-    return env.ASSETS.fetch(request);
+    // Static assets - add security headers including CSP
+    const assetResponse = await env.ASSETS.fetch(request);
+    return addSecurityHeaders(assetResponse, true);
   },
 };

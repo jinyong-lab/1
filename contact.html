@@ -2,6 +2,11 @@
 <html lang="ko" data-theme="dark">
 <head>
     <meta charset="UTF-8">
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA4_ID"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','YOUR_GA4_ID');</script>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_AD_CLIENT_ID" crossorigin="anonymous"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>문의하기</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,7 +50,18 @@
             </div>
             <button type="submit">전송하기</button>
         </form>
-        <a href="index.html" class="home-link">🔮 홈으로 돌아가기</a>
+        <nav style="text-align:center;margin-top:30px;font-size:14px;">
+            <a href="/" style="color:var(--muted);text-decoration:none;">홈</a> |
+            <a href="/about.html" style="color:var(--muted);text-decoration:none;">사이트 소개</a> |
+            <a href="/guide.html" style="color:var(--muted);text-decoration:none;">사주란?</a> |
+            <a href="/privacy-policy.html" style="color:var(--muted);text-decoration:none;">개인정보처리방침</a>
+        </nav>
+
+        <!-- Ad -->
+        <div style="overflow:hidden;border-radius:12px;border:1px dashed rgba(255,255,255,.10);padding:4px;margin:20px 0;text-align:center;min-height:90px;">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="AD_SLOT_SUB" data-ad-format="auto" data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
+        </div>
     </div>
 </body>
 </html>

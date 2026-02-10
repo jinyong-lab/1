@@ -15,6 +15,50 @@ const themeToggle = document.getElementById('themeToggle');
 
 let currentQuery = 'korean ballad playlist';
 
+// --- Theme Persistence ---
+(function() {
+  const saved = localStorage.getItem('saju-theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+})();
+
+if (document.documentElement.dataset.theme === 'light') {
+  const tBtn = document.getElementById('themeToggle');
+  if (tBtn) tBtn.textContent = '다크 모드';
+}
+
+// --- GA4 Event Tracking ---
+function trackEvent(name, params) {
+  if (typeof gtag === 'function') gtag('event', name, params || {});
+}
+
+// --- Toast Notifications ---
+function showToast(message, type = 'error', duration = 3500) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.className = 'toast toast-' + type + ' visible';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.classList.remove('visible'); }, duration);
+}
+
+// --- Social Sharing ---
+async function handleShare() {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: '사주로 보는 나의 운명', text: 'AI가 분석한 나의 사주 결과를 확인해보세요!', url: window.location.href });
+      trackEvent('share', { method: 'native' });
+    } catch (_e) { /* user cancelled */ }
+  } else {
+    handleCopyLink();
+  }
+}
+function handleCopyLink() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    showToast('링크가 복사되었습니다!', 'success');
+    trackEvent('share', { method: 'clipboard' });
+  }).catch(() => showToast('링크 복사에 실패했습니다.', 'error'));
+}
+
 function updateDays(year, month, daySelect) {
   if (!daySelect) return;
   daySelect.innerHTML = '<option value="">선택</option>';
@@ -63,12 +107,15 @@ function setupEventListeners() {
       btn.classList.add('active');
       document.querySelector('.tab-pane.active').classList.remove('active');
       document.getElementById(btn.dataset.tab).classList.add('active');
+      // Update ARIA
+      document.querySelectorAll('.tab-btn').forEach(b => b.setAttribute('aria-selected', b === btn ? 'true' : 'false'));
     });
   });
 
   themeToggle.addEventListener('click', () => {
     const newTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = newTheme;
+    localStorage.setItem('saju-theme', newTheme);
     setThemeLabel(newTheme);
   });
 
@@ -159,6 +206,7 @@ function ensureIframePlayer(playerContainer, videoId) {
     renderPlayerPlaceholder(playerContainer, '추천 영상을 불러오지 못했습니다.');
     return;
   }
+  trackEvent('song_play', { event_category: 'engagement' });
   if (!playerIframe || !playerContainer.contains(playerIframe)) {
     createPlayerIframe(playerContainer, videoId);
     return;
@@ -251,6 +299,7 @@ function showError(message, boxId) {
   const errBox = document.getElementById(boxId);
   errBox.textContent = message;
   errBox.style.display = 'block';
+  showToast(message, 'error');
 }
 
 function escapeHtml(value) {
@@ -1003,7 +1052,22 @@ document.getElementById('btnGo').addEventListener('click', async () => {
 
   const resultDiv = document.getElementById('result');
   resultDiv.style.display = 'block';
-  resultDiv.innerHTML = '<div class="section"><p class="loading-text">사주를 분석하고 있습니다<span class="loading-dots"></span></p></div>';
+  resultDiv.innerHTML = `
+    <div class="section result-shell fade-in" style="padding:24px;">
+      <div class="skeleton" style="height:24px;width:200px;margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:14px;width:80%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:14px;width:60%;margin-bottom:20px;"></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div class="skeleton" style="height:120px;"></div>
+        <div class="skeleton" style="height:120px;"></div>
+        <div class="skeleton" style="height:120px;"></div>
+        <div class="skeleton" style="height:120px;"></div>
+      </div>
+      <div class="skeleton" style="height:14px;width:70%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:200px;margin-bottom:14px;"></div>
+      <p class="loading-text">사주를 분석하고 있습니다<span class="loading-dots"></span></p>
+    </div>
+  `;
   resultDiv.scrollIntoView({ behavior: 'smooth' });
 
   resetPlayer();
@@ -1054,6 +1118,10 @@ document.getElementById('btnGo').addEventListener('click', async () => {
         ${questionChip}
       </div>
       ${buildSummaryHtml(analysisSummary)}
+      <div class="share-actions">
+        <button class="share-btn" onclick="handleShare()">공유하기</button>
+        <button class="share-btn" onclick="handleCopyLink()">링크 복사</button>
+      </div>
       ${buildSajuHero(sajuElement, elementCounts)}
       <div class="pillar-slot" data-role="pillar-slot"></div>
       <div class="element-slot" data-role="element-slot"></div>
@@ -1083,6 +1151,10 @@ document.getElementById('btnGo').addEventListener('click', async () => {
         <p style="font-size:12px; text-align:center; color: var(--muted); margin-top:10px;">'${sajuElement}' 기운에 어울리는 플레이리스트를 자동으로 재생합니다.</p>
       </div>
     </div>
+    <!-- Ad: In-Content -->
+    <div class="ad-container">
+      <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="AD_SLOT_CONTENT" data-ad-format="auto" data-full-width-responsive="true"></ins>
+    </div>
   `;
 
   const analysisBody = resultDiv.querySelector('[data-role="analysis-body"]');
@@ -1110,6 +1182,10 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   }
 
   getSongs(sajuElement, resultDiv);
+
+  trackEvent('saju_analysis_complete', { event_category: 'engagement', element: sajuElement || 'unknown' });
+
+  try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
 });
 
 document.getElementById('btnCompat').addEventListener('click', async () => {
@@ -1137,7 +1213,16 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
 
   const resultDiv = document.getElementById('compatResult');
   resultDiv.style.display = 'block';
-  resultDiv.innerHTML = '<div class="section"><p class="loading-text">궁합을 분석하고 있습니다<span class="loading-dots"></span></p></div>';
+  resultDiv.innerHTML = `
+    <div class="section result-shell fade-in" style="padding:24px;">
+      <div class="skeleton" style="height:24px;width:200px;margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:14px;width:80%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:200px;margin-bottom:14px;"></div>
+      <div class="skeleton" style="height:14px;width:60%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:160px;"></div>
+      <p class="loading-text">궁합을 분석하고 있습니다<span class="loading-dots"></span></p>
+    </div>
+  `;
   resultDiv.scrollIntoView({ behavior: 'smooth' });
 
   const aiPayload = {
@@ -1178,6 +1263,10 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
       </div>
       <div class="analysis-body" data-role="analysis-body"></div>
     </div>
+    <!-- Ad: In-Content -->
+    <div class="ad-container">
+      <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="AD_SLOT_CONTENT" data-ad-format="auto" data-full-width-responsive="true"></ins>
+    </div>
   `;
 
   const analysisBody = resultDiv.querySelector('[data-role="analysis-body"]');
@@ -1186,6 +1275,10 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
     enhanceCallouts(analysisBody);
     applyAccordion(analysisBody);
   }
+
+  trackEvent('compat_analysis_complete', { event_category: 'engagement' });
+
+  try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
 });
 
 const lastModified = document.getElementById('lastModified');
