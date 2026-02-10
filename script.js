@@ -18,7 +18,7 @@ let currentQuery = 'korean ballad playlist';
 // --- Theme Persistence ---
 (function() {
   const saved = localStorage.getItem('saju-theme');
-  if (saved) document.documentElement.dataset.theme = saved;
+  if (['light', 'dark'].includes(saved)) document.documentElement.dataset.theme = saved;
 })();
 
 if (document.documentElement.dataset.theme === 'light') {
@@ -202,7 +202,7 @@ function createPlayerIframe(playerContainer, videoId) {
 
 function ensureIframePlayer(playerContainer, videoId) {
   if (!playerContainer) return;
-  if (!videoId) {
+  if (!videoId || !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
     renderPlayerPlaceholder(playerContainer, '추천 영상을 불러오지 못했습니다.');
     return;
   }
@@ -433,6 +433,10 @@ async function getAiResponse(payload) {
     if (!response.ok) {
       console.error('API Error:', data);
       return `**오류 발생:** ${data.error?.message || 'API 응답을 받는 중 오류가 발생했습니다.'}`;
+    }
+    if (!data?.choices?.[0]?.message?.content) {
+      console.error('Invalid API response:', data);
+      return '**오류 발생:** AI 분석 결과를 받지 못했습니다. 다시 시도해주세요.';
     }
     return data.choices[0].message.content;
   } catch (error) {
@@ -1119,8 +1123,8 @@ document.getElementById('btnGo').addEventListener('click', async () => {
       </div>
       ${buildSummaryHtml(analysisSummary)}
       <div class="share-actions">
-        <button class="share-btn" onclick="handleShare()">공유하기</button>
-        <button class="share-btn" onclick="handleCopyLink()">링크 복사</button>
+        <button class="share-btn" data-action="share">공유하기</button>
+        <button class="share-btn" data-action="copy-link">링크 복사</button>
       </div>
       ${buildSajuHero(sajuElement, elementCounts)}
       <div class="pillar-slot" data-role="pillar-slot"></div>
@@ -1180,6 +1184,13 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => getSongs(sajuElement, resultDiv));
   }
+
+  resultDiv.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.action === 'share') handleShare();
+      else if (btn.dataset.action === 'copy-link') handleCopyLink();
+    });
+  });
 
   getSongs(sajuElement, resultDiv);
 
