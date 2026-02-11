@@ -309,11 +309,13 @@ async function getSongs(sajuElement, resultDiv) {
   }
 
   const query = elementQueries[sajuElement] || 'korean ballad playlist';
+  console.log('🎵 YouTube 검색 쿼리:', query, '(오행:', sajuElement, ')');
   currentQuery = query;
 
   let videoData = null;
   try {
     videoData = await fetchYouTubeVideos(query);
+    console.log('🎵 YouTube API 응답:', videoData);
   } catch (error) {
     console.error('YouTube fetch error:', error);
   }
@@ -322,16 +324,20 @@ async function getSongs(sajuElement, resultDiv) {
     ? videoData.items
     : (videoData?.videoId ? [videoData] : []);
   const primaryVideo = videoItems[0];
+  console.log('🎵 비디오 아이템 개수:', videoItems.length, '첫 번째:', primaryVideo);
 
   renderSongList(videoItems, resultDiv, playerContainer);
 
   if (musicMeta) {
     if (videoData?.error) {
+      console.error('❌ YouTube 에러:', videoData.error);
       musicMeta.textContent = `추천 정보를 불러오지 못했습니다. (${videoData.error})`;
     } else if (primaryVideo?.title) {
       const channelText = primaryVideo.channelTitle ? ` · ${primaryVideo.channelTitle}` : '';
+      console.log('✅ 음악 추천 성공:', primaryVideo.title);
       musicMeta.textContent = `추천 영상: ${primaryVideo.title}${channelText}`;
     } else {
+      console.warn('⚠️ 비디오 없음. videoData:', videoData);
       musicMeta.textContent = '추천 영상을 찾지 못했습니다. 다시 시도해주세요.';
     }
   }
