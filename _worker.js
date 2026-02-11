@@ -185,13 +185,21 @@ function calculateAccurateSaju(sajuData) {
 
     // Extract pillars from result (format: yearPillar, monthPillar, dayPillar, hourPillar)
     // Each pillar is a string like "甲子"
+    const HANJA_TO_HANGUL = {
+      '甲': '갑', '乙': '을', '丙': '병', '丁': '정', '戊': '무',
+      '己': '기', '庚': '경', '辛': '신', '壬': '임', '癸': '계',
+      '子': '자', '丑': '축', '寅': '인', '卯': '묘', '辰': '진', '巳': '사',
+      '午': '오', '未': '미', '申': '신', '酉': '유', '戌': '술', '亥': '해'
+    };
     const extractPillar = (pillarStr) => {
       if (!pillarStr || pillarStr.length !== 2) return null;
       const stem = pillarStr[0];
       const branch = pillarStr[1];
       const stemElement = STEM_ELEMENTS[stem] || '?';
       const branchElement = BRANCH_ELEMENTS[branch] || '?';
-      return { stem, branch, stemElement, branchElement };
+      const hangulStem = HANJA_TO_HANGUL[stem] || '';
+      const hangulBranch = HANJA_TO_HANGUL[branch] || '';
+      return { stem, branch, hangulStem, hangulBranch, stemElement, branchElement };
     };
 
     const yearPillar = extractPillar(result.yearPillarHanja);
@@ -855,6 +863,19 @@ async function handleApiRequest(request, env) {
 
       const question = sanitizeQuestion(url.searchParams.get('question'));
       messages = getSajuPrompt(sajuData, question);
+
+      // Calculate saju data for structured response
+      const calculatedSaju = calculateAccurateSaju(sajuData);
+
+      // Call OpenAI and extract content
+      const aiResult = await callOpenAi(OPENAI_API_KEY, messages);
+      const aiJson = await aiResult.json();
+      const content = aiJson.choices?.[0]?.message?.content || '';
+
+      return apiResponse({
+        content: content,
+        calculatedSaju: calculatedSaju
+      }, 200);
 
     } else if (type === 'compat') {
       let person1, person2;

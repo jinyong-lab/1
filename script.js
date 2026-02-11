@@ -16,6 +16,77 @@ const themeToggle = document.getElementById('themeToggle');
 let currentQuery = 'korean ballad playlist';
 let currentSajuData = null; // Store saju data for fortune tabs
 
+const SAJU_KEYWORDS = {
+  '도화살': '이성에게 매력적이고 인기가 많은 살. 연애운·대인관계에 영향',
+  '역마살': '이동과 변화가 많은 살. 여행·이직·해외 진출의 기운',
+  '백호살': '강렬한 기운의 살. 리더십과 추진력이 뛰어남',
+  '화개살': '예술적 감성과 종교적 영성이 깊은 살',
+  '과숙살': '외로움과 고독의 살. 독립심이 강함',
+  '현침살': '날카로운 지성의 살. 전문직·기술직에 유리',
+  '겁살': '급한 성격과 경쟁심의 살. 도전정신이 강함',
+  '원진살': '갈등과 반발의 살. 관계에서 밀당이 있음',
+  '귀문관살': '영적 감수성이 높은 살. 직감이 뛰어남',
+  '양인살': '결단력과 추진력의 살. 강한 의지를 가짐',
+  '천을귀인': '하늘이 내린 최고 귀인. 위기에서 도움을 받는 복',
+  '천덕귀인': '하늘의 덕을 가진 귀인. 자연스럽게 복이 따름',
+  '월덕귀인': '달의 덕을 가진 귀인. 주변의 도움과 인덕이 풍부',
+  '문창귀인': '학문과 지혜의 귀인. 공부·시험·자격증에 유리',
+  '학당귀인': '배움의 귀인. 학업과 연구에 탁월한 능력',
+  '금여귀인': '재물의 귀인. 경제적으로 안정되는 복',
+  '천관귀인': '관직의 귀인. 승진·명예에 유리한 기운',
+  '태극귀인': '큰 복의 귀인. 인생 전반에 걸친 행운',
+  '식신': '먹을 복과 표현력의 신. 요리·예술에 재능',
+  '상관': '창의력과 반항심의 신. 자유로운 영혼',
+  '편관': '권력과 통제의 신. 리더십이 강함',
+  '정관': '규율과 책임의 신. 공무원·관리직에 적합',
+  '편재': '투기적 재물의 신. 사업·투자에 기질',
+  '정재': '안정적 재물의 신. 저축·월급에 유리',
+  '편인': '독창적 학문의 신. 비전통적 공부에 재능',
+  '정인': '정통 학문의 신. 자격증·학위에 유리',
+  '비겁': '형제·경쟁의 신. 독립심과 자존심이 강함',
+  '겁재': '경쟁과 도전의 신. 승부욕이 강함'
+};
+
+function injectKeywordTooltips(container) {
+  if (!container) return;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  const keywords = Object.keys(SAJU_KEYWORDS).sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(`(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
+
+  textNodes.forEach(node => {
+    if (!pattern.test(node.textContent)) return;
+    if (node.parentElement?.classList.contains('keyword-tooltip')) return;
+
+    pattern.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+    let match;
+
+    while ((match = pattern.exec(node.textContent)) !== null) {
+      if (match.index > lastIndex) {
+        frag.appendChild(document.createTextNode(node.textContent.slice(lastIndex, match.index)));
+      }
+      const span = document.createElement('span');
+      span.className = 'keyword-tooltip';
+      span.setAttribute('data-tip', SAJU_KEYWORDS[match[1]]);
+      span.textContent = match[1];
+      frag.appendChild(span);
+      lastIndex = pattern.lastIndex;
+    }
+
+    if (lastIndex < node.textContent.length) {
+      frag.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
+    }
+
+    if (frag.childNodes.length > 0) {
+      node.parentNode.replaceChild(frag, node);
+    }
+  });
+}
+
 // --- Theme Persistence ---
 (function() {
   const saved = localStorage.getItem('saju-theme');
@@ -228,7 +299,8 @@ function getEmbedUrl(videoId) {
     autoplay: '1',
     rel: '0',
     modestbranding: '1',
-    playsinline: '1'
+    playsinline: '1',
+    enablejsapi: '1'
   });
   if (window.location && window.location.origin) {
     params.set('origin', window.location.origin);
@@ -284,29 +356,79 @@ function renderSongList(videos, resultDiv, playerContainer) {
     return;
   }
 
-  const video = videos[0];
-  const title = escapeHtml(video.title || '제목 없음');
-  const channel = escapeHtml(video.channelTitle || '');
-  const videoId = video.videoId || '';
-  const watchUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : '#';
-  list.innerHTML = `
-    <li>
-      <button class="play-btn" data-video-id="${videoId}">재생</button>
-      <div class="song-info">
-        <span class="song-title-text">${title}</span>
-        <span class="song-channel">${channel}</span>
-      </div>
-      <a class="yt-link" href="${watchUrl}" target="_blank" rel="noopener">유튜브</a>
-    </li>
-  `;
+  const songVideos = videos.slice(0, 5);
+  list.innerHTML = songVideos.map((video, idx) => {
+    const title = escapeHtml(video.title || '제목 없음');
+    const channel = escapeHtml(video.channelTitle || '');
+    const videoId = video.videoId || '';
+    const watchUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : '#';
+    return `
+      <li class="${idx === 0 ? 'now-playing' : ''}" data-song-index="${idx}">
+        <button class="play-btn" data-video-id="${videoId}" data-index="${idx}">
+          ${idx === 0 ? '▶' : (idx + 1)}
+        </button>
+        <div class="song-info">
+          <span class="song-title-text">${title}</span>
+          <span class="song-channel">${channel}</span>
+        </div>
+        <a class="yt-link" href="${watchUrl}" target="_blank" rel="noopener">유�브</a>
+      </li>
+    `;
+  }).join('');
+
+  let currentIndex = 0;
+
+  function playSong(index) {
+    if (index < 0 || index >= songVideos.length) return;
+    currentIndex = index;
+    const vid = songVideos[index];
+    if (!vid.videoId) return;
+    ensureIframePlayer(playerContainer, vid.videoId);
+    list.querySelectorAll('li').forEach((li, i) => {
+      li.classList.toggle('now-playing', i === index);
+      const btn = li.querySelector('.play-btn');
+      if (btn) btn.textContent = i === index ? '▶' : String(i + 1);
+    });
+  }
 
   list.onclick = event => {
     const button = event.target.closest('[data-video-id]');
     if (!button) return;
-    const videoId = button.dataset.videoId;
-    if (!videoId) return;
-    ensureIframePlayer(playerContainer, videoId);
+    const index = parseInt(button.dataset.index, 10);
+    if (!isNaN(index)) playSong(index);
   };
+
+  // Auto-advance: check every 5 seconds if iframe has ended
+  // YouTube iframe API postMessage approach
+  let autoAdvanceTimer = null;
+  function startAutoAdvance() {
+    if (autoAdvanceTimer) clearInterval(autoAdvanceTimer);
+    autoAdvanceTimer = setInterval(() => {
+      if (!playerIframe) return;
+      try {
+        // Request player state via postMessage
+        playerIframe.contentWindow.postMessage('{"event":"command","func":"getPlayerState","args":""}', '*');
+      } catch (e) { /* cross-origin, expected */ }
+    }, 3000);
+  }
+
+  window.addEventListener('message', event => {
+    try {
+      const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+      // YouTube player state 0 = ended
+      if (data.event === 'onStateChange' && data.info === 0) {
+        if (currentIndex < songVideos.length - 1) {
+          playSong(currentIndex + 1);
+        }
+      }
+    } catch (e) { /* ignore non-JSON messages */ }
+  });
+
+  // Play first song
+  if (songVideos[0]?.videoId) {
+    playSong(0);
+    startAutoAdvance();
+  }
 }
 
 async function getSongs(sajuElement, resultDiv) {
@@ -505,7 +627,14 @@ async function getAiResponse(payload) {
       console.error('Invalid API response:', data);
       return '**오류 발생:** AI 분석 결과를 받지 못했습니다. 다시 시도해주세요.';
     }
-    return data.choices[0].message.content;
+    const content = data.choices[0].message.content;
+
+    // For saju type, return structured response if available
+    if (payload.type === 'saju' && data.calculatedSaju) {
+      return { content, calculatedSaju: data.calculatedSaju };
+    }
+
+    return content;
   } catch (error) {
     console.error('Error calling worker function:', error);
     if (error instanceof SyntaxError) {
@@ -836,6 +965,25 @@ function injectPillarHanja(md) {
   }).join('\n');
 }
 
+function buildPillarsFromServer(saju) {
+  if (!saju) return [];
+  const labels = [
+    { key: 'yearPillar', label: '년주' },
+    { key: 'monthPillar', label: '월주' },
+    { key: 'dayPillar', label: '일주' },
+    { key: 'hourPillar', label: '시주' }
+  ];
+  return labels.map(({ key, label }) => {
+    const pillar = saju[key];
+    if (!pillar || !pillar.stem || !pillar.branch) return null;
+    return {
+      label,
+      hanja: pillar.stem + pillar.branch,
+      hangul: (pillar.hangulStem || '') + (pillar.hangulBranch || '')
+    };
+  }).filter(Boolean);
+}
+
 function extractPillars(md) {
   if (!md) return [];
   const ganToHanja = {
@@ -1160,14 +1308,23 @@ document.getElementById('btnGo').addEventListener('click', async () => {
     question: userQuestion
   };
 
-  const aiResponse = await getAiResponse(aiPayload);
+  const rawResponse = await getAiResponse(aiPayload);
+  let aiResponse, serverSaju;
+  if (rawResponse && typeof rawResponse === 'object' && rawResponse.content) {
+    aiResponse = rawResponse.content;
+    serverSaju = rawResponse.calculatedSaju || null;
+  } else {
+    aiResponse = rawResponse;
+    serverSaju = null;
+  }
+
   const analysisSummary = parseSummary(aiResponse);
   const sanitized = sanitizeAiResponse(aiResponse);
   const cleanedResponse = injectPillarHanja(sanitized.cleaned);
-  const pillars = extractPillars(cleanedResponse);
-  const elementCounts = getElementCounts(cleanedResponse, pillars);
+  const pillars = serverSaju ? buildPillarsFromServer(serverSaju) : extractPillars(cleanedResponse);
+  const elementCounts = serverSaju?.elements || getElementCounts(cleanedResponse, pillars);
 
-  const yinYangData = calculateYinYang(pillars);
+  const yinYangData = serverSaju?.yinYang || calculateYinYang(pillars);
   const yangCount = yinYangData.yang;
   const yinCount = yinYangData.yin;
   const total = yangCount + yinCount || 1;
@@ -1301,6 +1458,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
     analysisBody.innerHTML = renderMarkdownSafe(cleanedResponse);
     enhanceCallouts(analysisBody);
     applyAccordion(analysisBody);
+    injectKeywordTooltips(analysisBody);
   }
 
   const pillarSlot = resultDiv.querySelector('[data-role="pillar-slot"]');
@@ -1425,6 +1583,7 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
     analysisBody.innerHTML = renderMarkdownSafe(cleanedResponse);
     enhanceCallouts(analysisBody);
     applyAccordion(analysisBody);
+    injectKeywordTooltips(analysisBody);
   }
 
   trackEvent('compat_analysis_complete', { event_category: 'engagement' });
@@ -1441,7 +1600,7 @@ async function loadFortuneInResult(tabType, resultDiv) {
   if (fortuneTabCache[tabType] && typeof fortuneTabCache[tabType] === 'string') {
     container.innerHTML = fortuneTabCache[tabType];
     const body = container.querySelector('.analysis-body');
-    if (body) { enhanceCallouts(body); applyAccordion(body); }
+    if (body) { enhanceCallouts(body); applyAccordion(body); injectKeywordTooltips(body); }
     return;
   }
 
@@ -1470,6 +1629,7 @@ async function loadFortuneInResult(tabType, resultDiv) {
     if (body) {
       enhanceCallouts(body);
       applyAccordion(body);
+      injectKeywordTooltips(body);
     }
 
     // 캐시 저장
