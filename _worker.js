@@ -29,6 +29,12 @@ const RATE_WINDOW = 60000; // 1 minute in ms
 
 function checkRateLimit(ip) {
   const now = Date.now();
+  // Inline cleanup: remove expired entries on each check
+  if (rateLimitMap.size > 100) {
+    for (const [key, rec] of rateLimitMap) {
+      if (now - rec.start > RATE_WINDOW) rateLimitMap.delete(key);
+    }
+  }
   const record = rateLimitMap.get(ip);
   if (!record || now - record.start > RATE_WINDOW) {
     rateLimitMap.set(ip, { start: now, count: 1 });
@@ -53,13 +59,6 @@ function parseDuration(duration) {
   return totalSeconds;
 }
 
-// Periodic cleanup to prevent memory leak (every 5 minutes)
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, record] of rateLimitMap) {
-    if (now - record.start > RATE_WINDOW) rateLimitMap.delete(ip);
-  }
-}, 300000);
 
 // --- Prompt Injection Sanitization ---
 function sanitizeQuestion(text) {
