@@ -1137,7 +1137,11 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   const userQuestion = document.getElementById('bQ').value || '';
 
   if (!sajuData.year || !sajuData.month || !sajuData.day || !sajuData.time) {
-    showError('모든 정보를 입력해주세요.', 'errBox');
+    showError('생년월일과 시간을 모두 입력해주세요.', 'errBox');
+    return;
+  }
+  if (!sajuData.place || !sajuData.place.trim()) {
+    showError('출생지를 입력해주세요. (예: 서울, 부산, 인천)', 'errBox');
     return;
   }
 

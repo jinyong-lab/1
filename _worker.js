@@ -287,17 +287,17 @@ async function handleYouTubeRequest(request, env) {
   }
 
   const apiUrl = new URL('https://www.googleapis.com/youtube/v3/search');
-  // Add Korean music preference to query
-  const enhancedQuery = `${query} MV 뮤직비디오`;
+  const enhancedQuery = `${query} MV`;
   apiUrl.search = new URLSearchParams({
     part: 'snippet',
     type: 'video',
-    maxResults: '20', // Increased to ensure sufficient results after filtering
+    videoCategoryId: '10',
+    maxResults: '20',
     q: enhancedQuery,
     safeSearch: 'moderate',
     videoEmbeddable: 'true',
     videoSyndicated: 'true',
-    regionCode: 'KR', // Prefer Korean region
+    regionCode: 'KR',
     key: YOUTUBE_API_KEY,
   }).toString();
 
@@ -332,7 +332,9 @@ async function handleYouTubeRequest(request, env) {
         '연속듣기', '플레이리스트',
         '1시간', '2시간', '3시간', '4시간', '10시간',
         'playlist', 'hour', '연속재생', '모아듣기',
-        '논스톱', 'nonstop'
+        '논스톱', 'nonstop',
+        '#shorts', 'shorts', '#쇼츠', '쇼츠', 'tiktok',
+        'cover', '커버', 'reaction', '리액션'
       ];
       return !excludeKeywords.some(keyword => title.includes(keyword));
     });
@@ -370,8 +372,8 @@ async function handleYouTubeRequest(request, env) {
         }
         if (!detail.embeddable) return false;
         if (Array.isArray(detail.blocked) && detail.blocked.includes(region)) return false;
-        // Filter out videos longer than 10 minutes (600 seconds) - relaxed from 5 minutes
-        if (detail.duration > 600) {
+        // Filter: min 60s (exclude Shorts), max 600s (exclude compilations)
+        if (detail.duration < 60 || detail.duration > 600) {
           return false;
         }
         return true;
