@@ -5,8 +5,6 @@
   <!-- Google Analytics 4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA4_ID"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','YOUR_GA4_ID');</script>
-  <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_AD_CLIENT_ID" crossorigin="anonymous"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="AI 기반 사주 분석과 맞춤 음악 추천. 생년월일로 운세, 궁합, 오행을 분석하고 당신에게 어울리는 음악을 찾아보세요." />
   <meta name="keywords" content="사주, 사주분석, 운세, 궁합, 오행, 음악추천, AI운세" />
@@ -53,11 +51,12 @@
     <button class="theme-toggle" id="themeToggle">라이트 모드</button>
   </div>
   <div class="subtitle">AI가 분석하는 사주 리딩과 당신에게 어울리는 음악을 찾아보세요</div>
-  <!-- Ad: Top Banner -->
-  <div class="ad-container">
-    <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="AD_SLOT_TOP" data-ad-format="auto" data-full-width-responsive="true"></ins>
-    <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
+  <!-- 메인 탭 -->
+  <div class="main-tabs" role="tablist" aria-label="메인 메뉴">
+    <button class="main-tab-btn active" data-main-tab="mainSaju" role="tab" aria-selected="true">사주 분석</button>
+    <button class="main-tab-btn" data-main-tab="mainCompat" role="tab" aria-selected="false">궁합 분석</button>
   </div>
+  <div class="main-tab-pane active" id="mainSaju">
   <!-- 기본 사주 입력 폼 (항상 보임) -->
   <div class="main-input-section">
     <div class="form-grid">
@@ -107,9 +106,10 @@
       <div id="wealthResult" class="fortune-detail"></div>
     </div>
   </div>
+  </div>
 
-  <!-- 궁합 분석 별도 섹션 -->
-  <div id="compatSection" style="margin-top: 30px;">
+  <!-- 궁합 분석 탭 -->
+  <div class="main-tab-pane" id="mainCompat" style="display:none;">
     <div class="section result-shell fade-in">
       <div class="analysis-header">
         <div>
@@ -145,11 +145,6 @@
     </div>
   </div>
 </div>
-  <!-- Ad: Bottom -->
-  <div class="ad-container" style="max-width:880px;margin:16px auto;">
-    <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="AD_SLOT_BOTTOM" data-ad-format="autorelaxed"></ins>
-    <script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>
-  </div>
   <footer>
     <p>&copy; 2026 사주로 보는 나의 운명. All rights reserved.</p>
     <nav>

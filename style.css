@@ -221,6 +221,57 @@
       line-height: 1.6;
       letter-spacing: 0.01em;
     }
+    .main-tabs{
+      display:flex;
+      gap:8px;
+      margin-bottom:24px;
+      padding:4px;
+      background:var(--input-bg);
+      border-radius:16px;
+      border:1px solid var(--line);
+    }
+    .main-tab-btn{
+      flex:1;
+      border:none;
+      background:none;
+      color:var(--muted);
+      font-size:15px;
+      font-weight:700;
+      padding:14px 20px;
+      cursor:pointer;
+      border-radius:12px;
+      transition:all .3s ease;
+      font-family:var(--font-sans);
+      width:auto;
+      margin-top:0;
+      box-shadow:none;
+      text-shadow:none;
+    }
+    .main-tab-btn:hover{
+      color:var(--text);
+      background:rgba(124,102,217,0.08);
+      filter:none;
+      transform:none;
+      box-shadow:none;
+    }
+    .main-tab-btn.active{
+      background:linear-gradient(135deg, var(--accent-1), var(--accent-3));
+      color:#fff;
+      box-shadow:0 4px 12px rgba(124,102,217,0.3);
+      filter:none;
+      transform:none;
+    }
+    .main-tab-btn.active:hover{
+      filter:brightness(1.1);
+      transform:none;
+      box-shadow:0 4px 12px rgba(124,102,217,0.3);
+    }
+    .main-tab-btn::before{
+      display:none;
+    }
+    .main-tab-pane{
+      animation:fadeInTab 0.4s ease;
+    }
     .tabs{
       display:flex;
       gap:6px;
@@ -1656,23 +1707,6 @@
     .fade-in:nth-child(3) { animation-delay: 0.15s; }
     .fade-in:nth-child(4) { animation-delay: 0.2s; }
     .fade-in:nth-child(5) { animation-delay: 0.25s; }
-    .ad-container{
-      overflow:hidden;
-      border-radius:16px;
-      background:var(--card);
-      border:1px solid var(--line);
-      padding:16px;
-      margin:20px auto;
-      text-align:center;
-      min-height:100px;
-      max-width:900px;
-      box-shadow:0 8px 20px rgba(0,0,0,0.08);
-      transition: all 0.3s ease;
-    }
-    .ad-container:hover {
-      box-shadow:0 12px 28px rgba(0,0,0,0.12);
-    }
-    .ad-container ins{display:block}
     .skeleton{background:linear-gradient(90deg,var(--card) 25%,rgba(255,255,255,.08) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:12px}
     @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
     .toast{

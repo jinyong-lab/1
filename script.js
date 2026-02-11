@@ -102,6 +102,28 @@ function setupEventListeners() {
   updateDays(null, null, cD1);
   updateDays(null, null, cD2);
 
+  // 메인 탭 (사주/궁합) 전환
+  document.querySelectorAll('.main-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.main-tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+
+      document.querySelectorAll('.main-tab-pane').forEach(p => {
+        p.style.display = 'none';
+        p.classList.remove('active');
+      });
+      const target = document.getElementById(btn.dataset.mainTab);
+      if (target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+      }
+    });
+  });
+
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelector('.tab-btn.active').classList.remove('active');
@@ -1304,10 +1326,6 @@ document.getElementById('btnGo').addEventListener('click', async () => {
         <p style="font-size:12px; text-align:center; color: var(--muted); margin-top:10px;">'${escapeHtml(sajuElement)}' 기운에 어울리는 플레이리스트를 자동으로 재생합니다.</p>
       </div>
     </div>
-    <!-- Ad: In-Content -->
-    <div class="ad-container">
-      <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="AD_SLOT_CONTENT" data-ad-format="auto" data-full-width-responsive="true"></ins>
-    </div>
   `;
 
   const analysisBody = resultDiv.querySelector('[data-role="analysis-body"]');
@@ -1364,8 +1382,6 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   }, 500);
 
   trackEvent('saju_analysis_complete', { event_category: 'engagement', element: sajuElement || 'unknown' });
-
-  try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
 });
 
 document.getElementById('btnCompat').addEventListener('click', async () => {
@@ -1440,10 +1456,6 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
       </div>
       <div class="analysis-body" data-role="analysis-body"></div>
     </div>
-    <!-- Ad: In-Content -->
-    <div class="ad-container">
-      <ins class="adsbygoogle" style="display:block" data-ad-client="YOUR_AD_CLIENT_ID" data-ad-slot="AD_SLOT_CONTENT" data-ad-format="auto" data-full-width-responsive="true"></ins>
-    </div>
   `;
 
   const analysisBody = resultDiv.querySelector('[data-role="analysis-body"]');
@@ -1454,8 +1466,6 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
   }
 
   trackEvent('compat_analysis_complete', { event_category: 'engagement' });
-
-  try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
 });
 
 // --- Fortune Tab Handlers ---
