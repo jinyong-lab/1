@@ -116,7 +116,7 @@
       backdrop-filter: blur(20px);
       transition:background .4s ease, border .4s ease, box-shadow .5s ease, transform .3s ease;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
     }
     .card::before {
       content: "";
@@ -937,31 +937,38 @@
       border-color:rgba(76,201,240,0.7);
       transform:translateY(-6px) scale(1.02);
     }
-    .element-photo{
-      height:90px;
-      border-radius:14px;
-      background-image: var(--el-photo), var(--hanja-pattern);
-      background-size: cover, 160px;
-      background-position: center, center;
-      background-repeat: no-repeat, repeat;
-      background-blend-mode: overlay;
-      margin-bottom:10px;
-      position:relative;
-      overflow:hidden;
+    .element-hanja {
+      height: 90px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
       transition: transform 0.3s ease;
     }
-    .element-card:hover .element-photo {
+    .element-card:hover .element-hanja {
       transform: scale(1.05);
     }
-    .element-photo::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.4));
-      transition: opacity 0.3s ease;
+    .hanja-char {
+      font-size: 42px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      font-family: var(--font-serif);
+      z-index: 1;
+      transition: transform 0.3s ease;
     }
-    .element-card:hover .element-photo::after {
-      opacity: 0.7;
+    .element-card:hover .hanja-char {
+      transform: scale(1.1);
+    }
+    .element-hanja::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.15), transparent 70%);
+      pointer-events: none;
     }
     .element-label{
       font-size:16px;
@@ -1088,6 +1095,9 @@
       overflow: hidden;
       box-shadow: 0 20px 50px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.1);
       margin-bottom: 24px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      scroll-margin-top: 20px;
     }
     .result-shell::after{
       content:"";
@@ -1106,6 +1116,16 @@
       height: 2px;
       background: linear-gradient(90deg, var(--accent-1), var(--accent-3), var(--accent-2));
       opacity: 0.6;
+      z-index: 0;
+    }
+    .result-shell.loading-state {
+      padding-top: 70px !important;
+      min-height: 240px;
+      overflow: visible;
+    }
+    .result-shell.loading-state .loading-text {
+      position: relative;
+      z-index: 1;
     }
     .analysis-header{
       display:flex;
@@ -1775,3 +1795,66 @@
 .fortune-detail-tabs .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
 .fortune-detail-tabs .tab-btn:hover{color:var(--accent);opacity:0.8}
 .fortune-tab-content{min-height:200px;transition:opacity .3s ease}
+
+/* === 2026 CSS Trends === */
+
+/* Container Queries for responsive element gallery */
+.element-shell {
+  container-type: inline-size;
+}
+@container (max-width: 500px) {
+  .element-gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@container (max-width: 350px) {
+  .element-gallery {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+/* Text wrap balance for titles */
+.analysis-title,
+.saju-hero-title,
+.top-bar h1 {
+  text-wrap: balance;
+}
+
+/* Scroll-driven fade-in animation */
+@supports (animation-timeline: view()) {
+  .result-shell {
+    animation: scrollFadeIn linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 25%;
+  }
+  @keyframes scrollFadeIn {
+    from {
+      opacity: 0.3;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Color-mix hover effects */
+@supports (background: color-mix(in srgb, red 50%, blue)) {
+  .element-card:hover {
+    background: color-mix(in srgb, var(--accent-1) 12%, transparent);
+  }
+  [data-theme="light"] .element-card:hover {
+    background: color-mix(in srgb, var(--accent-1) 8%, white);
+  }
+}
+
+/* Smooth focus transitions */
+:focus-visible {
+  transition: outline-offset 0.15s ease;
+}
+
+/* Dark mode element meter background */
+[data-theme="light"] .element-meter {
+  background: rgba(0, 0, 0, 0.08);
+}

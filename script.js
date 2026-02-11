@@ -131,20 +131,6 @@ function setupEventListeners() {
       document.querySelector('.tab-pane.active').classList.remove('active');
       document.getElementById(btn.dataset.tab).classList.add('active');
 
-      // fortune 탭 클릭 시 자동 로드
-      const tabId = btn.dataset.tab;
-      const fortuneTypes = {
-        'tabTomorrow': 'tomorrow',
-        'tabTraditional': 'traditional',
-        'tabLove': 'love',
-        'tabHealth': 'health',
-        'tabWealth': 'wealth'
-      };
-      const fortuneType = fortuneTypes[tabId];
-      if (fortuneType && currentSajuData) {
-        loadFortuneTab(fortuneType);
-      }
-
       // Update ARIA
       document.querySelectorAll('.tab-btn').forEach(b => b.setAttribute('aria-selected', b === btn ? 'true' : 'false'));
     });
@@ -204,13 +190,16 @@ function calculateYinYang(pillars) {
   return { yang, yin };
 }
 
-const elementPhotos = {
-  '목': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-  '화': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1200&q=80',
-  '토': 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=80',
-  '금': 'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1200&q=80',
-  '수': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80'
-};
+function getElementHanja(key) {
+  const map = {
+    '목': { hanja: '木', gradient: 'linear-gradient(135deg, #2d6a4f, #52b788)', color: '#52b788' },
+    '화': { hanja: '火', gradient: 'linear-gradient(135deg, #e63946, #ff6b6b)', color: '#ff6b6b' },
+    '토': { hanja: '土', gradient: 'linear-gradient(135deg, #e9c46a, #f4a261)', color: '#f4a261' },
+    '금': { hanja: '金', gradient: 'linear-gradient(135deg, #adb5bd, #dee2e6)', color: '#dee2e6' },
+    '수': { hanja: '水', gradient: 'linear-gradient(135deg, #1d9bf0, #4cc9f0)', color: '#4cc9f0' },
+  };
+  return map[key] || map['목'];
+}
 
 const pillarPhotos = [
   'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=900&q=80',
@@ -953,29 +942,6 @@ function buildPillarBoard(pillars) {
   `;
 }
 
-function getElementSvg(key) {
-  const palette = {
-    '목': ['#90be6d', '#4cc9f0'],
-    '화': ['#ff6f59', '#f9c74f'],
-    '토': ['#f4a261', '#e9c46a'],
-    '금': ['#bfc0c0', '#8d99ae'],
-    '수': ['#1d9bf0', '#5ad0ff']
-  };
-  const [c1, c2] = palette[key] || palette['목'];
-  if (key === '목') {
-    return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><circle cx="40" cy="40" r="28" fill="url(#g)" opacity="0.35"/><path d="M40 16 C30 26 26 38 26 48 C26 58 34 66 40 66 C46 66 54 58 54 48 C54 38 50 26 40 16 Z" fill="url(#g)"/></svg>`;
-  }
-  if (key === '화') {
-    return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M40 12 C48 22 52 30 52 40 C52 52 44 64 40 68 C36 64 28 52 28 40 C28 30 32 22 40 12 Z" fill="url(#g)"/><circle cx="40" cy="44" r="10" fill="${c2}" opacity="0.6"/></svg>`;
-  }
-  if (key === '토') {
-    return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M14 56 L40 20 L66 56 Z" fill="url(#g)"/><rect x="20" y="56" width="40" height="10" rx="5" fill="${c2}" opacity="0.7"/></svg>`;
-  }
-  if (key === '금') {
-    return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect x="20" y="16" width="40" height="48" rx="8" fill="url(#g)"/><path d="M24 30 L56 30" stroke="#fff" stroke-width="3" opacity="0.4"/><path d="M24 42 L56 42" stroke="#fff" stroke-width="3" opacity="0.3"/></svg>`;
-  }
-  return `<svg viewBox="0 0 80 80" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M12 50 C20 40 30 40 40 50 C50 60 60 60 68 50" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round"/><path d="M16 60 C24 52 32 52 40 60 C48 68 56 68 64 60" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" opacity="0.7"/></svg>`;
-}
 
 function buildElementGallery(activeKey, counts) {
   const elements = [
@@ -989,16 +955,18 @@ function buildElementGallery(activeKey, counts) {
 
   const cards = elements.map(el => {
     const active = el.key === activeKey ? 'active' : '';
-    const photo = elementPhotos[el.key] || elementPhotos['목'];
+    const { hanja, gradient, color } = getElementHanja(el.key);
     const value = counts && typeof counts[el.key] === 'number' ? counts[el.key] : 0;
     const pct = Math.round((value / total) * 100);
     return `
-      <div class="element-card ${active}" data-key="${el.key}" style="--el-photo:url('${photo}')">
-        <div class="element-photo" aria-hidden="true"></div>
-        <div class="element-label">${el.label}</div>
+      <div class="element-card ${active}" data-key="${el.key}">
+        <div class="element-hanja" style="background:${gradient}">
+          <span class="hanja-char">${hanja}</span>
+        </div>
+        <div class="element-label">${el.label}(${hanja})</div>
         <div class="element-name">${el.name}</div>
         <div class="element-count">${value} / ${total}</div>
-        <div class="element-meter"><span style="width:${pct}%"></span></div>
+        <div class="element-meter"><span style="width:${pct}%;background:${color}"></span></div>
       </div>
     `;
   }).join('');
@@ -1007,8 +975,8 @@ function buildElementGallery(activeKey, counts) {
     <div class="section result-shell element-shell">
       <div class="analysis-header">
         <div>
-          <p class="analysis-eyebrow">🎨 오행 컬러맵</p>
-          <h3 class="analysis-title">당신의 기운을 그림으로</h3>
+          <p class="analysis-eyebrow">🎨 오행 분석</p>
+          <h3 class="analysis-title">오행(五行)의 기운</h3>
         </div>
       </div>
       <div class="element-gallery">
@@ -1173,7 +1141,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   const resultDiv = document.getElementById('basicResult');
   resultDiv.style.display = 'block';
   resultDiv.innerHTML = `
-    <div class="section result-shell fade-in" style="padding:60px 24px;text-align:center;">
+    <div class="section result-shell loading-state fade-in" style="padding:60px 24px;text-align:center;">
       <div style="font-size:48px;margin-bottom:20px;">🔮</div>
       <p class="loading-text" style="font-size:18px;font-weight:600;">사주를 깊이 분석하고 있습니다</p>
       <p class="loading-text" style="font-size:14px;color:var(--muted);margin-top:10px;">잠시만 기다려주세요<span class="loading-dots"></span></p>
@@ -1370,12 +1338,6 @@ document.getElementById('btnGo').addEventListener('click', async () => {
 
   getSongs(sajuElement, resultDiv);
 
-  // 기존 fortuneTabs는 숨기고, 인라인 fortune 탭 자동 로드
-  const fortuneTabs = document.getElementById('fortuneTabs');
-  if (fortuneTabs) {
-    fortuneTabs.style.display = 'none';
-  }
-
   // 첫 번째 상세 운세 탭 자동 로드
   setTimeout(() => {
     loadFortuneInResult('tomorrow', resultDiv);
@@ -1410,7 +1372,7 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
   const resultDiv = document.getElementById('compatResult');
   resultDiv.style.display = 'block';
   resultDiv.innerHTML = `
-    <div class="section result-shell fade-in" style="padding:60px 24px;text-align:center;">
+    <div class="section result-shell loading-state fade-in" style="padding:60px 24px;text-align:center;">
       <div style="font-size:48px;margin-bottom:20px;">💞</div>
       <p class="loading-text" style="font-size:18px;font-weight:600;">궁합을 깊이 분석하고 있습니다</p>
       <p class="loading-text" style="font-size:14px;color:var(--muted);margin-top:10px;">잠시만 기다려주세요<span class="loading-dots"></span></p>
@@ -1485,7 +1447,7 @@ async function loadFortuneInResult(tabType, resultDiv) {
 
   // 로딩 표시
   container.innerHTML = `
-    <div class="section result-shell fade-in" style="padding:60px 24px;text-align:center;">
+    <div class="section result-shell loading-state fade-in" style="padding:60px 24px;text-align:center;">
       <div style="font-size:48px;margin-bottom:20px;">✨</div>
       <p class="loading-text" style="font-size:18px;font-weight:600;">상세 운세를 분석하고 있습니다</p>
       <p class="loading-text" style="font-size:14px;color:var(--muted);margin-top:10px;">잠시만 기다려주세요<span class="loading-dots"></span></p>
@@ -1517,86 +1479,6 @@ async function loadFortuneInResult(tabType, resultDiv) {
   } catch (error) {
     console.error('Error loading inline fortune ' + tabType + ':', error);
     container.innerHTML = '<div style="padding:24px;text-align:center;"><p style="color:var(--muted);">운세 분석을 불러오지 못했습니다. 탭을 다시 클릭해주세요.</p></div>';
-  }
-}
-
-async function loadFortuneTab(tabType) {
-  if (!currentSajuData) {
-    showToast('먼저 사주 분석을 완료해주세요.');
-    return;
-  }
-
-  // Return cached result if available
-  if (fortuneTabCache[tabType]) {
-    console.log(`Using cached result for ${tabType}`);
-    return;
-  }
-
-  const resultContainers = {
-    'tomorrow': 'tomorrowResult',
-    'traditional': 'traditionalResult',
-    'love': 'loveResult',
-    'health': 'healthResult',
-    'wealth': 'wealthResult'
-  };
-
-  const containerId = resultContainers[tabType];
-  if (!containerId) {
-    console.error(`Unknown tab type: ${tabType}`);
-    return;
-  }
-
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.error(`Container not found: ${containerId}`);
-    return;
-  }
-
-  // Show loading
-  container.innerHTML = `
-    <div class="section result-shell fade-in" style="padding:60px 24px;text-align:center;">
-      <div style="font-size:48px;margin-bottom:20px;">🌟</div>
-      <p class="loading-text" style="font-size:18px;font-weight:600;">운세를 분석하고 있습니다</p>
-      <p class="loading-text" style="font-size:14px;color:var(--muted);margin-top:10px;">잠시만 기다려주세요<span class="loading-dots"></span></p>
-    </div>
-  `;
-
-  try {
-    console.log(`Loading fortune tab: ${tabType}`);
-    const aiPayload = {
-      type: tabType,
-      sajuData: JSON.stringify(currentSajuData)
-    };
-
-    const aiResponse = await getAiResponse(aiPayload);
-    console.log(`Received response for ${tabType}`);
-
-    const sanitized = sanitizeAiResponse(aiResponse);
-
-    container.innerHTML = `
-      <div class="section result-shell fade-in">
-        <div class="analysis-body">${renderMarkdownSafe(sanitized.cleaned)}</div>
-      </div>
-    `;
-
-    const analysisBody = container.querySelector('.analysis-body');
-    if (analysisBody) {
-      enhanceCallouts(analysisBody);
-      applyAccordion(analysisBody);
-    }
-
-    // Cache the result
-    fortuneTabCache[tabType] = true;
-
-    trackEvent(`fortune_${tabType}_complete`, { event_category: 'engagement' });
-  } catch (error) {
-    console.error(`Error loading fortune tab ${tabType}:`, error);
-    container.innerHTML = `
-      <div class="section result-shell fade-in" style="padding:24px;">
-        <p style="color:var(--muted);text-align:center;">운세를 불러오는데 실패했습니다. 다시 시도해주세요.</p>
-        <p style="color:var(--danger);text-align:center;font-size:12px;margin-top:10px;">오류: ${escapeHtml(error.message)}</p>
-      </div>
-    `;
   }
 }
 

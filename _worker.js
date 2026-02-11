@@ -239,8 +239,11 @@ async function callOpenAi(apiKey, messages) {
   const apiRequestBody = {
     model: 'gpt-4o-mini',
     messages: messages,
-    temperature: 0,      // 일관된 결과를 위해 0으로 설정
-    seed: 42,            // 재현 가능성을 위한 고정 seed
+    temperature: 0,      // 완전히 결정론적 출력 (0 = 가장 일관됨)
+    seed: 42,            // 동일 입력에 대해 동일 출력 보장
+    top_p: 1,            // nucleus sampling 비활성화 (deterministic)
+    frequency_penalty: 0,  // 반복 패널티 없음 (일관성 우선)
+    presence_penalty: 0,   // 새로운 주제 패널티 없음 (일관성 우선)
   };
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
