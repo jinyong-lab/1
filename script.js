@@ -141,12 +141,46 @@ function setupEventListeners() {
 setupEventListeners();
 
 const elementQueries = {
-  '목': 'calm acoustic playlist',
-  '화': 'upbeat pop playlist',
-  '토': 'cozy easy listening playlist',
-  '금': 'epic cinematic playlist',
-  '수': 'chill lofi hiphop playlist'
+  '목': '잔잔한 어쿠스틱 감성 한국 노래',
+  '화': '신나는 댄스 팝 한국 노래',
+  '토': '따뜻한 발라드 한국 노래',
+  '금': '웅장한 OST 한국 영화음악',
+  '수': '차분한 R&B 힙합 한국 노래'
 };
+
+const STEM_YINYANG = {
+  '甲': '양', '乙': '음', '丙': '양', '丁': '음', '戊': '양',
+  '己': '음', '庚': '양', '辛': '음', '壬': '양', '癸': '음'
+};
+const BRANCH_YINYANG = {
+  '子': '양', '丑': '음', '寅': '양', '卯': '음', '辰': '양', '巳': '음',
+  '午': '양', '未': '음', '申': '양', '酉': '음', '戌': '양', '亥': '음'
+};
+
+function calculateYinYang(pillars) {
+  const ganToHanja = {
+    '갑': '甲', '을': '乙', '병': '丙', '정': '丁', '무': '戊',
+    '기': '己', '경': '庚', '신': '辛', '임': '壬', '계': '癸'
+  };
+  const jiToHanja = {
+    '자': '子', '축': '丑', '인': '寅', '묘': '卯', '진': '辰', '사': '巳',
+    '오': '午', '미': '未', '신': '申', '유': '酉', '술': '戌', '해': '亥'
+  };
+  let yang = 0, yin = 0;
+  pillars.forEach(p => {
+    if (!p) return;
+    let hanja = p.hanja;
+    if ((!hanja || hanja.length !== 2) && p.hangul && p.hangul.length === 2) {
+      hanja = (ganToHanja[p.hangul[0]] || '') + (jiToHanja[p.hangul[1]] || '');
+    }
+    if (!hanja || hanja.length !== 2) return;
+    const stem = hanja[0];
+    const branch = hanja[1];
+    if (STEM_YINYANG[stem] === '양') yang++; else if (STEM_YINYANG[stem]) yin++;
+    if (BRANCH_YINYANG[branch] === '양') yang++; else if (BRANCH_YINYANG[branch]) yin++;
+  });
+  return { yang, yin };
+}
 
 const elementPhotos = {
   '목': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
@@ -1126,6 +1160,9 @@ document.getElementById('btnGo').addEventListener('click', async () => {
 
   resetPlayer();
 
+  // 새 분석 시 fortune 캐시 초기화
+  fortuneTabCache = {};
+
   const aiPayload = {
     type: 'saju',
     sajuData: JSON.stringify(sajuData),
@@ -1138,6 +1175,14 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   const cleanedResponse = injectPillarHanja(sanitized.cleaned);
   const pillars = extractPillars(cleanedResponse);
   const elementCounts = getElementCounts(cleanedResponse, pillars);
+
+  const yinYangData = calculateYinYang(pillars);
+  const yangCount = yinYangData.yang;
+  const yinCount = yinYangData.yin;
+  const total = yangCount + yinCount || 1;
+  const yangPercent = Math.round((yangCount / total) * 100);
+  const yinPercent = 100 - yangPercent;
+  const yinYangDesc = yangCount > yinCount ? '양(陽)의 기운이 강한 사주입니다. 적극적이고 활동적인 에너지가 넘칩니다.' : yinCount > yangCount ? '음(陰)의 기운이 강한 사주입니다. 내면의 깊이와 섬세한 감성이 돋보입니다.' : '음양이 균형 잡힌 사주입니다. 조화로운 에너지 흐름을 가지고 있습니다.';
 
   const elementMatch = cleanedResponse.match(/(?:###\s*오행|오행)\s*[:：]\s*\[?(목|화|토|금|수)\]?/);
   const sajuElement = elementMatch ? elementMatch[1] : '목';
@@ -1179,9 +1224,43 @@ document.getElementById('btnGo').addEventListener('click', async () => {
       ${buildSajuHero(sajuElement, elementCounts)}
       <div class="pillar-slot" data-role="pillar-slot"></div>
       <div class="element-slot" data-role="element-slot"></div>
+      <div class="section result-shell yinyang-card fade-in" style="margin:16px 0;">
+        <div class="analysis-header">
+          <div>
+            <p class="analysis-eyebrow">☯ 음양 분석</p>
+            <h3 class="analysis-title">음양의 기운</h3>
+          </div>
+          <div class="analysis-badges">
+            ${badge('양 ' + yangCount + '개', 2)}
+            ${badge('음 ' + yinCount + '개', 4)}
+          </div>
+        </div>
+        <div class="yinyang-bar">
+          <div class="yang-bar" style="width:${yangPercent}%">양(陽) ${yangCount}</div>
+          <div class="yin-bar" style="width:${yinPercent}%">음(陰) ${yinCount}</div>
+        </div>
+        <p class="yinyang-desc">${escapeHtml(yinYangDesc)}</p>
+      </div>
       <div class="analysis-body" data-role="analysis-body"></div>
     </div>
     ${fortuneHtml}
+    <div class="section result-shell fortune-tabs-shell fade-in">
+      <div class="analysis-header">
+        <div>
+          <p class="analysis-eyebrow">🔮 상세 운세</p>
+          <h3 class="analysis-title">상세 운세 분석</h3>
+        </div>
+      </div>
+      <div class="tabs fortune-detail-tabs" role="tablist" aria-label="상세 운세 메뉴">
+        <button class="tab-btn active" data-fortune="tomorrow" role="tab">내일의 운세</button>
+        <button class="tab-btn" data-fortune="love" role="tab">연애운</button>
+        <button class="tab-btn" data-fortune="health" role="tab">건강운</button>
+        <button class="tab-btn" data-fortune="wealth" role="tab">재물운</button>
+      </div>
+      <div class="fortune-tab-content" data-role="fortune-detail-content">
+        <p style="text-align:center;color:var(--muted);padding:40px 20px;">탭을 클릭하면 상세 분석이 표시됩니다.</p>
+      </div>
+    </div>
     <div class="section result-shell music-shell">
       <div class="analysis-header">
         <div>
@@ -1189,7 +1268,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
           <h3 class="analysis-title">오늘의 분위기 맞춤 플레이</h3>
         </div>
         <div class="analysis-badges">
-          ${badge(`키워드 ${sajuElement}`, 2)}
+          ${badge('키워드 ' + sajuElement, 2)}
         </div>
       </div>
       <div class="music-box">
@@ -1202,7 +1281,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
         <div class="music-actions">
           <button class="refresh-btn" data-role="refresh-songs">다시 추천</button>
         </div>
-        <p style="font-size:12px; text-align:center; color: var(--muted); margin-top:10px;">'${sajuElement}' 기운에 어울리는 플레이리스트를 자동으로 재생합니다.</p>
+        <p style="font-size:12px; text-align:center; color: var(--muted); margin-top:10px;">'${escapeHtml(sajuElement)}' 기운에 어울리는 플레이리스트를 자동으로 재생합니다.</p>
       </div>
     </div>
     <!-- Ad: In-Content -->
@@ -1230,6 +1309,15 @@ document.getElementById('btnGo').addEventListener('click', async () => {
 
   bindFortuneTabs(resultDiv);
 
+  // Fortune 상세 탭 클릭 핸들러 (fortune-detail-tabs 내부만 선택)
+  resultDiv.querySelectorAll('.fortune-detail-tabs [data-fortune]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      resultDiv.querySelectorAll('.fortune-detail-tabs [data-fortune]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadFortuneInResult(btn.dataset.fortune, resultDiv);
+    });
+  });
+
   const refreshBtn = resultDiv.querySelector('[data-role="refresh-songs"]');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => getSongs(sajuElement, resultDiv));
@@ -1244,16 +1332,16 @@ document.getElementById('btnGo').addEventListener('click', async () => {
 
   getSongs(sajuElement, resultDiv);
 
-  // Show fortune tabs after basic analysis is complete
+  // 기존 fortuneTabs는 숨기고, 인라인 fortune 탭 자동 로드
   const fortuneTabs = document.getElementById('fortuneTabs');
   if (fortuneTabs) {
-    fortuneTabs.style.display = 'block';
-
-    // 첫 번째 탭(내일의 운세) 자동 로드
-    setTimeout(() => {
-      loadFortuneTab('tomorrow');
-    }, 300);
+    fortuneTabs.style.display = 'none';
   }
+
+  // 첫 번째 상세 운세 탭 자동 로드
+  setTimeout(() => {
+    loadFortuneInResult('tomorrow', resultDiv);
+  }, 500);
 
   trackEvent('saju_analysis_complete', { event_category: 'engagement', element: sajuElement || 'unknown' });
 
@@ -1354,7 +1442,58 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
 });
 
 // --- Fortune Tab Handlers ---
-const fortuneTabCache = {}; // Cache fortune results
+let fortuneTabCache = {}; // Cache fortune results
+
+async function loadFortuneInResult(tabType, resultDiv) {
+  const container = resultDiv.querySelector('[data-role="fortune-detail-content"]');
+  if (!container || !currentSajuData) return;
+
+  // 캐시된 HTML 재사용
+  if (fortuneTabCache[tabType] && typeof fortuneTabCache[tabType] === 'string') {
+    container.innerHTML = fortuneTabCache[tabType];
+    const body = container.querySelector('.analysis-body');
+    if (body) { enhanceCallouts(body); applyAccordion(body); }
+    return;
+  }
+
+  // 로딩 표시
+  container.innerHTML = `
+    <div class="section result-shell fade-in" style="padding:24px;">
+      <div class="skeleton" style="height:24px;width:200px;margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:14px;width:80%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:14px;width:60%;margin-bottom:20px;"></div>
+      <div class="skeleton" style="height:200px;margin-bottom:14px;"></div>
+      <p class="loading-text">상세 운세를 분석하고 있습니다<span class="loading-dots"></span></p>
+    </div>
+  `;
+
+  try {
+    const aiPayload = {
+      type: tabType,
+      sajuData: JSON.stringify(currentSajuData)
+    };
+
+    const aiResponse = await getAiResponse(aiPayload);
+    const sanitized = sanitizeAiResponse(aiResponse);
+
+    const resultHtml = `<div class="analysis-body">${renderMarkdownSafe(sanitized.cleaned)}</div>`;
+    container.innerHTML = resultHtml;
+
+    const body = container.querySelector('.analysis-body');
+    if (body) {
+      enhanceCallouts(body);
+      applyAccordion(body);
+    }
+
+    // 캐시 저장
+    fortuneTabCache[tabType] = resultHtml;
+
+    trackEvent('fortune_inline_' + tabType + '_complete', { event_category: 'engagement' });
+  } catch (error) {
+    console.error('Error loading inline fortune ' + tabType + ':', error);
+    container.innerHTML = '<div style="padding:24px;text-align:center;"><p style="color:var(--muted);">운세 분석을 불러오지 못했습니다. 탭을 다시 클릭해주세요.</p></div>';
+  }
+}
 
 async function loadFortuneTab(tabType) {
   if (!currentSajuData) {

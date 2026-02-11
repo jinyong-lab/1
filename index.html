@@ -84,7 +84,6 @@
       <button class="tab-btn" data-tab="tabLove" role="tab" aria-selected="false" aria-controls="tabLove">연애운</button>
       <button class="tab-btn" data-tab="tabHealth" role="tab" aria-selected="false" aria-controls="tabHealth">건강운</button>
       <button class="tab-btn" data-tab="tabWealth" role="tab" aria-selected="false" aria-controls="tabWealth">재물운</button>
-      <button class="tab-btn" data-tab="tabCompat" role="tab" aria-selected="false" aria-controls="tabCompat">궁합</button>
     </div>
 
     <div class="tab-pane active" id="tabTomorrow" role="tabpanel">
@@ -106,30 +105,39 @@
     <div class="tab-pane" id="tabWealth" role="tabpanel">
       <div id="wealthResult" class="fortune-detail"></div>
     </div>
+  </div>
 
-    <div class="tab-pane" id="tabCompat" role="tabpanel">
-    <div class="vs-wrap">
-      <div>
-        <div style="font-weight:700;margin-bottom:8px;color:var(--section-title)">나</div>
-        <div class="form-grid" style="grid-template-columns:1fr 1fr">
-          <div class="form-group"><label>연도</label><input type="number" id="cY1" placeholder="1995" min="1900" max="2100"/></div>
-          <div class="form-group"><label>월</label><select id="cM1"><option value="">선택</option><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select></div>
-          <div class="form-group"><label>일</label><select id="cD1"><option value="">선택</option></select></div>
-          <div class="form-group"><label>시간</label><select id="cT1"><option value="">선택</option><option value="0">자시 (23~01)</option><option value="1">축시 (01~03)</option><option value="2">인시 (03~05)</option><option value="3">묘시 (05~07)</option><option value="4">진시 (07~09)</option><option value="5">사시 (09~11)</option><option value="6">오시 (11~13)</option><option value="7">미시 (13~15)</option><option value="8">신시 (15~17)</option><option value="9">유시 (17~19)</option><option value="10">술시 (19~21)</option><option value="11">해시 (21~23)</option><option value="-1">모름</option></select></div>
+  <!-- 궁합 분석 별도 섹션 -->
+  <div id="compatSection" style="margin-top: 30px;">
+    <div class="section result-shell fade-in">
+      <div class="analysis-header">
+        <div>
+          <p class="analysis-eyebrow">💞 궁합 분석</p>
+          <h3 class="analysis-title">두 사람의 궁합</h3>
         </div>
       </div>
-      <div class="vs-label">VS</div>
-      <div>
-        <div style="font-weight:700;margin-bottom:8px;color:var(--section-title)">상대</div>
-        <div class="form-grid" style="grid-template-columns:1fr 1fr">
-          <div class="form-group"><label>연도</label><input type="number" id="cY2" placeholder="1997" min="1900" max="2100"/></div>
-          <div class="form-group"><label>월</label><select id="cM2"><option value="">선택</option><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select></div>
-          <div class="form-group"><label>일</label><select id="cD2"><option value="">선택</option></select></div>
-          <div class="form-group"><label>시간</label><select id="cT2"><option value="">선택</option><option value="0">자시 (23~01)</option><option value="1">축시 (01~03)</option><option value="2">인시 (03~05)</option><option value="3">묘시 (05~07)</option><option value="4">진시 (07~09)</option><option value="5">사시 (09~11)</option><option value="6">오시 (11~13)</option><option value="7">미시 (13~15)</option><option value="8">신시 (15~17)</option><option value="9">유시 (17~19)</option><option value="10">술시 (19~21)</option><option value="11">해시 (21~23)</option><option value="-1">모름</option></select></div>
+      <div class="vs-wrap">
+        <div>
+          <div style="font-weight:700;margin-bottom:8px;color:var(--section-title)">나</div>
+          <div class="form-grid" style="grid-template-columns:1fr 1fr">
+            <div class="form-group"><label>연도</label><input type="number" id="cY1" placeholder="1995" min="1900" max="2100"/></div>
+            <div class="form-group"><label>월</label><select id="cM1"><option value="">선택</option><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select></div>
+            <div class="form-group"><label>일</label><select id="cD1"><option value="">선택</option></select></div>
+            <div class="form-group"><label>시간</label><select id="cT1"><option value="">선택</option><option value="0">자시 (23~01)</option><option value="1">축시 (01~03)</option><option value="2">인시 (03~05)</option><option value="3">묘시 (05~07)</option><option value="4">진시 (07~09)</option><option value="5">사시 (09~11)</option><option value="6">오시 (11~13)</option><option value="7">미시 (13~15)</option><option value="8">신시 (15~17)</option><option value="9">유시 (17~19)</option><option value="10">술시 (19~21)</option><option value="11">해시 (21~23)</option><option value="-1">모름</option></select></div>
+          </div>
+        </div>
+        <div class="vs-label">VS</div>
+        <div>
+          <div style="font-weight:700;margin-bottom:8px;color:var(--section-title)">상대</div>
+          <div class="form-grid" style="grid-template-columns:1fr 1fr">
+            <div class="form-group"><label>연도</label><input type="number" id="cY2" placeholder="1997" min="1900" max="2100"/></div>
+            <div class="form-group"><label>월</label><select id="cM2"><option value="">선택</option><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select></div>
+            <div class="form-group"><label>일</label><select id="cD2"><option value="">선택</option></select></div>
+            <div class="form-group"><label>시간</label><select id="cT2"><option value="">선택</option><option value="0">자시 (23~01)</option><option value="1">축시 (01~03)</option><option value="2">인시 (03~05)</option><option value="3">묘시 (05~07)</option><option value="4">진시 (07~09)</option><option value="5">사시 (09~11)</option><option value="6">오시 (11~13)</option><option value="7">미시 (13~15)</option><option value="8">신시 (15~17)</option><option value="9">유시 (17~19)</option><option value="10">술시 (19~21)</option><option value="11">해시 (21~23)</option><option value="-1">모름</option></select></div>
+          </div>
         </div>
       </div>
-      <div class="form-group full" style="grid-column: 1 / -1; margin-top: 10px;"><label>궁금한 점 (선택)</label><textarea id="cQ" rows="2" placeholder="예: 상대와의 궁합이 궁금해요"></textarea></div>
-    </div>
+      <div class="form-group full" style="margin-top: 10px;"><label>궁금한 점 (선택)</label><textarea id="cQ" rows="2" placeholder="예: 상대와의 궁합이 궁금해요"></textarea></div>
       <button id="btnCompat">궁합 분석하기 💞</button>
       <div class="err" id="errBox2"></div>
       <div id="compatResult" style="display:none"></div>

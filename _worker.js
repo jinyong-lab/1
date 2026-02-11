@@ -13,6 +13,15 @@ const BRANCH_ELEMENTS = {
   '午': '화', '未': '토', '申': '금', '酉': '금', '戌': '토', '亥': '수'
 };
 
+const STEM_YINYANG = {
+  '甲': '양', '乙': '음', '丙': '양', '丁': '음', '戊': '양',
+  '己': '음', '庚': '양', '辛': '음', '壬': '양', '癸': '음'
+};
+const BRANCH_YINYANG = {
+  '子': '양', '丑': '음', '寅': '양', '卯': '음', '辰': '양', '巳': '음',
+  '午': '양', '未': '음', '申': '양', '酉': '음', '戌': '양', '亥': '음'
+};
+
 // --- Rate Limiting (in-memory) ---
 const rateLimitMap = new Map();
 const RATE_LIMIT = 10; // requests per minute per IP
@@ -204,12 +213,22 @@ function calculateAccurateSaju(sajuData) {
       }
     });
 
+    // 음양 계산 (4천간 + 4지지 = 8글자)
+    let yangCount = 0, yinCount = 0;
+    pillars.forEach(pillar => {
+      if (pillar) {
+        if (STEM_YINYANG[pillar.stem] === '양') yangCount++; else yinCount++;
+        if (BRANCH_YINYANG[pillar.branch] === '양') yangCount++; else yinCount++;
+      }
+    });
+
     return {
       yearPillar,
       monthPillar,
       dayPillar,
       hourPillar,
-      elements
+      elements,
+      yinYang: { yang: yangCount, yin: yinCount }
     };
   } catch (error) {
     console.error('calculateAccurateSaju error:', error);
@@ -266,7 +285,7 @@ async function handleYouTubeRequest(request, env) {
 
   const apiUrl = new URL('https://www.googleapis.com/youtube/v3/search');
   // Add Korean music preference to query
-  const enhancedQuery = `${query} 한국 노래 K-pop Korean music`;
+  const enhancedQuery = `${query} MV 뮤직비디오`;
   apiUrl.search = new URLSearchParams({
     part: 'snippet',
     type: 'video',
@@ -298,7 +317,7 @@ async function handleYouTubeRequest(request, env) {
     .filter(item => item.videoId)
     .filter(item => {
       const title = item.title.toLowerCase();
-      const excludeKeywords = ['medley', 'mix', 'mashup', 'compilation', '메들리', '믹스', '모음', '합본', '연속듣기'];
+      const excludeKeywords = ['medley', 'mix', 'mashup', 'compilation', '메들리', '믹스', '모음', '합본', '연속듣기', '플레이리스트', '1시간', '2시간', '3시간', 'playlist', 'hour', '연속', '모아듣기', 'best', 'top'];
       return !excludeKeywords.some(keyword => title.includes(keyword));
     });
 
@@ -360,10 +379,12 @@ function getSajuPrompt(sajuData, question) {
 - 분석은 한국어로만 작성합니다. 영어 표현(예: User's Information)은 절대 쓰지 마세요.
 - 마크다운 문법을 사용하되 표는 사용하지 마세요.
 - 각 섹션 앞에 이모티콘을 넣고, 핵심 키워드는 **볼드** 표시하세요.
-- 각 섹션은 5~7문장으로 풍부하게 쓰고, 마지막에 1~2개의 속담이나 비유를 추가하세요.
+- **보고서 형식**: 각 섹션은 최소 8~12문장으로 깊이있게 작성하세요.
+- 각 섹션 마지막에 속담이나 비유 1~2개를 추가하세요.
 - 은유적이고 문학적인 감성을 담은 표현을 사용해주세요.
-- 전체적인 분석을 충실하게 제공해주세요.
-- 천간/지지 의미 설명을 딱딱하게 하지 않고, 생활 속에서 실용적인 조언으로 풀어주세요.`;
+- 전체 분석 길이: 최소 3000자 이상으로 충실하게 작성해주세요.
+- 천간/지지 의미를 생활 속 실용적 조언으로 풀어주세요.
+- 각 소제목 아래에는 핵심 요약 문장을 먼저 제시하고, 이어서 상세 해석을 펼쳐주세요.`;
 
   const calLabel = sajuData.cal === 'lunar' ? '음력' : '양력';
   const genderLabel = sajuData.gender === 'female' ? '여자' : '남자';
@@ -389,6 +410,7 @@ function getSajuPrompt(sajuData, question) {
 - 일주(日柱): ${calculatedSaju.dayPillar.stem}${calculatedSaju.dayPillar.branch} (천간: ${calculatedSaju.dayPillar.stemElement}, 지지: ${calculatedSaju.dayPillar.branchElement})
 - 시주(時柱): ${calculatedSaju.hourPillar.stem}${calculatedSaju.hourPillar.branch} (천간: ${calculatedSaju.hourPillar.stemElement}, 지지: ${calculatedSaju.hourPillar.branchElement})
 - 오행 분포: 목 ${calculatedSaju.elements.목}개, 화 ${calculatedSaju.elements.화}개, 토 ${calculatedSaju.elements.토}개, 금 ${calculatedSaju.elements.금}개, 수 ${calculatedSaju.elements.수}개
+- 음양 분포: 양 ${calculatedSaju.yinYang.yang}개, 음 ${calculatedSaju.yinYang.yin}개
 
 아래 정확하게 계산된 사주를 해석해주세요.`;
   } else {
@@ -414,8 +436,9 @@ function getSajuPrompt(sajuData, question) {
 **본 분석**
 1. **사주 기둥의 핵심 하이라이트**: 사주 기둥(년주·월주·일주·시주)를 한자+한글로 정확하게 표기하고, 각 기둥의 특징을 짚어주세요.
 2. **오행(목·화·토·금·수) 분석**: 강약, 균형, 보완 요소를 자세히 설명하고, 반드시 "목 N개, 화 N개, 토 N개, 금 N개, 수 N개" 형태로 정리한 후 바로 설명하세요.
-3. **살(煞) 분석**: 사주에 존재하는 살(도화살, 역마살, 백호살, 과숙살, 현침살 등)을 정확히 찾아내고, 각 살의 의미와 영향, 대처 방법을 자세히 설명해주세요.
-4. **귀인(貴人) 분석**: 사주에 존재하는 귀인(천을귀인, 천덕귀인, 월덕귀인, 문창귀인 등)을 찾아내고, 각 귀인이 가져다주는 도움과 복을 설명해주세요.
+2.5. **☯ 음양(陰陽) 분석**: 양 기운과 음 기운의 분포를 분석하고, 각 천간·지지의 음양 속성을 명시하세요. 음양의 균형/불균형이 성격, 건강, 대인관계에 미치는 영향을 8문장 이상으로 자세히 풀어주세요.
+3. **🔥 살(煞) 분석**: 사주에 존재하는 살(도화살, 역마살, 백호살, 과숙살, 현침살, 양인살, 화개살, 괴강살 등)을 정확히 찾아내고, 각 살의 이름을 소제목으로 나열한 뒤, 의미·영향·실생활 대처법을 각각 5문장 이상으로 자세히 설명해주세요.
+4. **⭐ 귀인(貴人) 분석**: 사주에 존재하는 귀인(천을귀인, 천덕귀인, 월덕귀인, 문창귀인, 학당귀인 등)을 찾아내고, 각 귀인의 이름을 소제목으로 나열한 뒤, 의미·가져다주는 복·활용법을 각각 5문장 이상으로 상세히 설명해주세요.
 5. **대운(大運) 분석**: 현재 대운 시기와 향후 주요 대운 전환기를 명시하고, 각 시기별 운세 흐름과 주의사항을 자세히 알려주세요. (예: 현재 N세~N세 대운, 다음 대운 전환기 등)
 6. **성격과 재능**: 일주, 일간, 십이운성이 나타내는 성향과 함께 자세히 분석해주세요.
 7. **관계/대인관계**: 어울리는 사람의 특징과, 추천 커뮤니케이션 방법을 알려주세요.
@@ -493,7 +516,7 @@ function getCompatPrompt(person1, person2, question) {
 }
 
 function getTomorrowFortunePrompt(sajuData) {
-  const systemPrompt = `당신은 사주 기반 일운(日運) 분석 전문가입니다. 내일의 운세를 상세하고 실용적으로 한국어로 제공하세요.`;
+  const systemPrompt = `당신은 사주 기반 일운(日運) 분석 전문가입니다. 내일의 운세를 보고서 형식으로 매우 상세하고 실용적으로 한국어로 제공하세요. 각 섹션은 최소 10문장 이상으로 깊이있게 작성하세요.`;
 
   const calculatedSaju = calculateAccurateSaju(sajuData);
   const tomorrow = new Date();
@@ -503,19 +526,19 @@ function getTomorrowFortunePrompt(sajuData) {
   const userPrompt = `${tomorrowStr} 내일의 운세를 다음 형식으로 작성해주세요:
 
 **🔮 내일의 전체 운세**
-- 내일의 기운과 흐름을 5~7문장으로 설명하고, 실천 가능한 조언을 추가하세요.
+- 내일의 기운과 흐름을 10~12문장으로 설명하고, 실천 가능한 조언을 추가하세요.
 
 **💖 연애운**
-- 6~8문장으로 내일의 연애운을 상세히 설명하고, 구체적인 행동 팁 2~3가지를 제공하세요.
+- 10~15문장으로 내일의 연애운을 상세히 설명하고, 구체적인 행동 팁 2~3가지를 제공하세요.
 
 **💰 재물운**
-- 6~8문장으로 내일의 재물운을 설명하고, 금전 관리 팁과 주의사항을 알려주세요.
+- 10~15문장으로 내일의 재물운을 설명하고, 금전 관리 팁과 주의사항을 알려주세요.
 
 **💼 직업/업무운**
-- 6~8문장으로 내일의 업무운을 분석하고, 효율적인 업무 처리 방법을 제시하세요.
+- 10~15문장으로 내일의 업무운을 분석하고, 효율적인 업무 처리 방법을 제시하세요.
 
 **🏥 건강운**
-- 6~8문장으로 건강 상태를 체크하고, 주의해야 할 신체 부위와 관리법을 알려주세요.
+- 10~15문장으로 건강 상태를 체크하고, 주의해야 할 신체 부위와 관리법을 알려주세요.
 
 **🎯 추천 행동**
 - 시간대별 길한 시간
@@ -585,7 +608,7 @@ function getTraditionalSajuPrompt(sajuData) {
 }
 
 function getLoveFortunePrompt(sajuData) {
-  const systemPrompt = `당신은 사주 기반 연애운 분석 전문가입니다. 애정운과 인연운을 깊이있게 분석하여 한국어로 제공하세요.`;
+  const systemPrompt = `당신은 사주 기반 연애운 분석 전문가입니다. 애정운과 인연운을 보고서 형식으로 매우 깊이있게 분석하여 한국어로 제공하세요. 각 섹션은 최소 10문장 이상으로 작성하세요.`;
 
   const calculatedSaju = calculateAccurateSaju(sajuData);
   const genderLabel = sajuData.gender === 'female' ? '여자' : '남자';
@@ -593,38 +616,38 @@ function getLoveFortunePrompt(sajuData) {
   const userPrompt = `연애운과 애정운을 다음 형식으로 상세히 작성해주세요:
 
 **💖 전체 연애운 개요**
-- 사주에 나타난 연애 성향과 패턴을 8~10문장으로 분석
+- 사주에 나타난 연애 성향과 패턴을 10~12문장으로 분석
 - ${genderLabel}로서의 매력 포인트와 연애 스타일
 
 **👥 이상형 분석**
 - 어울리는 상대의 사주적 특징 (천간, 지지, 오행)
 - 좋은 인연의 시기와 만남의 장소
 - 피해야 할 상대의 특징
-(각 항목 6~8문장)
+(각 항목 10~15문장)
 
 **💑 연애 패턴 및 주의사항**
 - 연애할 때 나타나는 습관과 패턴
 - 연애에서 겪을 수 있는 어려움
 - 극복 방법과 개선점
-(8~10문장)
+(10~15문장)
 
 **💍 결혼운**
 - 결혼 적령기와 좋은 시기
 - 배우자의 특징과 만남의 인연
 - 결혼 후 생활 패턴
-(8~10문장)
+(10~15문장)
 
 **🌹 월별/시기별 연애운**
 - 올해 남은 기간의 연애운 흐름
 - 좋은 달과 조심해야 할 달
 - 각 시기별 연애 전략
-(10~12문장)
+(10~15문장)
 
 **💝 연애 개운 방법**
 - 연애운을 높이는 색상, 장소, 패션
 - 데이트 추천 장소와 시간대
 - 고백/프러포즈 좋은 시기
-(7~9문장)
+(10~12문장)
 
 각 섹션마다 사랑과 인연에 관한 속담이나 명언을 포함하고, 희망적이고 따뜻한 톤으로 작성해주세요.`;
 
@@ -635,7 +658,7 @@ function getLoveFortunePrompt(sajuData) {
 }
 
 function getHealthFortunePrompt(sajuData) {
-  const systemPrompt = `당신은 사주 기반 건강운 분석 전문가입니다. 오행 균형과 사주 구조를 통해 건강 상태를 분석하여 한국어로 제공하세요.`;
+  const systemPrompt = `당신은 사주 기반 건강운 분석 전문가입니다. 건강 관련 사주 분석을 보고서 형식으로 매우 상세하게 한국어로 제공하세요. 각 섹션은 최소 10문장 이상으로 작성하세요.`;
 
   const calculatedSaju = calculateAccurateSaju(sajuData);
 
@@ -644,37 +667,37 @@ function getHealthFortunePrompt(sajuData) {
 **🏥 전체 건강운 개요**
 - 사주의 오행 균형으로 본 체질과 건강 특성
 - 선천적인 강점과 약점
-(8~10문장)
+(10~15문장)
 
 **🫀 취약 장기 및 주의사항**
 - 오행별 대응 장기 분석 (목-간담, 화-심장, 토-비위, 금-폐대장, 수-신장방광)
 - 특히 주의해야 할 장기와 질환
 - 계절별, 시기별 건강 주의점
-(10~12문장)
+(10~15문장)
 
 **💊 체질 맞춤 건강 관리법**
 - 체질에 맞는 음식과 피해야 할 음식
 - 적합한 운동과 생활 습관
 - 수면, 스트레스 관리 방법
-(9~11문장)
+(10~15문장)
 
 **🌿 사주로 보는 질병 예방**
 - 대운, 세운별 건강 취약 시기
 - 예방을 위한 정기 검진 항목
 - 건강 관리 타이밍
-(8~10문장)
+(10~15문장)
 
 **🧘 정신 건강 및 스트레스**
 - 사주에 나타난 스트레스 패턴
 - 심리적 안정을 위한 방법
 - 명상, 휴식의 적기
-(7~9문장)
+(10~12문장)
 
 **⚕️ 연령대별 건강 로드맵**
 - 현재부터 노년까지 건강 흐름
 - 각 시기별 주의사항과 관리 포인트
 - 장수 비결과 건강한 노후 준비
-(10~12문장)
+(10~15문장)
 
 각 섹션마다 건강에 관한 속담이나 한의학 격언을 포함하고, 예방과 관리에 중점을 둔 실용적인 조언을 제공해주세요.`;
 
@@ -685,7 +708,7 @@ function getHealthFortunePrompt(sajuData) {
 }
 
 function getWealthFortunePrompt(sajuData) {
-  const systemPrompt = `당신은 사주 기반 재물운 분석 전문가입니다. 재성, 식상, 비겁 등을 종합하여 재물운을 분석하고 실용적인 재테크 조언을 한국어로 제공하세요.`;
+  const systemPrompt = `당신은 사주 기반 재물운 분석 전문가입니다. 재물운과 재테크 조언을 보고서 형식으로 매우 상세하게 한국어로 제공하세요. 각 섹션은 최소 10문장 이상으로 작성하세요.`;
 
   const calculatedSaju = calculateAccurateSaju(sajuData);
 
@@ -695,49 +718,49 @@ function getWealthFortunePrompt(sajuData) {
 - 사주의 재성(정재, 편재) 분석
 - 돈을 버는 방식과 재물 축적 패턴
 - 재물운의 강약과 특징
-(9~11문장)
+(10~15문장)
 
 **📈 수입원 및 재물 획득 방법**
 - 주수입원(월급, 사업, 투자 등) 적성 분석
 - 부수입 창출 가능성
 - 재물이 들어오는 경로와 시기
 - 대박운 여부와 타이밍
-(10~12문장)
+(10~15문장)
 
 **💎 재테크 성향 및 전략**
 - 투자 성향 (안정형/공격형/균형형)
 - 적합한 투자 방법 (부동산, 주식, 저축 등)
 - 투자 성공 확률이 높은 분야
 - 투자 주의 시기
-(9~11문장)
+(10~15문장)
 
 **🏦 재물 관리 및 저축**
 - 돈 관리 습관과 소비 패턴
 - 저축 성공 전략
 - 낭비 주의 포인트
 - 재물 축적 방법
-(8~10문장)
+(10~15문장)
 
 **📊 시기별 재물운 흐름**
 - 대운별 재물운 변화
 - 올해 및 향후 3년간 재물운
 - 재물운이 좋은 시기와 투자 적기
 - 재물운이 약한 시기와 대처법
-(10~12문장)
+(10~15문장)
 
 **🎯 재물 증대 개운법**
 - 재물운을 높이는 방위, 색상, 숫자
 - 돈을 부르는 습관과 행동
 - 재물신을 모시는 방법
 - 기부와 나눔의 효과
-(8~10문장)
+(10~15문장)
 
 **⚠️ 재물 손실 주의사항**
 - 돈이 새는 구멍과 원인
 - 사기, 손실 주의 시기
 - 보증, 투자 실패 방지법
 - 재물 트러블 예방책
-(7~9문장)
+(10~12문장)
 
 각 섹션마다 돈과 재물에 관한 속담이나 격언을 포함하고, 현실적이고 실천 가능한 조언을 제공해주세요.`;
 

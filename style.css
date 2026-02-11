@@ -935,7 +935,7 @@
   .form-grid{grid-template-columns:1fr 1fr}
   .form-group.full{grid-column:1/-1}
 }
-@media(max-width:600px){body{padding:10px;font-size:14px}.card{padding:18px}.top-bar{flex-direction:column;align-items:flex-start;gap:10px}.form-grid{grid-template-columns:1fr 1fr}.compat-grid,.compat-detail-grid{grid-template-columns:1fr}.vs-wrap{grid-template-columns:1fr;text-align:center}.pillar-wrap{gap:8px}.pillar{min-width:75px;padding:10px 12px}.pillar .gan,.pillar .ji{font-size:20px}.fortune-grid{grid-template-columns:repeat(3,1fr)}.pillar-board{grid-template-columns:repeat(2,1fr)}.element-gallery{grid-template-columns:repeat(2,1fr)}.saju-hero-stats{grid-template-columns:repeat(2,1fr)}.analysis-body{padding:16px;font-size:14.5px;line-height:2.0}}
+@media(max-width:600px){body{padding:10px;font-size:14px}.card{padding:18px}.top-bar{flex-direction:column;align-items:flex-start;gap:10px}.form-grid{grid-template-columns:1fr 1fr}.compat-grid,.compat-detail-grid{grid-template-columns:1fr}.vs-wrap{grid-template-columns:1fr;text-align:center}.pillar-wrap{gap:8px}.pillar{min-width:75px;padding:10px 12px}.pillar .gan,.pillar .ji{font-size:20px}.fortune-grid{grid-template-columns:repeat(3,1fr)}.pillar-board{grid-template-columns:repeat(2,1fr)}.element-gallery{grid-template-columns:repeat(2,1fr)}.saju-hero-stats{grid-template-columns:repeat(2,1fr)}.analysis-body{padding:16px;font-size:14.5px;line-height:2.0}.yinyang-bar{height:32px;border-radius:16px}.yang-bar,.yin-bar{font-size:12px;min-width:50px}.fortune-detail-tabs{gap:2px}.fortune-detail-tabs .tab-btn{padding:8px 10px;font-size:13px}}
     footer{margin-top:20px;padding:20px;text-align:center;font-size:12px;color:var(--muted)}
     footer a{color:var(--muted);text-decoration:none}
     footer a:hover{text-decoration:underline}
@@ -964,3 +964,14 @@
     .tab-btn:focus-visible{outline:2px solid var(--accent-1);outline-offset:2px;border-radius:8px}
     .tab-btn:focus-visible:not(:focus-visible){outline:none}
     input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent-1);outline-offset:1px}
+    .yinyang-card{padding:20px}
+.yinyang-bar{display:flex;height:40px;border-radius:20px;overflow:hidden;margin:14px 0;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.yang-bar{background:linear-gradient(135deg,#ff6b6b,#ffa500);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;min-width:60px;transition:width .6s ease}
+.yin-bar{background:linear-gradient(135deg,#4cc9f0,#7c66d9);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;min-width:60px;transition:width .6s ease}
+.yinyang-desc{text-align:center;font-size:15px;color:var(--muted);margin-top:10px;line-height:1.8}
+.fortune-tabs-shell{margin:16px 0}
+.fortune-detail-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--line);padding-bottom:0;flex-wrap:wrap}
+.fortune-detail-tabs .tab-btn{border:none;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;margin-bottom:-2px;font-family:var(--font-sans);min-height:44px}
+.fortune-detail-tabs .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.fortune-detail-tabs .tab-btn:hover{color:var(--accent);opacity:0.8}
+.fortune-tab-content{min-height:200px;transition:opacity .3s ease}
