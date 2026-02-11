@@ -278,8 +278,12 @@ async function handleYouTubeRequest(request, env) {
   }
 
   if (!YOUTUBE_API_KEY) {
-    console.error('YOUTUBE_API_KEY is not set.');
-    return apiResponse({ error: { message: 'Internal server error.' } }, 500);
+    console.error('⚠️ YOUTUBE_API_KEY is not set in environment variables.');
+    return apiResponse({
+      error: {
+        message: 'YouTube API 키가 설정되지 않았습니다. Cloudflare Pages 설정에서 환경변수를 추가해주세요.'
+      }
+    }, 500);
   }
 
   const apiUrl = new URL('https://www.googleapis.com/youtube/v3/search');
@@ -288,7 +292,7 @@ async function handleYouTubeRequest(request, env) {
   apiUrl.search = new URLSearchParams({
     part: 'snippet',
     type: 'video',
-    maxResults: '10', // Increased to get more results before filtering
+    maxResults: '20', // Increased to ensure sufficient results after filtering
     q: enhancedQuery,
     safeSearch: 'moderate',
     videoEmbeddable: 'true',
@@ -298,12 +302,18 @@ async function handleYouTubeRequest(request, env) {
   }).toString();
 
   const response = await fetch(apiUrl.toString());
-  const data = await response.json();
 
   if (!response.ok) {
-    console.error('YouTube API error:', data.error?.message || 'Unknown');
-    return apiResponse({ error: { message: 'YouTube search failed.' } }, response.status);
+    const errorText = await response.text();
+    console.error('YouTube search failed:', response.status, errorText);
+    return apiResponse({
+      error: {
+        message: `YouTube 검색 실패 (${response.status}): ${errorText.slice(0, 100)}`
+      }
+    }, response.status);
   }
+
+  const data = await response.json();
 
   const rawItems = Array.isArray(data.items) ? data.items : [];
   const items = rawItems
@@ -316,7 +326,14 @@ async function handleYouTubeRequest(request, env) {
     .filter(item => item.videoId)
     .filter(item => {
       const title = item.title.toLowerCase();
-      const excludeKeywords = ['medley', 'mix', 'mashup', 'compilation', '메들리', '믹스', '모음', '합본', '연속듣기', '플레이리스트', '1시간', '2시간', '3시간', 'playlist', 'hour', '연속', '모아듣기', 'best', 'top'];
+      const excludeKeywords = [
+        'medley', 'mix', 'mashup', 'compilation',
+        '메들리', '믹스', '모음집', '합본',
+        '연속듣기', '플레이리스트',
+        '1시간', '2시간', '3시간', '4시간', '10시간',
+        'playlist', 'hour', '연속재생', '모아듣기',
+        '논스톱', 'nonstop'
+      ];
       return !excludeKeywords.some(keyword => title.includes(keyword));
     });
 
@@ -353,8 +370,8 @@ async function handleYouTubeRequest(request, env) {
         }
         if (!detail.embeddable) return false;
         if (Array.isArray(detail.blocked) && detail.blocked.includes(region)) return false;
-        // Filter out videos longer than 5 minutes (300 seconds)
-        if (detail.duration > 300) {
+        // Filter out videos longer than 10 minutes (600 seconds) - relaxed from 5 minutes
+        if (detail.duration > 600) {
           return false;
         }
         return true;
@@ -378,18 +395,29 @@ function getSajuPrompt(sajuData, question) {
 - 분석은 한국어로만 작성합니다. 영어 표현(예: User's Information)은 절대 쓰지 마세요.
 - 마크다운 문법을 사용하되 표는 사용하지 마세요.
 - 각 섹션 앞에 이모티콘을 넣고, 핵심 키워드는 **볼드** 표시하세요.
-- **보고서 형식**: 각 섹션은 최소 8~12문장으로 깊이있게 작성하세요.
-- 각 섹션 마지막에 속담이나 비유 1~2개를 추가하세요.
-- 은유적이고 문학적인 감성을 담은 표현을 사용해주세요.
-- 전체 분석 길이: 최소 3000자 이상으로 충실하게 작성해주세요.
-- 천간/지지 의미를 생활 속 실용적 조언으로 풀어주세요.
-- 각 소제목 아래에는 핵심 요약 문장을 먼저 제시하고, 이어서 상세 해석을 펼쳐주세요.`;
+- **보고서 형식 (필수)**:
+  * 각 섹션은 **최소 10~15문장**으로 매우 상세하게 작성하세요.
+  * 각 섹션 첫 문장은 핵심 요약으로 시작하세요.
+  * 각 섹션 마지막에 속담이나 비유를 추가하세요.
+  * 전체 분석 길이: **최소 4000자 이상**으로 충실하게 작성하세요.
+  * 은유적이고 문학적인 감성을 담은 표현을 사용해주세요.
+  * 천간/지지 의미를 생활 속 실용적 조언으로 풀어주세요.`;
 
   const calLabel = sajuData.cal === 'lunar' ? '음력' : '양력';
   const genderLabel = sajuData.gender === 'female' ? '여자' : '남자';
 
   // Calculate accurate saju
   const calculatedSaju = calculateAccurateSaju(sajuData);
+
+  // 만세력: 대운 계산 (10년 주기)
+  const currentYear = new Date().getFullYear();
+  const birthYear = Number(sajuData.year);
+  const age = currentYear - birthYear;
+  const daeunStart = Math.floor(age / 10) * 10; // 현재 대운 시작 나이
+  const daeunYears = `${daeunStart}세~${daeunStart+9}세`;
+
+  // 세운 (올해)
+  const saeun = `${currentYear}년 (${age}세)`;
 
   let userPrompt = `아래 정보를 바탕으로 깊이있고 폭이 넓은 사주 분석을 작성해주세요.
 
@@ -401,6 +429,17 @@ function getSajuPrompt(sajuData, question) {
 
   // Add calculated saju information if available
   if (calculatedSaju && calculatedSaju.yearPillar) {
+    const yangCount = calculatedSaju.yinYang.yang;
+    const yinCount = calculatedSaju.yinYang.yin;
+    let yinYangBalance;
+    if (yangCount === yinCount) {
+      yinYangBalance = '완벽한 균형(4:4)은 조화로운 성격을 의미합니다.';
+    } else if (yangCount > yinCount) {
+      yinYangBalance = '양이 우세하면 적극적이고 외향적인 성격입니다.';
+    } else {
+      yinYangBalance = '음이 우세하면 차분하고 내면적인 성격입니다.';
+    }
+
     userPrompt += `
 
 **정확하게 계산된 사주**
@@ -409,9 +448,11 @@ function getSajuPrompt(sajuData, question) {
 - 일주(日柱): ${calculatedSaju.dayPillar.stem}${calculatedSaju.dayPillar.branch} (천간: ${calculatedSaju.dayPillar.stemElement}, 지지: ${calculatedSaju.dayPillar.branchElement})
 - 시주(時柱): ${calculatedSaju.hourPillar.stem}${calculatedSaju.hourPillar.branch} (천간: ${calculatedSaju.hourPillar.stemElement}, 지지: ${calculatedSaju.hourPillar.branchElement})
 - 오행 분포: 목 ${calculatedSaju.elements.목}개, 화 ${calculatedSaju.elements.화}개, 토 ${calculatedSaju.elements.토}개, 금 ${calculatedSaju.elements.금}개, 수 ${calculatedSaju.elements.수}개
-- 음양 분포: 양 ${calculatedSaju.yinYang.yang}개, 음 ${calculatedSaju.yinYang.yin}개
+- 음양 분포: 양 ${yangCount}개, 음 ${yinCount}개 (총 8글자 중)
+- 현재 대운: ${daeunYears}
+- 올해 세운: ${saeun}
 
-아래 정확하게 계산된 사주를 해석해주세요.`;
+아래 정확하게 계산된 사주를 해석해주세요. 음양 분석에서는 "${yinYangBalance}" 이 점을 반드시 고려하세요.`;
   } else {
     userPrompt += `
 
@@ -435,16 +476,23 @@ function getSajuPrompt(sajuData, question) {
 **본 분석**
 1. **사주 기둥의 핵심 하이라이트**: 사주 기둥(년주·월주·일주·시주)를 한자+한글로 정확하게 표기하고, 각 기둥의 특징을 짚어주세요.
 2. **오행(목·화·토·금·수) 분석**: 강약, 균형, 보완 요소를 자세히 설명하고, 반드시 "목 N개, 화 N개, 토 N개, 금 N개, 수 N개" 형태로 정리한 후 바로 설명하세요.
-2.5. **☯ 음양(陰陽) 분석**: 양 기운과 음 기운의 분포를 분석하고, 각 천간·지지의 음양 속성을 명시하세요. 음양의 균형/불균형이 성격, 건강, 대인관계에 미치는 영향을 8문장 이상으로 자세히 풀어주세요.
-3. **🔥 살(煞) 분석**: 사주에 존재하는 살(도화살, 역마살, 백호살, 과숙살, 현침살, 양인살, 화개살, 괴강살 등)을 정확히 찾아내고, 각 살의 이름을 소제목으로 나열한 뒤, 의미·영향·실생활 대처법을 각각 5문장 이상으로 자세히 설명해주세요.
-4. **⭐ 귀인(貴人) 분석**: 사주에 존재하는 귀인(천을귀인, 천덕귀인, 월덕귀인, 문창귀인, 학당귀인 등)을 찾아내고, 각 귀인의 이름을 소제목으로 나열한 뒤, 의미·가져다주는 복·활용법을 각각 5문장 이상으로 상세히 설명해주세요.
-5. **대운(大運) 분석**: 현재 대운 시기와 향후 주요 대운 전환기를 명시하고, 각 시기별 운세 흐름과 주의사항을 자세히 알려주세요. (예: 현재 N세~N세 대운, 다음 대운 전환기 등)
-6. **성격과 재능**: 일주, 일간, 십이운성이 나타내는 성향과 함께 자세히 분석해주세요.
-7. **관계/대인관계**: 어울리는 사람의 특징과, 추천 커뮤니케이션 방법을 알려주세요.
-8. **직업/재물운**: 적성 분야, 시기에 맞는 돈 흐름과, 재무 관리 방법을 제공해주세요.
-9. **건강운**: 취약 포인트와 생활밀착 관리법을 제공해주세요.
-10. **시기별 운세 흐름**: 단기/중기/장기 흐름을 자세히 알려주세요.
-11. **마무리 조언 및 한 줄 메시지**: 따뜻한 메시지를 남겨주세요.
+3. **☯ 음양(陰陽) 분석**
+핵심: 음양 균형이 운명의 흐름에 미치는 영향
+${calculatedSaju && calculatedSaju.yinYang ? `
+- 양(${calculatedSaju.yinYang.yang}개): 외향성, 활동성, 적극성, 남성성
+- 음(${calculatedSaju.yinYang.yin}개): 내향성, 수용성, 소극성, 여성성` : ''}
+- 음양 비율에 따른 건강, 대인관계, 직업 적성을 구체적으로 설명하세요.
+- 각 천간·지지의 음양 속성을 명시하세요.
+- 음양의 균형/불균형이 성격, 건강, 대인관계에 미치는 영향을 최소 12문장 이상으로 자세히 풀어주세요.
+4. **🔥 살(煞) 분석**: 사주에 존재하는 살(도화살, 역마살, 백호살, 과숙살, 현침살, 양인살, 화개살, 괴강살 등)을 정확히 찾아내고, 각 살의 이름을 소제목으로 나열한 뒤, 의미·영향·실생활 대처법을 각각 5문장 이상으로 자세히 설명해주세요.
+5. **⭐ 귀인(貴人) 분석**: 사주에 존재하는 귀인(천을귀인, 천덕귀인, 월덕귀인, 문창귀인, 학당귀인 등)을 찾아내고, 각 귀인의 이름을 소제목으로 나열한 뒤, 의미·가져다주는 복·활용법을 각각 5문장 이상으로 상세히 설명해주세요.
+6. **대운(大運) 분석**: 현재 대운 시기(${daeunYears})와 향후 주요 대운 전환기를 명시하고, 각 시기별 운세 흐름과 주의사항을 자세히 알려주세요.
+7. **성격과 재능**: 일주, 일간, 십이운성이 나타내는 성향과 함께 자세히 분석해주세요.
+8. **관계/대인관계**: 어울리는 사람의 특징과, 추천 커뮤니케이션 방법을 알려주세요.
+9. **직업/재물운**: 적성 분야, 시기에 맞는 돈 흐름과, 재무 관리 방법을 제공해주세요.
+10. **건강운**: 취약 포인트와 생활밀착 관리법을 제공해주세요.
+11. **시기별 운세 흐름**: 단기/중기/장기 흐름을 자세히 알려주세요.
+12. **마무리 조언 및 한 줄 메시지**: 따뜻한 메시지를 남겨주세요.
 
 **운세 카드 (정확히 아래 형식 준수)**
 - 건강운: ... (첫 줄에 요약 작성)

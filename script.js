@@ -1141,19 +1141,10 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   const resultDiv = document.getElementById('basicResult');
   resultDiv.style.display = 'block';
   resultDiv.innerHTML = `
-    <div class="section result-shell fade-in" style="padding:24px;">
-      <div class="skeleton" style="height:24px;width:200px;margin-bottom:16px;"></div>
-      <div class="skeleton" style="height:14px;width:80%;margin-bottom:10px;"></div>
-      <div class="skeleton" style="height:14px;width:60%;margin-bottom:20px;"></div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
-        <div class="skeleton" style="height:120px;"></div>
-        <div class="skeleton" style="height:120px;"></div>
-        <div class="skeleton" style="height:120px;"></div>
-        <div class="skeleton" style="height:120px;"></div>
-      </div>
-      <div class="skeleton" style="height:14px;width:70%;margin-bottom:10px;"></div>
-      <div class="skeleton" style="height:200px;margin-bottom:14px;"></div>
-      <p class="loading-text">사주를 분석하고 있습니다<span class="loading-dots"></span></p>
+    <div class="section result-shell fade-in" style="padding:60px 24px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:20px;">🔮</div>
+      <p class="loading-text" style="font-size:18px;font-weight:600;">사주를 깊이 분석하고 있습니다</p>
+      <p class="loading-text" style="font-size:14px;color:var(--muted);margin-top:10px;">잠시만 기다려주세요<span class="loading-dots"></span></p>
     </div>
   `;
   resultDiv.scrollIntoView({ behavior: 'smooth' });
@@ -1182,7 +1173,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   const total = yangCount + yinCount || 1;
   const yangPercent = Math.round((yangCount / total) * 100);
   const yinPercent = 100 - yangPercent;
-  const yinYangDesc = yangCount > yinCount ? '양(陽)의 기운이 강한 사주입니다. 적극적이고 활동적인 에너지가 넘칩니다.' : yinCount > yangCount ? '음(陰)의 기운이 강한 사주입니다. 내면의 깊이와 섬세한 감성이 돋보입니다.' : '음양이 균형 잡힌 사주입니다. 조화로운 에너지 흐름을 가지고 있습니다.';
+  const yinYangDesc = yangCount > yinCount ? '양의 기운이 강한 사주입니다. 적극적이고 활동적인 에너지가 넘치며, 자신감 있게 앞으로 나아가는 성향을 보입니다. 도전을 두려워하지 않고 새로운 시도를 즐깁니다.' : yinCount > yangCount ? '음의 기운이 강한 사주입니다. 내면의 깊이와 섬세한 감성이 돋보이며, 차분하고 신중하게 상황을 파악하는 능력이 뛰어납니다. 타인의 감정을 잘 이해하고 배려심이 많습니다.' : '음양이 균형 잡힌 사주입니다. 조화로운 에너지 흐름을 가지고 있어 상황에 따라 유연하게 대처할 수 있습니다. 적극성과 신중함을 모두 갖춘 균형잡힌 성격입니다.';
 
   const elementMatch = cleanedResponse.match(/(?:###\s*오행|오행)\s*[:：]\s*\[?(목|화|토|금|수)\]?/);
   const sajuElement = elementMatch ? elementMatch[1] : '목';
@@ -1236,10 +1227,29 @@ document.getElementById('btnGo').addEventListener('click', async () => {
           </div>
         </div>
         <div class="yinyang-bar">
-          <div class="yang-bar" style="width:${yangPercent}%">양(陽) ${yangCount}</div>
-          <div class="yin-bar" style="width:${yinPercent}%">음(陰) ${yinCount}</div>
+          <div class="yang-bar" style="width:${yangPercent}%">
+            <span style="font-size:16px;">☀</span> 양 ${yangCount}/8
+          </div>
+          <div class="yin-bar" style="width:${yinPercent}%">
+            <span style="font-size:16px;">🌙</span> 음 ${yinCount}/8
+          </div>
         </div>
-        <p class="yinyang-desc">${escapeHtml(yinYangDesc)}</p>
+        <div class="yinyang-details" style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:12px;">
+          <p style="font-weight:600;margin-bottom:10px;">
+            ${yangCount > yinCount ? '양의 기운이 우세합니다' : yinCount > yangCount ? '음의 기운이 우세합니다' : '음양이 완벽하게 균형을 이룹니다'}
+          </p>
+          <p class="yinyang-desc" style="line-height:1.8;">${escapeHtml(yinYangDesc)}</p>
+          <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+            <div style="padding:12px;background:rgba(255,107,107,0.1);border-radius:8px;">
+              <strong>양의 특성:</strong><br>
+              외향적, 활동적, 적극적, 창의적
+            </div>
+            <div style="padding:12px;background:rgba(76,201,240,0.1);border-radius:8px;">
+              <strong>음의 특성:</strong><br>
+              내향적, 사려깊음, 수용적, 안정적
+            </div>
+          </div>
+        </div>
       </div>
       <div class="analysis-body" data-role="analysis-body"></div>
     </div>
@@ -1374,13 +1384,10 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
   const resultDiv = document.getElementById('compatResult');
   resultDiv.style.display = 'block';
   resultDiv.innerHTML = `
-    <div class="section result-shell fade-in" style="padding:24px;">
-      <div class="skeleton" style="height:24px;width:200px;margin-bottom:16px;"></div>
-      <div class="skeleton" style="height:14px;width:80%;margin-bottom:10px;"></div>
-      <div class="skeleton" style="height:200px;margin-bottom:14px;"></div>
-      <div class="skeleton" style="height:14px;width:60%;margin-bottom:10px;"></div>
-      <div class="skeleton" style="height:160px;"></div>
-      <p class="loading-text">궁합을 분석하고 있습니다<span class="loading-dots"></span></p>
+    <div class="section result-shell fade-in" style="padding:60px 24px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:20px;">💞</div>
+      <p class="loading-text" style="font-size:18px;font-weight:600;">궁합을 깊이 분석하고 있습니다</p>
+      <p class="loading-text" style="font-size:14px;color:var(--muted);margin-top:10px;">잠시만 기다려주세요<span class="loading-dots"></span></p>
     </div>
   `;
   resultDiv.scrollIntoView({ behavior: 'smooth' });
@@ -1458,12 +1465,10 @@ async function loadFortuneInResult(tabType, resultDiv) {
 
   // 로딩 표시
   container.innerHTML = `
-    <div class="section result-shell fade-in" style="padding:24px;">
-      <div class="skeleton" style="height:24px;width:200px;margin-bottom:16px;"></div>
-      <div class="skeleton" style="height:14px;width:80%;margin-bottom:10px;"></div>
-      <div class="skeleton" style="height:14px;width:60%;margin-bottom:20px;"></div>
-      <div class="skeleton" style="height:200px;margin-bottom:14px;"></div>
-      <p class="loading-text">상세 운세를 분석하고 있습니다<span class="loading-dots"></span></p>
+    <div class="section result-shell fade-in" style="padding:60px 24px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:20px;">✨</div>
+      <p class="loading-text" style="font-size:18px;font-weight:600;">상세 운세를 분석하고 있습니다</p>
+      <p class="loading-text" style="font-size:14px;color:var(--muted);margin-top:10px;">잠시만 기다려주세요<span class="loading-dots"></span></p>
     </div>
   `;
 
@@ -1529,12 +1534,10 @@ async function loadFortuneTab(tabType) {
 
   // Show loading
   container.innerHTML = `
-    <div class="section result-shell fade-in" style="padding:24px;">
-      <div class="skeleton" style="height:24px;width:200px;margin-bottom:16px;"></div>
-      <div class="skeleton" style="height:14px;width:80%;margin-bottom:10px;"></div>
-      <div class="skeleton" style="height:14px;width:60%;margin-bottom:20px;"></div>
-      <div class="skeleton" style="height:200px;margin-bottom:14px;"></div>
-      <p class="loading-text">운세를 분석하고 있습니다<span class="loading-dots"></span></p>
+    <div class="section result-shell fade-in" style="padding:60px 24px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:20px;">🌟</div>
+      <p class="loading-text" style="font-size:18px;font-weight:600;">운세를 분석하고 있습니다</p>
+      <p class="loading-text" style="font-size:14px;color:var(--muted);margin-top:10px;">잠시만 기다려주세요<span class="loading-dots"></span></p>
     </div>
   `;
 
