@@ -623,18 +623,22 @@ async function getAiResponse(payload) {
       console.error('API Error:', data);
       return `**오류 발생:** ${data.error?.message || 'API 응답을 받는 중 오류가 발생했습니다.'}`;
     }
-    if (!data?.choices?.[0]?.message?.content) {
-      console.error('Invalid API response:', data);
-      return '**오류 발생:** AI 분석 결과를 받지 못했습니다. 다시 시도해주세요.';
-    }
-    const content = data.choices[0].message.content;
 
-    // For saju type, return structured response if available
-    if (payload.type === 'saju' && data.calculatedSaju) {
-      return { content, calculatedSaju: data.calculatedSaju };
+    // New structured format: { content, calculatedSaju }
+    if (data.content && typeof data.content === 'string') {
+      if (payload.type === 'saju' && data.calculatedSaju) {
+        return { content: data.content, calculatedSaju: data.calculatedSaju };
+      }
+      return data.content;
     }
 
-    return content;
+    // Old OpenAI passthrough format: { choices: [{ message: { content } }] }
+    if (data?.choices?.[0]?.message?.content) {
+      return data.choices[0].message.content;
+    }
+
+    console.error('Invalid API response:', data);
+    return '**오류 발생:** AI 분석 결과를 받지 못했습니다. 다시 시도해주세요.';
   } catch (error) {
     console.error('Error calling worker function:', error);
     if (error instanceof SyntaxError) {
