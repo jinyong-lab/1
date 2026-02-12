@@ -972,18 +972,24 @@ function injectPillarHanja(md) {
 function buildPillarsFromServer(saju) {
   if (!saju) return [];
   const labels = [
-    { key: 'yearPillar', label: '년주' },
-    { key: 'monthPillar', label: '월주' },
-    { key: 'dayPillar', label: '일주' },
-    { key: 'hourPillar', label: '시주' }
+    { key: 'yearPillar', label: '년주', name: 'year' },
+    { key: 'monthPillar', label: '월주', name: 'month' },
+    { key: 'dayPillar', label: '일주', name: 'day' },
+    { key: 'hourPillar', label: '시주', name: 'hour' }
   ];
-  return labels.map(({ key, label }) => {
+  return labels.map(({ key, label, name }) => {
     const pillar = saju[key];
     if (!pillar || !pillar.stem || !pillar.branch) return null;
     return {
       label,
       hanja: pillar.stem + pillar.branch,
-      hangul: (pillar.hangulStem || '') + (pillar.hangulBranch || '')
+      hangul: (pillar.hangulStem || '') + (pillar.hangulBranch || ''),
+      stemElement: pillar.stemElement || '',
+      branchElement: pillar.branchElement || '',
+      tenGodStem: saju.tenGods ? saju.tenGods[name + 'Stem'] || '' : '',
+      tenGodBranch: saju.tenGods ? saju.tenGods[name + 'Branch'] || '' : '',
+      twelveStage: saju.twelveStages ? saju.twelveStages[name] || '' : '',
+      hiddenStems: saju.hiddenStems ? saju.hiddenStems[name] || [] : []
     };
   }).filter(Boolean);
 }
@@ -1069,12 +1075,32 @@ function buildPillarBoard(pillars) {
   const cards = pillars.map((pillar, index) => {
     const tone = (index % 5) + 1;
     const photo = pillarPhotos[index % pillarPhotos.length];
+
+    // 십성 표시 (천간 위에)
+    const tenGodStemHtml = pillar.tenGodStem
+      ? `<span class="pillar-tengod">${escapeHtml(pillar.tenGodStem)}</span>` : '';
+    const tenGodBranchHtml = pillar.tenGodBranch
+      ? `<span class="pillar-tengod branch">${escapeHtml(pillar.tenGodBranch)}</span>` : '';
+
+    // 12운성
+    const twelveStageHtml = pillar.twelveStage
+      ? `<span class="pillar-stage">${escapeHtml(pillar.twelveStage)}</span>` : '';
+
+    // 지장간
+    const hiddenHtml = pillar.hiddenStems && pillar.hiddenStems.length > 0
+      ? `<div class="pillar-hidden">${pillar.hiddenStems.map(s => `<span>${escapeHtml(s)}</span>`).join('')}</div>` : '';
+
     return `
       <div class="pillar-card" data-tone="${tone}" style="--pillar-photo:url('${photo}')">
         <div class="pillar-seal">${getStampSvg(tone)}</div>
         <div class="pillar-label">${pillar.label}</div>
-        <div class="pillar-hanja">${escapeHtml(pillar.hanja || '')}</div>
+        ${tenGodStemHtml}
+        <div class="pillar-hanja-stem">${escapeHtml(pillar.hanja ? pillar.hanja[0] : '')}</div>
+        <div class="pillar-hanja-branch">${escapeHtml(pillar.hanja ? pillar.hanja[1] : '')}</div>
+        ${tenGodBranchHtml}
         <div class="pillar-hangul">${escapeHtml(pillar.hangul || '')}</div>
+        ${twelveStageHtml}
+        ${hiddenHtml}
       </div>
     `;
   }).join('');

@@ -22,6 +22,269 @@ const BRANCH_YINYANG = {
   '午': '양', '未': '음', '申': '양', '酉': '음', '戌': '양', '亥': '음'
 };
 
+// --- 지지 본기 천간 (Branch Main Stem) ---
+const BRANCH_MAIN_STEM = {
+  '子': '癸', '丑': '己', '寅': '甲', '卯': '乙', '辰': '戊', '巳': '丙',
+  '午': '丁', '未': '己', '申': '庚', '酉': '辛', '戌': '戊', '亥': '壬'
+};
+
+// --- 지장간 (Hidden Stems) ---
+const HIDDEN_STEMS = {
+  '子': ['癸'],
+  '丑': ['己', '癸', '辛'],
+  '寅': ['甲', '丙', '戊'],
+  '卯': ['乙'],
+  '辰': ['戊', '乙', '癸'],
+  '巳': ['丙', '庚', '戊'],
+  '午': ['丁', '己'],
+  '未': ['己', '丁', '乙'],
+  '申': ['庚', '壬', '戊'],
+  '酉': ['辛'],
+  '戌': ['戊', '辛', '丁'],
+  '亥': ['壬', '甲']
+};
+
+// --- 오행 상생/상극 관계 ---
+// 상생: 목→화→토→금→수→목
+// 상극(I overcome): 목→토, 토→수, 수→화, 화→금, 금→목
+const OHENG_CYCLE = ['목', '화', '토', '금', '수'];
+
+/**
+ * 십성(十神) 계산 - 일간과 대상 천간의 관계를 판별
+ * @param {string} dayStem - 일간 (천간 한자)
+ * @param {string} targetStem - 대상 천간 (한자)
+ * @returns {string} 십성 이름 (한국어)
+ */
+function getTenGod(dayStem, targetStem) {
+  if (!dayStem || !targetStem) return '';
+
+  const dayElement = STEM_ELEMENTS[dayStem];
+  const targetElement = STEM_ELEMENTS[targetStem];
+  const dayYY = STEM_YINYANG[dayStem];
+  const targetYY = STEM_YINYANG[targetStem];
+
+  if (!dayElement || !targetElement) return '';
+
+  const sameYinYang = dayYY === targetYY;
+  const dayIdx = OHENG_CYCLE.indexOf(dayElement);
+  const targetIdx = OHENG_CYCLE.indexOf(targetElement);
+
+  // Same element
+  if (dayElement === targetElement) {
+    return sameYinYang ? '비견' : '겁재';
+  }
+
+  // I generate (상생 - 내가 생하는 것): dayIdx의 다음이 targetIdx
+  if (OHENG_CYCLE[(dayIdx + 1) % 5] === targetElement) {
+    return sameYinYang ? '식신' : '상관';
+  }
+
+  // I overcome (상극 - 내가 극하는 것): 목→토, 화→금, 토→수, 금→목, 수→화
+  // dayIdx에서 +2 위치
+  if (OHENG_CYCLE[(dayIdx + 2) % 5] === targetElement) {
+    return sameYinYang ? '편재' : '정재';
+  }
+
+  // Overcomes me (나를 극하는 것): target이 나를 극함
+  // targetIdx에서 +2 위치가 dayElement
+  if (OHENG_CYCLE[(targetIdx + 2) % 5] === dayElement) {
+    return sameYinYang ? '편관' : '정관';
+  }
+
+  // Generates me (나를 생하는 것): target이 나를 생함
+  // targetIdx에서 +1 위치가 dayElement
+  if (OHENG_CYCLE[(targetIdx + 1) % 5] === dayElement) {
+    return sameYinYang ? '편인' : '정인';
+  }
+
+  return '';
+}
+
+// --- 12운성 (Twelve Life Stages) ---
+const TWELVE_STAGES = ['장생', '목욕', '관대', '건록', '제왕', '쇠', '병', '사', '묘', '절', '태', '양'];
+const BRANCHES_ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+// 장생 시작 지지 (각 천간별)
+const TWELVE_STAGE_START = {
+  '甲': '亥', '乙': '午', '丙': '寅', '丁': '酉', '戊': '寅',
+  '己': '酉', '庚': '巳', '辛': '子', '壬': '申', '癸': '卯'
+};
+
+// 양간: 甲丙戊庚壬, 음간: 乙丁己辛癸
+const YANG_STEMS = new Set(['甲', '丙', '戊', '庚', '壬']);
+
+/**
+ * 12운성 계산 - 천간이 지지에서 어떤 운성에 해당하는지 판별
+ * @param {string} stem - 천간 (한자)
+ * @param {string} branch - 지지 (한자)
+ * @returns {string} 12운성 이름
+ */
+function getTwelveStage(stem, branch) {
+  if (!stem || !branch) return '';
+
+  const startBranch = TWELVE_STAGE_START[stem];
+  if (!startBranch) return '';
+
+  const startIdx = BRANCHES_ORDER.indexOf(startBranch);
+  const branchIdx = BRANCHES_ORDER.indexOf(branch);
+  if (startIdx === -1 || branchIdx === -1) return '';
+
+  let offset;
+  if (YANG_STEMS.has(stem)) {
+    // 양간: 순행 (forward)
+    offset = (branchIdx - startIdx + 12) % 12;
+  } else {
+    // 음간: 역행 (backward)
+    offset = (startIdx - branchIdx + 12) % 12;
+  }
+
+  return TWELVE_STAGES[offset] || '';
+}
+
+// --- 신살 (Spirit Killings / Special Stars) ---
+
+// 도화살 - 년지 또는 일지 기준
+const DOHUA_TABLE = {
+  '寅': '卯', '午': '卯', '戌': '卯',
+  '巳': '午', '酉': '午', '丑': '午',
+  '申': '酉', '子': '酉', '辰': '酉',
+  '亥': '子', '卯': '子', '未': '子'
+};
+
+// 역마살 - 년지 또는 일지 기준
+const YEOKMA_TABLE = {
+  '寅': '申', '午': '申', '戌': '申',
+  '巳': '亥', '酉': '亥', '丑': '亥',
+  '申': '寅', '子': '寅', '辰': '寅',
+  '亥': '巳', '卯': '巳', '未': '巳'
+};
+
+// 화개살 - 년지 또는 일지 기준
+const HWAGAE_TABLE = {
+  '寅': '戌', '午': '戌', '戌': '戌',
+  '巳': '丑', '酉': '丑', '丑': '丑',
+  '申': '辰', '子': '辰', '辰': '辰',
+  '亥': '未', '卯': '未', '未': '未'
+};
+
+// 천을귀인 - 일간 기준
+const CHUNEUL_TABLE = {
+  '甲': ['丑', '未'], '戊': ['丑', '未'],
+  '乙': ['子', '申'], '己': ['子', '申'],
+  '丙': ['亥', '酉'], '丁': ['亥', '酉'],
+  '庚': ['寅', '午'], '辛': ['寅', '午'],
+  '壬': ['巳', '卯'], '癸': ['巳', '卯']
+};
+
+// 천덕귀인 - 월지 기준
+const CHUNDUK_TABLE = {
+  '寅': '丁', '卯': '申', '辰': '壬', '巳': '辛',
+  '午': '亥', '未': '甲', '申': '癸', '酉': '寅',
+  '戌': '丙', '亥': '乙', '子': '巳', '丑': '庚'
+};
+
+// 월덕귀인 - 월지 기준
+const WOLDUK_TABLE = {
+  '寅': '丙', '卯': '甲', '辰': '壬', '巳': '庚',
+  '午': '丙', '未': '甲', '申': '壬', '酉': '庚',
+  '戌': '丙', '亥': '甲', '子': '壬', '丑': '庚'
+};
+
+/**
+ * 신살(神殺) 계산 - 사주 내 길신/흉살 판별
+ * @param {Array} pillars - [yearPillar, monthPillar, dayPillar, hourPillar]
+ * @param {string} gender - 성별 ('male' or 'female')
+ * @returns {Object} 신살 분석 결과
+ */
+function calculateShinsal(pillars, gender) {
+  const [yearP, monthP, dayP, hourP] = pillars;
+
+  // 모든 지지 수집
+  const allBranches = pillars.filter(p => p).map(p => p.branch);
+  // 모든 천간 수집
+  const allStems = pillars.filter(p => p).map(p => p.stem);
+
+  const yearBranch = yearP ? yearP.branch : null;
+  const dayBranch = dayP ? dayP.branch : null;
+  const dayStem = dayP ? dayP.stem : null;
+  const monthBranch = monthP ? monthP.branch : null;
+
+  // --- 도화살 ---
+  const dohuaTargets = new Set();
+  if (yearBranch && DOHUA_TABLE[yearBranch]) dohuaTargets.add(DOHUA_TABLE[yearBranch]);
+  if (dayBranch && DOHUA_TABLE[dayBranch]) dohuaTargets.add(DOHUA_TABLE[dayBranch]);
+  const dohuaFound = allBranches.filter(b => dohuaTargets.has(b));
+
+  // --- 역마살 ---
+  const yeokmaTargets = new Set();
+  if (yearBranch && YEOKMA_TABLE[yearBranch]) yeokmaTargets.add(YEOKMA_TABLE[yearBranch]);
+  if (dayBranch && YEOKMA_TABLE[dayBranch]) yeokmaTargets.add(YEOKMA_TABLE[dayBranch]);
+  const yeokmaFound = allBranches.filter(b => yeokmaTargets.has(b));
+
+  // --- 화개살 ---
+  const hwagaeTargets = new Set();
+  if (yearBranch && HWAGAE_TABLE[yearBranch]) hwagaeTargets.add(HWAGAE_TABLE[yearBranch]);
+  if (dayBranch && HWAGAE_TABLE[dayBranch]) hwagaeTargets.add(HWAGAE_TABLE[dayBranch]);
+  const hwagaeFound = allBranches.filter(b => hwagaeTargets.has(b));
+
+  // --- 천을귀인 ---
+  const chuneulTargets = dayStem && CHUNEUL_TABLE[dayStem] ? CHUNEUL_TABLE[dayStem] : [];
+  const chuneulFound = allBranches.filter(b => chuneulTargets.includes(b));
+
+  // --- 천덕귀인 ---
+  const chundukTarget = monthBranch && CHUNDUK_TABLE[monthBranch] ? CHUNDUK_TABLE[monthBranch] : null;
+  const chundukFound = chundukTarget ? allStems.filter(s => s === chundukTarget).concat(allBranches.filter(b => b === chundukTarget)) : [];
+
+  // --- 월덕귀인 ---
+  const woldukTarget = monthBranch && WOLDUK_TABLE[monthBranch] ? WOLDUK_TABLE[monthBranch] : null;
+  const woldukFound = woldukTarget ? allStems.filter(s => s === woldukTarget).concat(allBranches.filter(b => b === woldukTarget)) : [];
+
+  return {
+    도화살: {
+      present: dohuaFound.length > 0,
+      branches: [...new Set(dohuaFound)],
+      description: dohuaFound.length > 0
+        ? '매력과 인기가 많으며 이성에게 호감을 끄는 기운이 있습니다. 예술적 감각과 사교성이 뛰어납니다.'
+        : '도화살이 없어 대인관계에서 안정적인 편입니다.'
+    },
+    역마살: {
+      present: yeokmaFound.length > 0,
+      branches: [...new Set(yeokmaFound)],
+      description: yeokmaFound.length > 0
+        ? '이동과 변화가 많은 삶을 살게 됩니다. 해외 진출, 출장, 이사 등의 기회가 많습니다.'
+        : '역마살이 없어 안정적인 생활 기반을 가지는 편입니다.'
+    },
+    화개살: {
+      present: hwagaeFound.length > 0,
+      branches: [...new Set(hwagaeFound)],
+      description: hwagaeFound.length > 0
+        ? '학문, 예술, 종교에 대한 깊은 관심과 재능이 있습니다. 영적인 감수성이 뛰어납니다.'
+        : '화개살이 없어 현실적이고 실용적인 성향이 강합니다.'
+    },
+    천을귀인: {
+      present: chuneulFound.length > 0,
+      branches: [...new Set(chuneulFound)],
+      description: chuneulFound.length > 0
+        ? '어려울 때 귀인의 도움을 받는 길한 기운입니다. 위기 상황에서 빠져나오는 힘이 있습니다.'
+        : '천을귀인이 없으나 다른 귀인을 통해 도움을 받을 수 있습니다.'
+    },
+    천덕귀인: {
+      present: chundukFound.length > 0,
+      stems: chundukTarget ? [chundukTarget] : [],
+      description: chundukFound.length > 0
+        ? '하늘의 덕을 받는 길한 기운으로, 재난을 피하고 복을 받습니다. 도덕적이고 너그러운 성품입니다.'
+        : '천덕귀인이 없으나 선행과 덕행으로 복을 쌓을 수 있습니다.'
+    },
+    월덕귀인: {
+      present: woldukFound.length > 0,
+      stems: woldukTarget ? [woldukTarget] : [],
+      description: woldukFound.length > 0
+        ? '달의 덕을 받아 재물과 건강에 좋은 영향을 줍니다. 주변 사람들에게 신뢰를 얻습니다.'
+        : '월덕귀인이 없으나 꾸준한 노력으로 신뢰를 쌓을 수 있습니다.'
+    }
+  };
+}
+
 // --- Rate Limiting (in-memory) ---
 const rateLimitMap = new Map();
 const RATE_LIMIT = 10; // requests per minute per IP
@@ -229,13 +492,50 @@ function calculateAccurateSaju(sajuData) {
       }
     });
 
+    // 일간 (Day stem) - 사주 분석의 기준점
+    const dayStem = dayPillar ? dayPillar.stem : null;
+
+    // 십성(十神) 계산 - 일간 기준으로 각 천간/지지의 관계 판별
+    const tenGods = {};
+    const pillarNames = ['year', 'month', 'day', 'hour'];
+    pillars.forEach((pillar, idx) => {
+      if (pillar) {
+        tenGods[pillarNames[idx] + 'Stem'] = idx === 2 ? '일간' : getTenGod(dayStem, pillar.stem);
+        tenGods[pillarNames[idx] + 'Branch'] = getTenGod(dayStem, BRANCH_MAIN_STEM[pillar.branch]);
+      }
+    });
+
+    // 12운성 계산 - 일간이 각 지지에서 어떤 생사 단계에 있는지
+    const twelveStages = {};
+    pillars.forEach((pillar, idx) => {
+      if (pillar) {
+        twelveStages[pillarNames[idx]] = getTwelveStage(dayStem, pillar.branch);
+      }
+    });
+
+    // 신살(神殺) 계산 - 길신/흉살 판별
+    const shinsal = calculateShinsal(pillars, sajuData?.gender);
+
+    // 지장간(地藏干) - 각 지지에 숨어있는 천간
+    const hiddenStems = {};
+    pillars.forEach((pillar, idx) => {
+      if (pillar) {
+        hiddenStems[pillarNames[idx]] = HIDDEN_STEMS[pillar.branch] || [];
+      }
+    });
+
     return {
       yearPillar,
       monthPillar,
       dayPillar,
       hourPillar,
       elements,
-      yinYang: { yang: yangCount, yin: yinCount }
+      yinYang: { yang: yangCount, yin: yinCount },
+      dayStem,
+      tenGods,
+      twelveStages,
+      shinsal,
+      hiddenStems
     };
   } catch (error) {
     console.error('calculateAccurateSaju error:', error);
@@ -462,10 +762,34 @@ function getSajuPrompt(sajuData, question) {
 - 시주(時柱): ${calculatedSaju.hourPillar.stem}${calculatedSaju.hourPillar.branch} (천간: ${calculatedSaju.hourPillar.stemElement}, 지지: ${calculatedSaju.hourPillar.branchElement})
 - 오행 분포: 목 ${calculatedSaju.elements.목}개, 화 ${calculatedSaju.elements.화}개, 토 ${calculatedSaju.elements.토}개, 금 ${calculatedSaju.elements.금}개, 수 ${calculatedSaju.elements.수}개
 - 음양 분포: 양 ${yangCount}개, 음 ${yinCount}개 (총 8글자 중)
+- 일간(日干): ${calculatedSaju.dayStem} (${STEM_ELEMENTS[calculatedSaju.dayStem]}/${STEM_YINYANG[calculatedSaju.dayStem]})
 - 현재 대운: ${daeunYears}
 - 올해 세운: ${saeun}
 
-아래 정확하게 계산된 사주를 해석해주세요. 음양 분석에서는 "${yinYangBalance}" 이 점을 반드시 고려하세요.`;
+**십성(十神) 배치**
+- 년주 천간: ${calculatedSaju.tenGods.yearStem || '-'}, 년주 지지: ${calculatedSaju.tenGods.yearBranch || '-'}
+- 월주 천간: ${calculatedSaju.tenGods.monthStem || '-'}, 월주 지지: ${calculatedSaju.tenGods.monthBranch || '-'}
+- 일주 천간: ${calculatedSaju.tenGods.dayStem || '일간'}, 일주 지지: ${calculatedSaju.tenGods.dayBranch || '-'}
+- 시주 천간: ${calculatedSaju.tenGods.hourStem || '-'}, 시주 지지: ${calculatedSaju.tenGods.hourBranch || '-'}
+
+**12운성(十二運星)**
+- 년주: ${calculatedSaju.twelveStages.year || '-'}, 월주: ${calculatedSaju.twelveStages.month || '-'}, 일주: ${calculatedSaju.twelveStages.day || '-'}, 시주: ${calculatedSaju.twelveStages.hour || '-'}
+
+**지장간(地藏干)**
+- 년주: ${(calculatedSaju.hiddenStems.year || []).join(', ') || '-'}
+- 월주: ${(calculatedSaju.hiddenStems.month || []).join(', ') || '-'}
+- 일주: ${(calculatedSaju.hiddenStems.day || []).join(', ') || '-'}
+- 시주: ${(calculatedSaju.hiddenStems.hour || []).join(', ') || '-'}
+
+**신살(神殺) 분석**
+- 도화살: ${calculatedSaju.shinsal.도화살.present ? '있음 (' + calculatedSaju.shinsal.도화살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.도화살.description : '없음'}
+- 역마살: ${calculatedSaju.shinsal.역마살.present ? '있음 (' + calculatedSaju.shinsal.역마살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.역마살.description : '없음'}
+- 화개살: ${calculatedSaju.shinsal.화개살.present ? '있음 (' + calculatedSaju.shinsal.화개살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.화개살.description : '없음'}
+- 천을귀인: ${calculatedSaju.shinsal.천을귀인.present ? '있음 (' + calculatedSaju.shinsal.천을귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.천을귀인.description : '없음'}
+- 천덕귀인: ${calculatedSaju.shinsal.천덕귀인.present ? '있음 - ' + calculatedSaju.shinsal.천덕귀인.description : '없음'}
+- 월덕귀인: ${calculatedSaju.shinsal.월덕귀인.present ? '있음 - ' + calculatedSaju.shinsal.월덕귀인.description : '없음'}
+
+아래 정확하게 계산된 사주를 해석해주세요. 음양 분석에서는 "${yinYangBalance}" 이 점을 반드시 고려하세요. 십성, 12운성, 지장간, 신살 정보를 반드시 분석에 활용하세요.`;
   } else {
     userPrompt += `
 
