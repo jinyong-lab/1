@@ -197,6 +197,144 @@ const MUNCHANG_TABLE = {
   '己': '酉', '庚': '亥', '辛': '子', '壬': '寅', '癸': '卯'
 };
 
+// 태극귀인 - 일간 기준 (만사형통, 재난 극복)
+const TAEGEUK_TABLE = {
+  '甲': ['子', '午'], '乙': ['子', '午'],
+  '丙': ['卯', '酉'], '丁': ['卯', '酉'],
+  '戊': ['辰', '戌', '丑', '未'], '己': ['辰', '戌', '丑', '未'],
+  '庚': ['寅', '亥'], '辛': ['寅', '亥'],
+  '壬': ['巳', '申'], '癸': ['巳', '申']
+};
+
+// 학당귀인 - 일간 기준 (학업운, 교육)
+const HAKDANG_TABLE = {
+  '甲': '亥', '乙': '午', '丙': '寅', '丁': '酉', '戊': '寅',
+  '己': '酉', '庚': '巳', '辛': '子', '壬': '申', '癸': '卯'
+};
+
+// 천주귀인 - 일간 기준 (의식주 복, 물질적 풍요)
+const CHUNJU_TABLE = {
+  '甲': '巳', '乙': '午', '丙': '申', '丁': '酉', '戊': '申',
+  '己': '酉', '庚': '亥', '辛': '子', '壬': '寅', '癸': '卯'
+};
+
+// 재고귀인 - 일간 기준 (재물운, 부의 축적)
+const JAEGO_TABLE = {
+  '甲': '辰', '乙': '辰', '丙': '丑', '丁': '丑', '戊': '丑',
+  '己': '丑', '庚': '未', '辛': '未', '壬': '戌', '癸': '戌'
+};
+
+// 금여귀인 - 일간 기준 (배우자 복, 결혼 후 안정)
+const GEUMYEO_TABLE = {
+  '甲': '辰', '乙': '巳', '丙': '未', '丁': '申', '戊': '未',
+  '己': '申', '庚': '戌', '辛': '亥', '壬': '丑', '癸': '寅'
+};
+
+// 문곡귀인 - 일간 기준 (문학적 재능, 예술)
+const MUNGOK_TABLE = {
+  '甲': '亥', '乙': '子', '丙': '寅', '丁': '卯', '戊': '寅',
+  '己': '卯', '庚': '巳', '辛': '午', '壬': '申', '癸': '酉'
+};
+
+// 겁살 - 년지/일지 기준 (외부 재난, 강탈)
+const GEOBSAL_TABLE = {
+  '申': '亥', '子': '亥', '辰': '亥',
+  '寅': '巳', '午': '巳', '戌': '巳',
+  '巳': '申', '酉': '申', '丑': '申',
+  '亥': '寅', '卯': '寅', '未': '寅'
+};
+
+// 망신살 - 년지/일지 기준 (명예 손상, 수치)
+const MANGSIN_TABLE = {
+  '申': '巳', '子': '巳', '辰': '巳',
+  '寅': '亥', '午': '亥', '戌': '亥',
+  '巳': '寅', '酉': '寅', '丑': '寅',
+  '亥': '申', '卯': '申', '未': '申'
+};
+
+// 양인살 - 일간 기준 (날카로운 기운, 급변)
+const YANGIN_TABLE = {
+  '甲': '卯', '乙': '寅', '丙': '午', '丁': '巳', '戊': '午',
+  '己': '巳', '庚': '酉', '辛': '申', '壬': '子', '癸': '亥'
+};
+
+// 원진살 - 년지 기준 (원한, 불화)
+const WONJIN_TABLE = {
+  '子': '未', '丑': '午', '寅': '酉', '卯': '申',
+  '辰': '亥', '巳': '戌', '午': '丑', '未': '子',
+  '申': '卯', '酉': '寅', '戌': '巳', '亥': '辰'
+};
+
+// 괴강살 - 일주(천간+지지) 기준 (극단적 권위, 리더십)
+const GOEGANG_PILLARS = ['庚辰', '庚戌', '壬辰', '壬戌', '戊辰', '戊戌'];
+
+// 백호살 - 일주(천간+지지) 기준 (유혈, 사고, 수술)
+const BAEKHO_PILLARS = ['甲辰', '乙未', '丙戌', '丁丑', '戊辰', '壬戌', '癸丑'];
+
+// 재살(災殺) - 년지/일지 기준 (천재지변, 수재)
+const JAESAL_TABLE = {
+  '申': '子', '子': '子', '辰': '子',
+  '寅': '午', '午': '午', '戌': '午',
+  '巳': '酉', '酉': '酉', '丑': '酉',
+  '亥': '卯', '卯': '卯', '未': '卯'
+};
+
+// 천살(天殺) - 년지/일지 기준 (하늘의 재앙)
+const CHUNSAL_TABLE = {
+  '申': '丑', '子': '丑', '辰': '丑',
+  '寅': '未', '午': '未', '戌': '未',
+  '巳': '戌', '酉': '戌', '丑': '戌',
+  '亥': '辰', '卯': '辰', '未': '辰'
+};
+
+// 지살(地殺) - 년지/일지 기준 (땅의 재앙)
+const JISAL_TABLE = {
+  '申': '寅', '子': '寅', '辰': '寅',
+  '寅': '申', '午': '申', '戌': '申',
+  '巳': '亥', '酉': '亥', '丑': '亥',
+  '亥': '巳', '卯': '巳', '未': '巳'
+};
+
+// 연살(年殺/紅艶殺) - 년지/일지 기준 (이성 매력, 연애)
+const YEONSAL_TABLE = {
+  '申': '卯', '子': '卯', '辰': '卯',
+  '寅': '酉', '午': '酉', '戌': '酉',
+  '巳': '子', '酉': '子', '丑': '子',
+  '亥': '午', '卯': '午', '未': '午'
+};
+
+// 월살(月殺) - 년지/일지 기준 (고독, 외로움)
+const WOLSAL_TABLE = {
+  '申': '辰', '子': '辰', '辰': '辰',
+  '寅': '戌', '午': '戌', '戌': '戌',
+  '巳': '丑', '酉': '丑', '丑': '丑',
+  '亥': '未', '卯': '未', '未': '未'
+};
+
+// 장성살(將星殺) - 년지/일지 기준 (리더십, 권력)
+const JANGSUNG_TABLE = {
+  '申': '午', '子': '午', '辰': '午',
+  '寅': '子', '午': '子', '戌': '子',
+  '巳': '卯', '酉': '卯', '丑': '卯',
+  '亥': '酉', '卯': '酉', '未': '酉'
+};
+
+// 반안살(攀鞍殺) - 년지/일지 기준 (승진, 지위 상승)
+const BANAN_TABLE = {
+  '申': '未', '子': '未', '辰': '未',
+  '寅': '丑', '午': '丑', '戌': '丑',
+  '巳': '辰', '酉': '辰', '丑': '辰',
+  '亥': '戌', '卯': '戌', '未': '戌'
+};
+
+// 육해살(六害殺) - 년지/일지 기준 (배신, 인연 파괴)
+const YUKHAE_TABLE = {
+  '申': '酉', '子': '酉', '辰': '酉',
+  '寅': '卯', '午': '卯', '戌': '卯',
+  '巳': '午', '酉': '午', '丑': '午',
+  '亥': '子', '卯': '子', '未': '子'
+};
+
 /**
  * 신살(神殺) 계산 - 사주 내 길신/흉살 판별
  * @param {Array} pillars - [yearPillar, monthPillar, dayPillar, hourPillar]
@@ -250,6 +388,105 @@ function calculateShinsal(pillars, gender) {
   const munchangTarget = dayStem && MUNCHANG_TABLE[dayStem] ? MUNCHANG_TABLE[dayStem] : null;
   const munchangFound = munchangTarget ? allBranches.filter(b => b === munchangTarget) : [];
 
+  // --- 태극귀인 ---
+  const taegeukTargets = dayStem && TAEGEUK_TABLE[dayStem] ? TAEGEUK_TABLE[dayStem] : [];
+  const taegeukFound = allBranches.filter(b => taegeukTargets.includes(b));
+
+  // --- 학당귀인 ---
+  const hakdangTarget = dayStem && HAKDANG_TABLE[dayStem] ? HAKDANG_TABLE[dayStem] : null;
+  const hakdangFound = hakdangTarget ? allBranches.filter(b => b === hakdangTarget) : [];
+
+  // --- 천주귀인 ---
+  const chunjuTarget = dayStem && CHUNJU_TABLE[dayStem] ? CHUNJU_TABLE[dayStem] : null;
+  const chunjuFound = chunjuTarget ? allBranches.filter(b => b === chunjuTarget) : [];
+
+  // --- 재고귀인 ---
+  const jaegoTarget = dayStem && JAEGO_TABLE[dayStem] ? JAEGO_TABLE[dayStem] : null;
+  const jaegoFound = jaegoTarget ? allBranches.filter(b => b === jaegoTarget) : [];
+
+  // --- 금여귀인 ---
+  const geumyeoTarget = dayStem && GEUMYEO_TABLE[dayStem] ? GEUMYEO_TABLE[dayStem] : null;
+  const geumyeoFound = geumyeoTarget ? allBranches.filter(b => b === geumyeoTarget) : [];
+
+  // --- 문곡귀인 ---
+  const mungokTarget = dayStem && MUNGOK_TABLE[dayStem] ? MUNGOK_TABLE[dayStem] : null;
+  const mungokFound = mungokTarget ? allBranches.filter(b => b === mungokTarget) : [];
+
+  // --- 겁살 ---
+  const geobTargets = new Set();
+  if (yearBranch && GEOBSAL_TABLE[yearBranch]) geobTargets.add(GEOBSAL_TABLE[yearBranch]);
+  if (dayBranch && GEOBSAL_TABLE[dayBranch]) geobTargets.add(GEOBSAL_TABLE[dayBranch]);
+  const geobFound = allBranches.filter(b => geobTargets.has(b));
+
+  // --- 망신살 ---
+  const mangsinTargets = new Set();
+  if (yearBranch && MANGSIN_TABLE[yearBranch]) mangsinTargets.add(MANGSIN_TABLE[yearBranch]);
+  if (dayBranch && MANGSIN_TABLE[dayBranch]) mangsinTargets.add(MANGSIN_TABLE[dayBranch]);
+  const mangsinFound = allBranches.filter(b => mangsinTargets.has(b));
+
+  // --- 양인살 ---
+  const yanginTarget = dayStem && YANGIN_TABLE[dayStem] ? YANGIN_TABLE[dayStem] : null;
+  const yanginFound = yanginTarget ? allBranches.filter(b => b === yanginTarget) : [];
+
+  // --- 원진살 ---
+  const wonjinTarget = yearBranch && WONJIN_TABLE[yearBranch] ? WONJIN_TABLE[yearBranch] : null;
+  const wonjinFound = wonjinTarget ? allBranches.filter(b => b === wonjinTarget) : [];
+
+  // --- 괴강살 ---
+  const dayPillarStr = dayP ? (dayP.stem + dayP.branch) : '';
+  const goegangPresent = GOEGANG_PILLARS.includes(dayPillarStr);
+
+  // --- 백호살 ---
+  const baekhoPresent = BAEKHO_PILLARS.includes(dayPillarStr);
+
+  // --- 재살 ---
+  const jaesalTargets = new Set();
+  if (yearBranch && JAESAL_TABLE[yearBranch]) jaesalTargets.add(JAESAL_TABLE[yearBranch]);
+  if (dayBranch && JAESAL_TABLE[dayBranch]) jaesalTargets.add(JAESAL_TABLE[dayBranch]);
+  const jaesalFound = allBranches.filter(b => jaesalTargets.has(b));
+
+  // --- 천살 ---
+  const chunsalTargets = new Set();
+  if (yearBranch && CHUNSAL_TABLE[yearBranch]) chunsalTargets.add(CHUNSAL_TABLE[yearBranch]);
+  if (dayBranch && CHUNSAL_TABLE[dayBranch]) chunsalTargets.add(CHUNSAL_TABLE[dayBranch]);
+  const chunsalFound = allBranches.filter(b => chunsalTargets.has(b));
+
+  // --- 지살 ---
+  const jisalTargets = new Set();
+  if (yearBranch && JISAL_TABLE[yearBranch]) jisalTargets.add(JISAL_TABLE[yearBranch]);
+  if (dayBranch && JISAL_TABLE[dayBranch]) jisalTargets.add(JISAL_TABLE[dayBranch]);
+  const jisalFound = allBranches.filter(b => jisalTargets.has(b));
+
+  // --- 연살 ---
+  const yeonsalTargets = new Set();
+  if (yearBranch && YEONSAL_TABLE[yearBranch]) yeonsalTargets.add(YEONSAL_TABLE[yearBranch]);
+  if (dayBranch && YEONSAL_TABLE[dayBranch]) yeonsalTargets.add(YEONSAL_TABLE[dayBranch]);
+  const yeonsalFound = allBranches.filter(b => yeonsalTargets.has(b));
+
+  // --- 월살 ---
+  const wolsalTargets = new Set();
+  if (yearBranch && WOLSAL_TABLE[yearBranch]) wolsalTargets.add(WOLSAL_TABLE[yearBranch]);
+  if (dayBranch && WOLSAL_TABLE[dayBranch]) wolsalTargets.add(WOLSAL_TABLE[dayBranch]);
+  const wolsalFound = allBranches.filter(b => wolsalTargets.has(b));
+
+  // --- 장성살 ---
+  const jangsungTargets = new Set();
+  if (yearBranch && JANGSUNG_TABLE[yearBranch]) jangsungTargets.add(JANGSUNG_TABLE[yearBranch]);
+  if (dayBranch && JANGSUNG_TABLE[dayBranch]) jangsungTargets.add(JANGSUNG_TABLE[dayBranch]);
+  const jangsungFound = allBranches.filter(b => jangsungTargets.has(b));
+
+  // --- 반안살 ---
+  const bananTargets = new Set();
+  if (yearBranch && BANAN_TABLE[yearBranch]) bananTargets.add(BANAN_TABLE[yearBranch]);
+  if (dayBranch && BANAN_TABLE[dayBranch]) bananTargets.add(BANAN_TABLE[dayBranch]);
+  const bananFound = allBranches.filter(b => bananTargets.has(b));
+
+  // --- 육해살 ---
+  const yukhaeTargets = new Set();
+  if (yearBranch && YUKHAE_TABLE[yearBranch]) yukhaeTargets.add(YUKHAE_TABLE[yearBranch]);
+  if (dayBranch && YUKHAE_TABLE[dayBranch]) yukhaeTargets.add(YUKHAE_TABLE[dayBranch]);
+  const yukhaeFound = allBranches.filter(b => yukhaeTargets.has(b));
+
   return {
     도화살: {
       present: dohuaFound.length > 0,
@@ -299,6 +536,146 @@ function calculateShinsal(pillars, gender) {
       description: munchangFound.length > 0
         ? '학문과 지혜의 귀인으로, 시험, 공부, 자격증에 유리합니다. 문서 관련 일에서 좋은 성과를 거둡니다.'
         : '문창귀인이 없으나 꾸준한 학습과 독서로 지혜를 쌓을 수 있습니다.'
+    },
+    태극귀인: {
+      present: taegeukFound.length > 0,
+      branches: [...new Set(taegeukFound)],
+      description: taegeukFound.length > 0
+        ? '태극의 근본 기운을 타고나 만사에 형통하며, 어떤 재난도 극복하는 큰 복입니다.'
+        : '태극귀인이 없으나 근본을 다지는 수양으로 복을 키울 수 있습니다.'
+    },
+    학당귀인: {
+      present: hakdangFound.length > 0,
+      branches: hakdangTarget ? [hakdangTarget] : [],
+      description: hakdangFound.length > 0
+        ? '학문의 전당에 앉은 귀인으로, 공부, 시험, 학위에 큰 행운이 따릅니다.'
+        : '학당귀인이 없으나 꾸준한 노력으로 학업 성취를 이룰 수 있습니다.'
+    },
+    천주귀인: {
+      present: chunjuFound.length > 0,
+      branches: chunjuTarget ? [chunjuTarget] : [],
+      description: chunjuFound.length > 0
+        ? '하늘의 주방 귀인으로 의식주가 풍족하고, 평생 먹고 사는 걱정이 없습니다.'
+        : '천주귀인이 없으나 근면 성실함으로 물질적 안정을 이룰 수 있습니다.'
+    },
+    재고귀인: {
+      present: jaegoFound.length > 0,
+      branches: jaegoTarget ? [jaegoTarget] : [],
+      description: jaegoFound.length > 0
+        ? '재물의 창고를 가진 귀인으로, 돈을 모으고 불리는 재능이 있습니다. 투자와 사업에 유리합니다.'
+        : '재고귀인이 없으나 절약과 계획적 재테크로 부를 쌓을 수 있습니다.'
+    },
+    금여귀인: {
+      present: geumyeoFound.length > 0,
+      branches: geumyeoTarget ? [geumyeoTarget] : [],
+      description: geumyeoFound.length > 0
+        ? '금으로 된 수레를 탄 귀인으로, 결혼 후 배우자 복이 크고 안정된 생활을 누립니다.'
+        : '금여귀인이 없으나 상호 존중으로 좋은 배우자 관계를 만들 수 있습니다.'
+    },
+    문곡귀인: {
+      present: mungokFound.length > 0,
+      branches: mungokTarget ? [mungokTarget] : [],
+      description: mungokFound.length > 0
+        ? '문학과 예술의 별로, 글쓰기, 창작, 예술 분야에서 뛰어난 재능을 발휘합니다.'
+        : '문곡귀인이 없으나 꾸준한 독서와 창작 활동으로 문학적 감성을 기울 수 있습니다.'
+    },
+    겁살: {
+      present: geobFound.length > 0,
+      branches: [...new Set(geobFound)],
+      description: geobFound.length > 0
+        ? '외부로부터의 갑작스러운 손실이나 강탈을 의미합니다. 재물 관리에 주의가 필요합니다.'
+        : '겁살이 없어 외부 재난으로 인한 손실 위험이 적습니다.'
+    },
+    망신살: {
+      present: mangsinFound.length > 0,
+      branches: [...new Set(mangsinFound)],
+      description: mangsinFound.length > 0
+        ? '명예와 체면에 손상이 올 수 있는 기운입니다. 언행을 조심하고 비밀 관리에 주의하세요.'
+        : '망신살이 없어 명예가 잘 보전되는 편입니다.'
+    },
+    양인살: {
+      present: yanginFound.length > 0,
+      branches: yanginTarget ? [yanginTarget] : [],
+      description: yanginFound.length > 0
+        ? '날카로운 칼날의 기운으로 결단력이 강하지만, 급변과 충돌에 주의해야 합니다. 군인, 의사, 법조인에게 유리합니다.'
+        : '양인살이 없어 온화한 성향이 강합니다.'
+    },
+    원진살: {
+      present: wonjinFound.length > 0,
+      branches: wonjinTarget ? [wonjinTarget] : [],
+      description: wonjinFound.length > 0
+        ? '미워하면서도 끌리는 악연의 기운입니다. 특정 관계에서 갈등이 반복될 수 있으니 거리두기가 필요합니다.'
+        : '원진살이 없어 대인관계가 비교적 원만합니다.'
+    },
+    괴강살: {
+      present: goegangPresent,
+      branches: goegangPresent ? [dayPillarStr] : [],
+      description: goegangPresent
+        ? '극단적인 권위와 카리스마를 가진 장군의 기운입니다. 리더십이 강하지만 고집도 세니 유연성이 필요합니다.'
+        : '괴강살이 없어 극단적 성향 없이 균형 잡힌 편입니다.'
+    },
+    백호살: {
+      present: baekhoPresent,
+      branches: baekhoPresent ? [dayPillarStr] : [],
+      description: baekhoPresent
+        ? '백호의 기운으로 수술, 사고, 유혈 사태에 주의가 필요합니다. 의료 분야 종사 시 오히려 길합니다.'
+        : '백호살이 없어 신체적 위험이 비교적 적습니다.'
+    },
+    재살: {
+      present: jaesalFound.length > 0,
+      branches: [...new Set(jaesalFound)],
+      description: jaesalFound.length > 0
+        ? '자연재해나 예상치 못한 사고를 의미합니다. 안전에 각별히 주의하고 보험 등 대비가 필요합니다.'
+        : '재살이 없어 자연재해로 인한 피해가 적은 편입니다.'
+    },
+    천살: {
+      present: chunsalFound.length > 0,
+      branches: [...new Set(chunsalFound)],
+      description: chunsalFound.length > 0
+        ? '하늘에서 오는 재앙의 기운으로, 갑작스러운 변화에 대비해야 합니다. 신앙이나 명상이 도움됩니다.'
+        : '천살이 없어 갑작스러운 천재지변의 영향이 적습니다.'
+    },
+    지살: {
+      present: jisalFound.length > 0,
+      branches: [...new Set(jisalFound)],
+      description: jisalFound.length > 0
+        ? '땅에서 오는 재앙의 기운으로, 이사나 부동산 거래 시 주의가 필요합니다.'
+        : '지살이 없어 주거와 부동산 관련 문제가 적습니다.'
+    },
+    연살: {
+      present: yeonsalFound.length > 0,
+      branches: [...new Set(yeonsalFound)],
+      description: yeonsalFound.length > 0
+        ? '이성에 대한 강한 매력과 끌림이 있으며, 연애운이 활발합니다. 도화살과 함께 있으면 더욱 강해집니다.'
+        : '연살이 없어 이성 관계가 안정적인 편입니다.'
+    },
+    월살: {
+      present: wolsalFound.length > 0,
+      branches: [...new Set(wolsalFound)],
+      description: wolsalFound.length > 0
+        ? '고독과 외로움의 기운이 있으며, 가정이나 조직에서 소외감을 느낄 수 있습니다.'
+        : '월살이 없어 소속감이 잘 유지되는 편입니다.'
+    },
+    장성살: {
+      present: jangsungFound.length > 0,
+      branches: [...new Set(jangsungFound)],
+      description: jangsungFound.length > 0
+        ? '장수의 별로 리더십과 통솔력이 뛰어납니다. 조직의 중심이 되는 기운입니다.'
+        : '장성살이 없어 지휘보다는 협력에 강합니다.'
+    },
+    반안살: {
+      present: bananFound.length > 0,
+      branches: [...new Set(bananFound)],
+      description: bananFound.length > 0
+        ? '말 안장에 오르는 기운으로, 승진과 지위 상승의 기회가 많습니다.'
+        : '반안살이 없어 꾸준한 노력으로 지위를 쌓아가는 타입입니다.'
+    },
+    육해살: {
+      present: yukhaeFound.length > 0,
+      branches: [...new Set(yukhaeFound)],
+      description: yukhaeFound.length > 0
+        ? '가까운 사람과의 배신이나 인연 파괴의 기운이 있습니다. 믿을 사람을 잘 가려야 합니다.'
+        : '육해살이 없어 가까운 인연이 잘 유지되는 편입니다.'
     }
   };
 }
@@ -988,6 +1365,26 @@ function getSajuPrompt(sajuData, question) {
 - 천덕귀인: ${calculatedSaju.shinsal.천덕귀인.present ? '있음 - ' + calculatedSaju.shinsal.천덕귀인.description : '없음'}
 - 월덕귀인: ${calculatedSaju.shinsal.월덕귀인.present ? '있음 - ' + calculatedSaju.shinsal.월덕귀인.description : '없음'}
 - 문창귀인: ${calculatedSaju.shinsal.문창귀인.present ? '있음 (' + calculatedSaju.shinsal.문창귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.문창귀인.description : '없음'}
+- 태극귀인: ${calculatedSaju.shinsal.태극귀인.present ? '있음 (' + calculatedSaju.shinsal.태극귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.태극귀인.description : '없음'}
+- 학당귀인: ${calculatedSaju.shinsal.학당귀인.present ? '있음 (' + calculatedSaju.shinsal.학당귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.학당귀인.description : '없음'}
+- 천주귀인: ${calculatedSaju.shinsal.천주귀인.present ? '있음 (' + calculatedSaju.shinsal.천주귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.천주귀인.description : '없음'}
+- 재고귀인: ${calculatedSaju.shinsal.재고귀인.present ? '있음 (' + calculatedSaju.shinsal.재고귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.재고귀인.description : '없음'}
+- 금여귀인: ${calculatedSaju.shinsal.금여귀인.present ? '있음 (' + calculatedSaju.shinsal.금여귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.금여귀인.description : '없음'}
+- 문곡귀인: ${calculatedSaju.shinsal.문곡귀인.present ? '있음 (' + calculatedSaju.shinsal.문곡귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.문곡귀인.description : '없음'}
+- 겁살: ${calculatedSaju.shinsal.겁살.present ? '있음 (' + calculatedSaju.shinsal.겁살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.겁살.description : '없음'}
+- 망신살: ${calculatedSaju.shinsal.망신살.present ? '있음 (' + calculatedSaju.shinsal.망신살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.망신살.description : '없음'}
+- 양인살: ${calculatedSaju.shinsal.양인살.present ? '있음 (' + calculatedSaju.shinsal.양인살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.양인살.description : '없음'}
+- 원진살: ${calculatedSaju.shinsal.원진살.present ? '있음 (' + calculatedSaju.shinsal.원진살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.원진살.description : '없음'}
+- 괴강살: ${calculatedSaju.shinsal.괴강살.present ? '있음 (' + calculatedSaju.shinsal.괴강살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.괴강살.description : '없음'}
+- 백호살: ${calculatedSaju.shinsal.백호살.present ? '있음 (' + calculatedSaju.shinsal.백호살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.백호살.description : '없음'}
+- 재살: ${calculatedSaju.shinsal.재살.present ? '있음 (' + calculatedSaju.shinsal.재살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.재살.description : '없음'}
+- 천살: ${calculatedSaju.shinsal.천살.present ? '있음 (' + calculatedSaju.shinsal.천살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.천살.description : '없음'}
+- 지살: ${calculatedSaju.shinsal.지살.present ? '있음 (' + calculatedSaju.shinsal.지살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.지살.description : '없음'}
+- 연살: ${calculatedSaju.shinsal.연살.present ? '있음 (' + calculatedSaju.shinsal.연살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.연살.description : '없음'}
+- 월살: ${calculatedSaju.shinsal.월살.present ? '있음 (' + calculatedSaju.shinsal.월살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.월살.description : '없음'}
+- 장성살: ${calculatedSaju.shinsal.장성살.present ? '있음 (' + calculatedSaju.shinsal.장성살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.장성살.description : '없음'}
+- 반안살: ${calculatedSaju.shinsal.반안살.present ? '있음 (' + calculatedSaju.shinsal.반안살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.반안살.description : '없음'}
+- 육해살: ${calculatedSaju.shinsal.육해살.present ? '있음 (' + calculatedSaju.shinsal.육해살.branches.join(', ') + ') - ' + calculatedSaju.shinsal.육해살.description : '없음'}
 
 아래 정확하게 계산된 사주를 해석해주세요. 음양 분석에서는 "${yinYangBalance}" 이 점을 반드시 고려하세요. 십성, 12운성, 지장간, 신살 정보를 반드시 분석에 활용하세요.`;
   } else {
