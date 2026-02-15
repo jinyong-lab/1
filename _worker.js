@@ -103,6 +103,7 @@ function getTenGod(dayStem, targetStem) {
 // --- 12운성 (Twelve Life Stages) ---
 const TWELVE_STAGES = ['장생', '목욕', '관대', '건록', '제왕', '쇠', '병', '사', '묘', '절', '태', '양'];
 const BRANCHES_ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+const STEMS_ORDER = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 
 // 장생 시작 지지 (각 천간별)
 const TWELVE_STAGE_START = {
@@ -283,6 +284,177 @@ function calculateShinsal(pillars, gender) {
         : '월덕귀인이 없으나 꾸준한 노력으로 신뢰를 쌓을 수 있습니다.'
     }
   };
+}
+
+// --- 60갑자 & 대운/세운 계산 ---
+
+// 한자→한글 매핑 (모듈 레벨)
+const HANJA_HANGUL = {
+  '甲': '갑', '乙': '을', '丙': '병', '丁': '정', '戊': '무',
+  '己': '기', '庚': '경', '辛': '신', '壬': '임', '癸': '계',
+  '子': '자', '丑': '축', '寅': '인', '卯': '묘', '辰': '진', '巳': '사',
+  '午': '오', '未': '미', '申': '신', '酉': '유', '戌': '술', '亥': '해'
+};
+
+/**
+ * 60갑자 인덱스 계산 (Chinese Remainder Theorem)
+ * @param {string} stem - 천간 한자
+ * @param {string} branch - 지지 한자
+ * @returns {number} 0~59 인덱스
+ */
+function get60CycleIndex(stem, branch) {
+  const sIdx = STEMS_ORDER.indexOf(stem);
+  const bIdx = BRANCHES_ORDER.indexOf(branch);
+  if (sIdx === -1 || bIdx === -1) return -1;
+  return (sIdx * 36 + bIdx * 25) % 60;
+}
+
+/**
+ * 60갑자 인덱스에서 천간/지지 추출
+ * @param {number} index - 60갑자 인덱스
+ * @returns {Object} { stem, branch }
+ */
+function get60CyclePillar(index) {
+  const idx = ((index % 60) + 60) % 60;
+  return {
+    stem: STEMS_ORDER[idx % 10],
+    branch: BRANCHES_ORDER[idx % 12]
+  };
+}
+
+// 절기 근사 날짜 (양력) - 사주 월의 시작 절기
+const JEOLGI_APPROX = [
+  { month: 1, day: 6 },   // 소한 (축월)
+  { month: 2, day: 4 },   // 입춘 (인월)
+  { month: 3, day: 6 },   // 경칩 (묘월)
+  { month: 4, day: 5 },   // 청명 (진월)
+  { month: 5, day: 6 },   // 입하 (사월)
+  { month: 6, day: 6 },   // 망종 (오월)
+  { month: 7, day: 7 },   // 소서 (미월)
+  { month: 8, day: 8 },   // 입추 (신월)
+  { month: 9, day: 8 },   // 백로 (유월)
+  { month: 10, day: 8 },  // 한로 (술월)
+  { month: 11, day: 7 },  // 입동 (해월)
+  { month: 12, day: 7 },  // 대설 (자월)
+];
+
+/**
+ * 대운 시작 나이 계산
+ * 순행: 생일 → 다음 절기까지 일수 / 3
+ * 역행: 생일 → 이전 절기까지 일수 / 3
+ */
+function calculateDaeunStartAge(solarYear, solarMonth, solarDay, yearStem, gender) {
+  const isYangStem = YANG_STEMS.has(yearStem);
+  const isMale = gender === 'male';
+  const isForward = (isYangStem && isMale) || (!isYangStem && !isMale);
+
+  const birthDate = new Date(solarYear, solarMonth - 1, solarDay);
+
+  // Collect all nearby 절기 dates (-1 year to +1 year)
+  const jeolgiDates = [];
+  for (let yOff = -1; yOff <= 1; yOff++) {
+    for (const jg of JEOLGI_APPROX) {
+      const jDate = new Date(solarYear + yOff, jg.month - 1, jg.day);
+      jeolgiDates.push(jDate);
+    }
+  }
+
+  // Find next and previous 절기
+  let nextDiff = Infinity, prevDiff = Infinity;
+  for (const jDate of jeolgiDates) {
+    const diff = (jDate - birthDate) / (1000 * 60 * 60 * 24);
+    if (diff > 0 && diff < nextDiff) nextDiff = diff;
+    if (diff < 0 && Math.abs(diff) < prevDiff) prevDiff = Math.abs(diff);
+  }
+
+  const days = isForward ? (nextDiff === Infinity ? 15 : nextDiff) : (prevDiff === Infinity ? 15 : prevDiff);
+  const startAge = Math.max(1, Math.round(days / 3));
+
+  return { startAge, direction: isForward ? '순행' : '역행' };
+}
+
+/**
+ * 대운(大運) 계산 - 10년 주기 운세
+ * @param {Object} sajuData - 사용자 생년월일 정보
+ * @param {Object} yearPillar - 년주 { stem, branch }
+ * @param {Object} monthPillar - 월주 { stem, branch }
+ * @param {string} dayStem - 일간 천간
+ * @returns {Object} { direction, startAge, cycles[] }
+ */
+function calculateDaeunData(sajuData, yearPillar, monthPillar, dayStem) {
+  if (!monthPillar || !yearPillar) return null;
+
+  const birthYear = Number(sajuData.year);
+  let solarYear = birthYear, solarMonth = Number(sajuData.month), solarDay = Number(sajuData.day);
+
+  if (sajuData.cal === 'lunar') {
+    try {
+      const conv = lunarToSolar(birthYear, solarMonth, solarDay);
+      if (conv && conv.solar) {
+        solarYear = conv.solar.year;
+        solarMonth = conv.solar.month;
+        solarDay = conv.solar.day;
+      }
+    } catch (e) { /* use original solar dates */ }
+  }
+
+  const { startAge, direction } = calculateDaeunStartAge(
+    solarYear, solarMonth, solarDay, yearPillar.stem, sajuData.gender || 'male'
+  );
+  const isForward = direction === '순행';
+  const mpIndex = get60CycleIndex(monthPillar.stem, monthPillar.branch);
+
+  const cycles = [];
+  for (let i = 1; i <= 10; i++) {
+    const ci = isForward ? mpIndex + i : mpIndex - i;
+    const { stem, branch } = get60CyclePillar(ci);
+    const age = startAge + (i - 1) * 10;
+    cycles.push({
+      age,
+      year: birthYear + age,
+      stem,
+      branch,
+      hangulStem: HANJA_HANGUL[stem] || '',
+      hangulBranch: HANJA_HANGUL[branch] || '',
+      stemElement: STEM_ELEMENTS[stem] || '',
+      branchElement: BRANCH_ELEMENTS[branch] || '',
+      tenGod: getTenGod(dayStem, stem),
+      twelveStage: getTwelveStage(dayStem, branch)
+    });
+  }
+
+  return { direction, startAge, cycles };
+}
+
+/**
+ * 세운(歲運) 계산 - 연간 운세 (현재 기준 ±2년)
+ * @param {number} birthYear - 출생 연도
+ * @param {string} dayStem - 일간 천간
+ * @returns {Array} 5개년 세운 데이터
+ */
+function calculateSaeunData(birthYear, dayStem) {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+
+  for (let y = currentYear - 2; y <= currentYear + 2; y++) {
+    const cycleIndex = ((y - 4) % 60 + 60) % 60;
+    const { stem, branch } = get60CyclePillar(cycleIndex);
+    years.push({
+      year: y,
+      age: y - birthYear,
+      stem,
+      branch,
+      hangulStem: HANJA_HANGUL[stem] || '',
+      hangulBranch: HANJA_HANGUL[branch] || '',
+      stemElement: STEM_ELEMENTS[stem] || '',
+      branchElement: BRANCH_ELEMENTS[branch] || '',
+      tenGod: dayStem ? getTenGod(dayStem, stem) : '',
+      twelveStage: dayStem ? getTwelveStage(dayStem, branch) : '',
+      isCurrent: y === currentYear
+    });
+  }
+
+  return years;
 }
 
 // --- Rate Limiting (in-memory) ---
@@ -524,6 +696,11 @@ function calculateAccurateSaju(sajuData) {
       }
     });
 
+    // 대운 계산
+    const daeun = calculateDaeunData(sajuData, yearPillar, monthPillar, dayStem);
+    // 세운 계산
+    const saeun = calculateSaeunData(Number(sajuData.year), dayStem);
+
     return {
       yearPillar,
       monthPillar,
@@ -535,7 +712,9 @@ function calculateAccurateSaju(sajuData) {
       tenGods,
       twelveStages,
       shinsal,
-      hiddenStems
+      hiddenStems,
+      daeun,
+      saeun
     };
   } catch (error) {
     console.error('calculateAccurateSaju error:', error);

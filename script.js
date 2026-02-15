@@ -1154,6 +1154,87 @@ function buildPillarBoard(pillars) {
   `;
 }
 
+function buildManseryeokTable(serverSaju) {
+  if (!serverSaju || !serverSaju.daeun) return '';
+
+  const daeun = serverSaju.daeun;
+  const saeun = serverSaju.saeun || [];
+  const currentYear = new Date().getFullYear();
+  const birthYear = saeun.length > 0 ? saeun[0].year - saeun[0].age : currentYear - 30;
+
+  // 오행 색상 매핑
+  const elementColor = {
+    '목': '#4ade80', '화': '#f87171', '토': '#fbbf24', '금': '#e2e8f0', '수': '#60a5fa'
+  };
+
+  // 대운 행 (현재 대운 하이라이트)
+  const currentAge = currentYear - birthYear;
+  const daeunCells = daeun.cycles.map(c => {
+    const isActive = currentAge >= c.age && currentAge < c.age + 10;
+    const stemColor = elementColor[c.stemElement] || '#fff';
+    const branchColor = elementColor[c.branchElement] || '#fff';
+    return `
+      <div class="ms-cell ${isActive ? 'ms-active' : ''}">
+        <div class="ms-age">${c.age}세</div>
+        <div class="ms-year">${c.year}</div>
+        <div class="ms-tengod">${escapeHtml(c.tenGod)}</div>
+        <div class="ms-stem" style="color:${stemColor}">${escapeHtml(c.stem)}</div>
+        <div class="ms-branch" style="color:${branchColor}">${escapeHtml(c.branch)}</div>
+        <div class="ms-hangul">${escapeHtml(c.hangulStem)}${escapeHtml(c.hangulBranch)}</div>
+        <div class="ms-stage">${escapeHtml(c.twelveStage)}</div>
+      </div>
+    `;
+  }).join('');
+
+  // 세운 행
+  const saeunCells = saeun.map(s => {
+    const stemColor = elementColor[s.stemElement] || '#fff';
+    const branchColor = elementColor[s.branchElement] || '#fff';
+    return `
+      <div class="ms-cell ${s.isCurrent ? 'ms-active' : ''}">
+        <div class="ms-age">${s.age}세</div>
+        <div class="ms-year">${s.year}</div>
+        <div class="ms-tengod">${escapeHtml(s.tenGod)}</div>
+        <div class="ms-stem" style="color:${stemColor}">${escapeHtml(s.stem)}</div>
+        <div class="ms-branch" style="color:${branchColor}">${escapeHtml(s.branch)}</div>
+        <div class="ms-hangul">${escapeHtml(s.hangulStem)}${escapeHtml(s.hangulBranch)}</div>
+        <div class="ms-stage">${escapeHtml(s.twelveStage)}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="section result-shell manseryeok-shell fade-in">
+      <div class="analysis-header">
+        <div>
+          <p class="analysis-eyebrow">📜 만세력</p>
+          <h3 class="analysis-title">만세력 (命式)</h3>
+        </div>
+        <div class="analysis-badges">
+          <span class="badge tone-2">대운 ${escapeHtml(daeun.direction)}</span>
+          <span class="badge tone-4">대운수 ${daeun.startAge}세</span>
+        </div>
+      </div>
+      <div class="ms-section">
+        <div class="ms-label">대운 (大運) <span class="ms-sublabel">10년 주기 운의 흐름</span></div>
+        <div class="ms-scroll">
+          <div class="ms-row">
+            ${daeunCells}
+          </div>
+        </div>
+      </div>
+      <div class="ms-section">
+        <div class="ms-label">세운 (歲運) <span class="ms-sublabel">연간 운세</span></div>
+        <div class="ms-scroll">
+          <div class="ms-row ms-saeun-row">
+            ${saeunCells}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 
 function buildElementGallery(activeKey, counts) {
   const elements = [
@@ -1434,6 +1515,7 @@ document.getElementById('btnGo').addEventListener('click', async () => {
         <button class="share-btn" data-action="copy-link">링크 복사</button>
       </div>
       ${buildSajuHero(sajuElement, elementCounts)}
+      <div class="manseryeok-slot" data-role="manseryeok-slot"></div>
       <div class="pillar-slot" data-role="pillar-slot"></div>
       <div class="element-slot" data-role="element-slot"></div>
       <div class="section result-shell yinyang-card fade-in" style="margin:16px 0;">
@@ -1523,6 +1605,11 @@ document.getElementById('btnGo').addEventListener('click', async () => {
     enhanceCallouts(analysisBody);
     applyAccordion(analysisBody);
     injectKeywordTooltips(analysisBody);
+  }
+
+  const manseryeokSlot = resultDiv.querySelector('[data-role="manseryeok-slot"]');
+  if (manseryeokSlot && serverSaju) {
+    manseryeokSlot.innerHTML = buildManseryeokTable(serverSaju);
   }
 
   const pillarSlot = resultDiv.querySelector('[data-role="pillar-slot"]');

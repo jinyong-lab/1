@@ -2025,3 +2025,133 @@
 [data-theme="light"] .element-meter {
   background: rgba(0, 0, 0, 0.08);
 }
+
+/* --- 만세력 (Manseryeok) Table --- */
+.manseryeok-shell {
+  margin: 16px 0;
+}
+.ms-section {
+  margin-top: 20px;
+}
+.ms-label {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.ms-sublabel {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: 8px;
+}
+.ms-scroll {
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.ms-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.ms-scroll::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+}
+.ms-scroll::-webkit-scrollbar-thumb {
+  background: rgba(124, 102, 217, 0.3);
+  border-radius: 3px;
+}
+.ms-row {
+  display: flex;
+  gap: 8px;
+  min-width: max-content;
+}
+.ms-saeun-row {
+  justify-content: center;
+}
+.ms-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 72px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: var(--pillar-bg, rgba(142, 170, 255, 0.06));
+  border: 1px solid var(--line);
+  transition: all 0.3s ease;
+}
+.ms-cell.ms-active {
+  background: rgba(124, 102, 217, 0.15);
+  border-color: var(--accent-1);
+  box-shadow: 0 0 12px rgba(124, 102, 217, 0.25);
+}
+.ms-age {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-1);
+  margin-bottom: 2px;
+}
+.ms-year {
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.ms-tengod {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-2);
+  margin-bottom: 4px;
+  min-height: 16px;
+}
+.ms-stem {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.ms-branch {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+.ms-hangul {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.ms-stage {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(76, 201, 240, 0.12);
+  color: var(--accent-3);
+}
+
+/* Light theme overrides */
+:root[data-theme="light"] .ms-cell {
+  background: rgba(124, 102, 217, 0.04);
+}
+:root[data-theme="light"] .ms-cell.ms-active {
+  background: rgba(124, 102, 217, 0.1);
+}
+:root[data-theme="light"] .ms-stem,
+:root[data-theme="light"] .ms-branch {
+  filter: brightness(0.7);
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .ms-cell {
+    min-width: 64px;
+    padding: 8px 6px;
+  }
+  .ms-stem, .ms-branch {
+    font-size: 18px;
+  }
+  .ms-saeun-row {
+    justify-content: flex-start;
+  }
+}
