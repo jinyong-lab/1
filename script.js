@@ -17,68 +17,36 @@ let currentQuery = 'korean ballad playlist';
 let currentSajuData = null; // Store saju data for fortune tabs
 
 const SAJU_KEYWORDS = {
-  // 살(煞) - 10종
-  '도화살': '이성에게 매력적이고 인기가 많은 살. 연애운·대인관계에 영향을 미치며 예술적 감각이 뛰어남',
-  '역마살': '이동과 변화가 많은 살. 여행·이직·해외 진출의 기운이 강하며 한 곳에 머물기 어려움',
-  '백호살': '강렬한 기운의 살. 리더십과 추진력이 뛰어나지만 사고나 수술에 주의가 필요',
-  '화개살': '예술적 감성과 종교적 영성이 깊은 살. 학문·예술·철학에 재능이 있음',
-  '과숙살': '외로움과 고독의 살. 독립심이 강하고 자기만의 세계가 뚜렷함',
-  '현침살': '날카로운 지성의 살. 전문직·기술직·의료직에 유리한 기운',
-  '겁살': '급한 성격과 경쟁심의 살. 도전정신이 강하지만 성급한 판단에 주의',
-  '원진살': '갈등과 반발의 살. 관계에서 밀당이 있으며 가까운 사이일수록 충돌 가능',
-  '귀문관살': '영적 감수성이 높은 살. 직감이 뛰어나고 신비로운 분야에 관심',
-  '양인살': '결단력과 추진력의 살. 강한 의지를 가지지만 과격한 행동에 주의',
-  // 귀인(貴人) - 8종
-  '천을귀인': '하늘이 내린 최고 귀인. 위기에서 도움을 받는 복으로, 사주에서 가장 강력한 길신',
-  '천덕귀인': '하늘의 덕을 가진 귀인. 자연스럽게 복이 따르고 재난을 피하는 기운',
-  '월덕귀인': '달의 덕을 가진 귀인. 주변의 도움과 인덕이 풍부하고 건강에 이로움',
-  '문창귀인': '학문과 지혜의 귀인. 공부·시험·자격증에 유리하며 총명한 기운',
-  '학당귀인': '배움의 귀인. 학업과 연구에 탁월한 능력을 발휘하는 기운',
-  '금여귀인': '재물의 귀인. 경제적으로 안정되는 복이 있으며 금전운이 좋음',
-  '천관귀인': '관직의 귀인. 승진·명예에 유리한 기운으로 사회적 성공을 도움',
-  '태극귀인': '큰 복의 귀인. 인생 전반에 걸친 행운으로 큰 뜻을 이루는 기운',
+  // 살(煞) - 핵심 5종
+  '도화살': '이성에게 매력적이고 인기가 많은 살. 연애운과 대인관계에 영향',
+  '역마살': '이동과 변화가 많은 살. 여행·이직·해외 진출 기운',
+  '화개살': '예술적 감성과 영성이 깊은 살. 학문·예술에 재능',
+  '양인살': '결단력과 추진력의 살. 강한 의지력',
+  '원진살': '갈등과 반발의 살. 가까운 사이일수록 충돌 가능',
+  // 귀인(貴人) - 핵심 3종
+  '천을귀인': '하늘이 내린 최고 귀인. 위기에서 도움을 받는 복',
+  '문창귀인': '학문과 지혜의 귀인. 시험·자격증에 유리',
+  '천덕귀인': '하늘의 덕을 가진 귀인. 재난을 피하는 기운',
   // 십성(十神) - 10종
-  '식신': '먹을 복과 표현력의 신. 요리·예술·창작에 재능이 있으며 낙천적 성격',
-  '상관': '창의력과 반항심의 신. 자유로운 영혼으로 틀에 박힌 것을 거부하는 기운',
-  '편관': '권력과 통제의 신. 리더십이 강하며 군인·경찰·법조인에 적합',
-  '정관': '규율과 책임의 신. 공무원·관리직에 적합하며 성실하고 신뢰받는 성격',
-  '편재': '투기적 재물의 신. 사업·투자 기질이 있으며 큰돈을 벌고 쓰는 성향',
-  '정재': '안정적 재물의 신. 저축·월급에 유리하며 꾸준한 재물 축적에 능함',
-  '편인': '독창적 학문의 신. 비전통적 공부에 재능이 있으며 직관력이 뛰어남',
-  '정인': '정통 학문의 신. 자격증·학위에 유리하며 어머니의 사랑과 보호를 상징',
-  '비견': '형제·경쟁의 신. 독립심과 자존심이 강하며 동업보다 독립이 유리',
-  '겁재': '경쟁과 도전의 신. 승부욕이 강하며 투기성 재물에 손실 주의',
-  // 12운성(十二運星) - 12종
-  '장생': '새로운 시작과 탄생의 기운. 성장 가능성이 크고 밝은 미래를 상징',
-  '목욕': '정화와 변화의 기운. 감정 기복이 있으나 새로운 전환점을 맞이',
-  '관대': '성장과 독립의 기운. 사회적으로 인정받기 시작하며 자신감이 생김',
-  '건록': '안정과 번영의 기운. 직업과 재물이 안정되며 가장 활발한 시기',
-  '제왕': '최고 전성기의 기운. 가장 강한 에너지를 가지나 쇠퇴 시작에 주의',
-  '쇠': '기운이 점차 약해지는 시기. 무리하지 말고 내면의 성숙에 집중',
-  '병': '쇠약과 시련의 기운. 건강 관리에 주의하며 내면의 힘을 기르는 시기',
-  '사': '끝과 완성의 기운. 기존 방식의 종결이며 새로운 시작을 준비하는 시기',
-  '묘': '저장과 보존의 기운. 숨겨진 재능이 있으며 때를 기다리는 지혜가 필요',
-  '절': '단절과 새출발의 기운. 과거를 정리하고 완전히 새로운 시작을 하는 시기',
-  '태': '잉태와 가능성의 기운. 아직 드러나지 않은 잠재력이 무궁무진',
-  '양': '양육과 준비의 기운. 조용히 실력을 쌓으며 때를 기다리는 시기',
-  // 오행(五行) - 5종
-  '목': '나무의 기운. 성장·발전·창의성을 상징하며 봄의 에너지를 지님',
-  '화': '불의 기운. 열정·활동·표현력을 상징하며 여름의 에너지를 지님',
-  '토': '흙의 기운. 안정·중용·신뢰를 상징하며 환절기의 에너지를 지님',
-  '금': '쇠의 기운. 결단·의리·정확함을 상징하며 가을의 에너지를 지님',
-  '수': '물의 기운. 지혜·유연·적응력을 상징하며 겨울의 에너지를 지님',
-  // 기타 핵심 용어
-  '일간': '사주의 중심이 되는 나 자신. 일주의 천간으로 성격과 운명의 핵심',
-  '대운': '10년 단위로 변하는 큰 운의 흐름. 인생의 큰 전환점을 나타냄',
-  '세운': '매년 바뀌는 1년 단위의 운세. 그해의 전체적인 기운과 흐름',
-  '월운': '매달 바뀌는 1개월 단위의 운세. 세부적인 기운의 변화',
-  '천간': '하늘의 기운을 나타내는 10개의 글자. 갑을병정무기경신임계',
-  '지지': '땅의 기운을 나타내는 12개의 글자. 자축인묘진사오미신유술해',
-  '지장간': '지지 속에 숨어있는 천간. 겉으로 드러나지 않는 내면의 기운',
-  '삼합': '세 지지가 모여 강한 오행을 이루는 조합. 큰 에너지의 결합',
-  '충': '서로 반대되는 지지가 부딪히는 것. 갈등·변화·이별의 기운',
-  '형': '지지끼리 벌하는 관계. 구설·시비·법적 문제에 주의',
-  '합': '천간이나 지지가 결합하는 것. 화합·협력·인연의 기운'
+  '식신': '먹을 복과 표현력의 신. 창작에 재능이 있으며 낙천적',
+  '상관': '창의력과 반항심의 신. 자유로운 영혼',
+  '편관': '권력과 통제의 신. 리더십이 강함',
+  '정관': '규율과 책임의 신. 성실하고 신뢰받는 성격',
+  '편재': '투기적 재물의 신. 사업·투자 기질',
+  '정재': '안정적 재물의 신. 꾸준한 재물 축적',
+  '편인': '독창적 학문의 신. 직관력이 뛰어남',
+  '정인': '정통 학문의 신. 어머니의 사랑과 보호 상징',
+  '비견': '형제·경쟁의 신. 독립심과 자존심이 강함',
+  '겁재': '경쟁과 도전의 신. 승부욕이 강함',
+  // 핵심 용어
+  '일간': '사주의 중심, 나 자신. 성격과 운명의 핵심',
+  '대운': '10년 단위 큰 운의 흐름. 인생의 전환점',
+  '세운': '매년 바뀌는 1년 단위 운세',
+  '천간': '하늘의 기운 10글자. 갑을병정무기경신임계',
+  '지지': '땅의 기운 12글자. 자축인묘진사오미신유술해',
+  '지장간': '지지 속 숨은 천간. 내면의 기운',
+  '합': '천간·지지가 결합. 화합·협력의 기운',
+  '충': '반대 지지가 부딪힘. 갈등·변화의 기운'
 };
 
 function injectKeywordTooltips(container) {
@@ -582,7 +550,7 @@ function parseSummary(md) {
         .split(/[,/·•|]/)
         .map(item => item.trim())
         .filter(Boolean)
-        .slice(0, 8);
+        .slice(0, 5);
     } else {
       summary[key] = rawValue;
     }
@@ -1510,6 +1478,13 @@ document.getElementById('btnGo').addEventListener('click', async () => {
         ${questionChip}
       </div>
       ${buildSummaryHtml(analysisSummary)}
+      <div class="saju-search-wrap">
+        <div class="saju-search-box">
+          <input type="text" class="saju-search-input" data-role="saju-search" placeholder="사주 용어가 궁금하면 여기에 검색하세요 (예: 도화살, 편관, 대운)" maxlength="100">
+          <button class="saju-search-btn" data-role="saju-search-btn">검색</button>
+        </div>
+        <div class="saju-search-result" data-role="saju-search-result" style="display:none;"></div>
+      </div>
       <div class="share-actions">
         <button class="share-btn" data-action="share">공유하기</button>
         <button class="share-btn" data-action="copy-link">링크 복사</button>
@@ -1651,6 +1626,62 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   setTimeout(() => {
     loadFortuneInResult('tomorrow', resultDiv);
   }, 500);
+
+  // Saju term search
+  const searchInput = resultDiv.querySelector('[data-role="saju-search"]');
+  const searchBtn = resultDiv.querySelector('[data-role="saju-search-btn"]');
+  const searchResult = resultDiv.querySelector('[data-role="saju-search-result"]');
+
+  async function doSearch() {
+    const query = searchInput?.value?.trim();
+    if (!query || query.length < 2) {
+      showToast('검색어를 2자 이상 입력해주세요.', 'error');
+      return;
+    }
+    searchResult.style.display = 'block';
+    searchResult.innerHTML = '<p class="search-loading">검색 중<span class="loading-dots"></span></p>';
+    searchBtn.disabled = true;
+
+    try {
+      const params = new URLSearchParams({ type: 'search', query });
+      const resp = await fetch(`/api/saju?${params.toString()}`);
+      const data = await resp.json();
+
+      let answer = '';
+      if (data?.choices?.[0]?.message?.content) {
+        answer = data.choices[0].message.content;
+      } else if (data?.content) {
+        answer = data.content;
+      } else if (data?.error?.message) {
+        answer = `오류: ${data.error.message}`;
+      } else {
+        answer = '검색 결과를 가져오지 못했습니다.';
+      }
+
+      searchResult.innerHTML = `
+        <div class="search-answer">
+          <div class="search-answer-header">
+            <span class="search-query-label">"${escapeHtml(query)}"</span>
+            <button class="search-close-btn" data-role="search-close">✕</button>
+          </div>
+          <div class="search-answer-body">${renderMarkdownSafe(answer)}</div>
+        </div>
+      `;
+      injectKeywordTooltips(searchResult.querySelector('.search-answer-body'));
+
+      searchResult.querySelector('[data-role="search-close"]')?.addEventListener('click', () => {
+        searchResult.style.display = 'none';
+      });
+    } catch (err) {
+      searchResult.innerHTML = '<p class="search-error">검색 중 오류가 발생했습니다. 다시 시도해주세요.</p>';
+    }
+    searchBtn.disabled = false;
+  }
+
+  if (searchBtn) searchBtn.addEventListener('click', doSearch);
+  if (searchInput) searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
 
   trackEvent('saju_analysis_complete', { event_category: 'engagement', element: sajuElement || 'unknown' });
 });

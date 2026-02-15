@@ -2026,6 +2026,147 @@
   background: rgba(0, 0, 0, 0.08);
 }
 
+/* --- Saju Term Search --- */
+.saju-search-wrap {
+  margin: 20px 0 12px;
+}
+.saju-search-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.saju-search-input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  transition: all 0.3s ease;
+  outline: none;
+}
+.saju-search-input::placeholder {
+  color: var(--muted);
+  font-size: 13px;
+}
+.saju-search-input:focus {
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 3px rgba(124, 102, 217, 0.12);
+}
+.saju-search-btn {
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  min-width: 72px;
+  margin-top: 0;
+  width: auto;
+  box-shadow: 0 2px 8px rgba(124, 102, 217, 0.25);
+  animation: none;
+}
+.saju-search-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 102, 217, 0.35);
+}
+.saju-search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+.saju-search-result {
+  margin-top: 12px;
+}
+.search-loading {
+  text-align: center;
+  color: var(--muted);
+  padding: 20px;
+  font-size: 14px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.search-answer {
+  background: var(--shell-bg, rgba(12, 16, 32, 0.85));
+  border: 1.5px solid var(--accent-1);
+  border-radius: 14px;
+  overflow: hidden;
+  animation: fadeIn 0.4s ease-out;
+}
+.search-answer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(124, 102, 217, 0.1);
+  border-bottom: 1px solid rgba(124, 102, 217, 0.2);
+}
+.search-query-label {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent-1);
+}
+.search-close-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  width: auto;
+  min-width: auto;
+  margin-top: 0;
+  box-shadow: none;
+  animation: none;
+}
+.search-close-btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.1);
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+.search-close-btn::before {
+  display: none;
+}
+.search-answer-body {
+  padding: 16px;
+  font-size: 14.5px;
+  line-height: 1.85;
+  color: var(--text);
+}
+.search-answer-body strong {
+  color: var(--accent-1);
+}
+.search-answer-body p {
+  margin: 8px 0;
+}
+.search-error {
+  text-align: center;
+  color: #ff5252;
+  padding: 16px;
+  font-size: 14px;
+}
+[data-theme="light"] .search-answer {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--accent-1);
+}
+[data-theme="light"] .search-answer-header {
+  background: rgba(90, 72, 163, 0.08);
+  border-bottom-color: rgba(90, 72, 163, 0.15);
+}
+[data-theme="light"] .search-close-btn:hover {
+  background: rgba(0,0,0,0.06);
+}
+
 /* --- 만세력 (Manseryeok) Table --- */
 .manseryeok-shell {
   margin: 16px 0;
@@ -2153,5 +2294,11 @@
   }
   .ms-saeun-row {
     justify-content: flex-start;
+  }
+  .saju-search-box {
+    flex-direction: column;
+  }
+  .saju-search-btn {
+    width: 100%;
   }
 }

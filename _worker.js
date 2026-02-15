@@ -1056,6 +1056,22 @@ ${calculatedSaju && calculatedSaju.yinYang ? `
   ];
 }
 
+function getSearchPrompt(query) {
+  const systemPrompt = `당신은 사주명리학(四柱命理學) 전문 용어 사전입니다.
+- 사용자가 물어보는 사주 관련 용어, 개념, 살(煞), 귀인(貴人), 십성(十神), 12운성, 오행, 천간, 지지 등을 쉽고 정확하게 설명합니다.
+- 답변은 한국어로만 작성하고, 마크다운 문법을 사용합니다.
+- 핵심 키워드는 **볼드** 처리합니다.
+- 답변 길이: 200~400자 (간결하지만 충분히 이해 가능하게).
+- 전문 용어 설명 시 한자 병기 (예: 도화살(桃花煞))
+- 비유나 예시를 1~2개 포함하세요.
+- 사주와 무관한 질문에는 "사주 관련 용어나 궁금한 점을 물어보세요!" 라고 안내하세요.`;
+
+  return [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: query }
+  ];
+}
+
 function getCompatPrompt(person1, person2, question) {
   const systemPrompt = `당신은 사주 기반 궁합 분석 전문 역학가입니다. 정확하고 풍부한 분석을 한국어로 제공하세요.
 - 분석은 한국어로만 작성합니다. 영어 표현은 절대 쓰지 마세요.
@@ -1485,6 +1501,13 @@ async function handleApiRequest(request, env) {
         return apiResponse({ error: { message: dateError } }, 400);
       }
       messages = getWealthFortunePrompt(sajuData);
+
+    } else if (type === 'search') {
+      const query = sanitizeQuestion(url.searchParams.get('query'));
+      if (!query || query.trim().length < 2) {
+        return apiResponse({ error: { message: '검색어를 2자 이상 입력해주세요.' } }, 400);
+      }
+      messages = getSearchPrompt(query.trim());
 
     } else {
       return apiResponse({ error: { message: 'Invalid request type.' } }, 400);
