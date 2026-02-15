@@ -16,79 +16,6 @@ const themeToggle = document.getElementById('themeToggle');
 let currentQuery = 'korean ballad playlist';
 let currentSajuData = null; // Store saju data for fortune tabs
 
-const SAJU_KEYWORDS = {
-  // 살(煞) - 핵심 5종
-  '도화살': '이성에게 매력적이고 인기가 많은 살. 연애운과 대인관계에 영향',
-  '역마살': '이동과 변화가 많은 살. 여행·이직·해외 진출 기운',
-  '화개살': '예술적 감성과 영성이 깊은 살. 학문·예술에 재능',
-  '양인살': '결단력과 추진력의 살. 강한 의지력',
-  '원진살': '갈등과 반발의 살. 가까운 사이일수록 충돌 가능',
-  // 귀인(貴人) - 핵심 3종
-  '천을귀인': '하늘이 내린 최고 귀인. 위기에서 도움을 받는 복',
-  '문창귀인': '학문과 지혜의 귀인. 시험·자격증에 유리',
-  '천덕귀인': '하늘의 덕을 가진 귀인. 재난을 피하는 기운',
-  // 십성(十神) - 10종
-  '식신': '먹을 복과 표현력의 신. 창작에 재능이 있으며 낙천적',
-  '상관': '창의력과 반항심의 신. 자유로운 영혼',
-  '편관': '권력과 통제의 신. 리더십이 강함',
-  '정관': '규율과 책임의 신. 성실하고 신뢰받는 성격',
-  '편재': '투기적 재물의 신. 사업·투자 기질',
-  '정재': '안정적 재물의 신. 꾸준한 재물 축적',
-  '편인': '독창적 학문의 신. 직관력이 뛰어남',
-  '정인': '정통 학문의 신. 어머니의 사랑과 보호 상징',
-  '비견': '형제·경쟁의 신. 독립심과 자존심이 강함',
-  '겁재': '경쟁과 도전의 신. 승부욕이 강함',
-  // 핵심 용어
-  '일간': '사주의 중심, 나 자신. 성격과 운명의 핵심',
-  '대운': '10년 단위 큰 운의 흐름. 인생의 전환점',
-  '세운': '매년 바뀌는 1년 단위 운세',
-  '천간': '하늘의 기운 10글자. 갑을병정무기경신임계',
-  '지지': '땅의 기운 12글자. 자축인묘진사오미신유술해',
-  '지장간': '지지 속 숨은 천간. 내면의 기운',
-  '합': '천간·지지가 결합. 화합·협력의 기운',
-  '충': '반대 지지가 부딪힘. 갈등·변화의 기운'
-};
-
-function injectKeywordTooltips(container) {
-  if (!container) return;
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
-  const textNodes = [];
-  while (walker.nextNode()) textNodes.push(walker.currentNode);
-
-  const keywords = Object.keys(SAJU_KEYWORDS).sort((a, b) => b.length - a.length);
-  const pattern = new RegExp(`(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
-
-  textNodes.forEach(node => {
-    if (!pattern.test(node.textContent)) return;
-    if (node.parentElement?.classList.contains('keyword-tooltip')) return;
-
-    pattern.lastIndex = 0;
-    const frag = document.createDocumentFragment();
-    let lastIndex = 0;
-    let match;
-
-    while ((match = pattern.exec(node.textContent)) !== null) {
-      if (match.index > lastIndex) {
-        frag.appendChild(document.createTextNode(node.textContent.slice(lastIndex, match.index)));
-      }
-      const span = document.createElement('span');
-      span.className = 'keyword-tooltip';
-      span.setAttribute('data-tip', SAJU_KEYWORDS[match[1]]);
-      span.textContent = match[1];
-      frag.appendChild(span);
-      lastIndex = pattern.lastIndex;
-    }
-
-    if (lastIndex < node.textContent.length) {
-      frag.appendChild(document.createTextNode(node.textContent.slice(lastIndex)));
-    }
-
-    if (frag.childNodes.length > 0) {
-      node.parentNode.replaceChild(frag, node);
-    }
-  });
-}
-
 // --- Theme Persistence ---
 (function() {
   const saved = localStorage.getItem('saju-theme');
@@ -1324,6 +1251,13 @@ function applyAccordion(container) {
 
   const flush = () => {
     if (!current) return;
+    // Skip sections with no meaningful content
+    const hasContent = current.nodes.some(node => {
+      const text = (node.textContent || '').trim();
+      return text.length > 0;
+    });
+    if (!hasContent) { current = null; return; }
+
     const details = document.createElement('details');
     details.className = 'accordion-item';
     if (!accordion.children.length) {
@@ -1579,7 +1513,6 @@ document.getElementById('btnGo').addEventListener('click', async () => {
     analysisBody.innerHTML = renderMarkdownSafe(cleanedResponse);
     enhanceCallouts(analysisBody);
     applyAccordion(analysisBody);
-    injectKeywordTooltips(analysisBody);
   }
 
   const manseryeokSlot = resultDiv.querySelector('[data-role="manseryeok-slot"]');
@@ -1667,7 +1600,6 @@ document.getElementById('btnGo').addEventListener('click', async () => {
           <div class="search-answer-body">${renderMarkdownSafe(answer)}</div>
         </div>
       `;
-      injectKeywordTooltips(searchResult.querySelector('.search-answer-body'));
 
       searchResult.querySelector('[data-role="search-close"]')?.addEventListener('click', () => {
         searchResult.style.display = 'none';
@@ -1765,7 +1697,6 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
     analysisBody.innerHTML = renderMarkdownSafe(cleanedResponse);
     enhanceCallouts(analysisBody);
     applyAccordion(analysisBody);
-    injectKeywordTooltips(analysisBody);
   }
 
   trackEvent('compat_analysis_complete', { event_category: 'engagement' });
@@ -1782,7 +1713,7 @@ async function loadFortuneInResult(tabType, resultDiv) {
   if (fortuneTabCache[tabType] && typeof fortuneTabCache[tabType] === 'string') {
     container.innerHTML = fortuneTabCache[tabType];
     const body = container.querySelector('.analysis-body');
-    if (body) { enhanceCallouts(body); applyAccordion(body); injectKeywordTooltips(body); }
+    if (body) { enhanceCallouts(body); applyAccordion(body); }
     return;
   }
 
@@ -1811,7 +1742,6 @@ async function loadFortuneInResult(tabType, resultDiv) {
     if (body) {
       enhanceCallouts(body);
       applyAccordion(body);
-      injectKeywordTooltips(body);
     }
 
     // 캐시 저장

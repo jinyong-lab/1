@@ -1666,57 +1666,6 @@
       background:linear-gradient(90deg, rgba(76,201,240,0.18), rgba(255,138,101,0.12));
       font-weight:600;
     }
-    /* Keyword tooltips */
-    .keyword-tooltip {
-      position: relative;
-      cursor: help;
-      color: var(--accent-1);
-      border-bottom: 1px dotted var(--accent-1);
-      transition: color 0.2s;
-    }
-    .keyword-tooltip:hover {
-      color: var(--accent-2);
-    }
-    .keyword-tooltip::after {
-      content: attr(data-tip);
-      position: absolute;
-      bottom: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(10, 14, 28, 0.95);
-      color: #e0e0e0;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 13px;
-      line-height: 1.5;
-      white-space: nowrap;
-      max-width: 280px;
-      white-space: normal;
-      z-index: 100;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.08);
-      backdrop-filter: blur(8px);
-    }
-    .keyword-tooltip::before {
-      content: '';
-      position: absolute;
-      bottom: calc(100% + 2px);
-      left: 50%;
-      transform: translateX(-50%);
-      border: 6px solid transparent;
-      border-top-color: rgba(10, 14, 28, 0.95);
-      z-index: 100;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .keyword-tooltip:hover::after,
-    .keyword-tooltip:hover::before {
-      opacity: 1;
-    }
     .song-list-title{
       margin:12px 0 6px;
       font-size:12px;
