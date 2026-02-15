@@ -2,6 +2,7 @@
 const bM = document.getElementById('bM');
 const bD = document.getElementById('bD');
 const bT = document.getElementById('bT');
+const bTUnknown = document.getElementById('bTUnknown');
 const bP = document.getElementById('bP');
 const cY1 = document.getElementById('cY1');
 const cM1 = document.getElementById('cM1');
@@ -15,6 +16,18 @@ const themeToggle = document.getElementById('themeToggle');
 
 let currentQuery = 'korean ballad playlist';
 let currentSajuData = null; // Store saju data for fortune tabs
+
+// --- 시간 모름 체크박스 핸들러 ---
+function setupTimeUnknown(timeInput, unknownCheckbox) {
+  if (!timeInput || !unknownCheckbox) return;
+  unknownCheckbox.addEventListener('change', () => {
+    timeInput.disabled = unknownCheckbox.checked;
+    if (unknownCheckbox.checked) timeInput.value = '';
+  });
+}
+setupTimeUnknown(bT, bTUnknown);
+setupTimeUnknown(document.getElementById('cT1'), document.getElementById('cT1Unknown'));
+setupTimeUnknown(document.getElementById('cT2'), document.getElementById('cT2Unknown'));
 
 // --- Theme Persistence ---
 (function() {
@@ -1254,7 +1267,7 @@ function applyAccordion(container) {
     // Skip sections with no meaningful content
     const hasContent = current.nodes.some(node => {
       const text = (node.textContent || '').trim();
-      return text.length > 0;
+      return text.length > 10;
     });
     if (!hasContent) { current = null; return; }
 
@@ -1309,20 +1322,21 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   const errBox = document.getElementById('errBox');
   errBox.style.display = 'none';
 
+  const timeUnknown = bTUnknown && bTUnknown.checked;
   const sajuData = {
     year: bY.value,
     month: bM.value,
     day: bD.value,
-    time: bT.value,
+    time: timeUnknown ? '-1' : bT.value,
     gender: document.querySelector('input[name="gender"]:checked').value,
     cal: document.querySelector('input[name="cal"]:checked').value,
     place: bP.value,
-    b_time_ext: document.querySelector('#bT option:checked').textContent,
+    b_time_ext: timeUnknown ? '모름' : (bT.value || '모름'),
   };
   const userQuestion = document.getElementById('bQ').value || '';
 
-  if (!sajuData.year || !sajuData.month || !sajuData.day || !sajuData.time) {
-    showError('생년월일과 시간을 모두 입력해주세요.', 'errBox');
+  if (!sajuData.year || !sajuData.month || !sajuData.day || (!timeUnknown && !bT.value)) {
+    showError('생년월일과 시간을 모두 입력해주세요. (시간을 모르면 "모름" 체크)', 'errBox');
     return;
   }
   if (!sajuData.place || !sajuData.place.trim()) {
@@ -1622,17 +1636,22 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
   const errBox = document.getElementById('errBox2');
   errBox.style.display = 'none';
 
+  const cT1Unknown = document.getElementById('cT1Unknown');
+  const cT2Unknown = document.getElementById('cT2Unknown');
+  const time1Unknown = cT1Unknown && cT1Unknown.checked;
+  const time2Unknown = cT2Unknown && cT2Unknown.checked;
+
   const person1 = {
     year: cY1.value,
     month: cM1.value,
     day: cD1.value,
-    time: cT1.value,
+    time: time1Unknown ? '-1' : cT1.value,
   };
   const person2 = {
     year: cY2.value,
     month: cM2.value,
     day: cD2.value,
-    time: cT2.value,
+    time: time2Unknown ? '-1' : cT2.value,
   };
   const userQuestion = document.getElementById('cQ').value || '';
 
@@ -1663,8 +1682,8 @@ document.getElementById('btnCompat').addEventListener('click', async () => {
   const summary = parseSummary(aiResponse);
   const sanitized = sanitizeAiResponse(aiResponse);
   const cleanedResponse = injectPillarHanja(sanitized.cleaned);
-  const time1Label = person1.time ? document.querySelector('#cT1 option:checked').textContent : '시간 미입력';
-  const time2Label = person2.time ? document.querySelector('#cT2 option:checked').textContent : '시간 미입력';
+  const time1Label = time1Unknown ? '모름' : (cT1.value || '시간 미입력');
+  const time2Label = time2Unknown ? '모름' : (cT2.value || '시간 미입력');
   const person1Label = `${person1.year}.${person1.month}.${person1.day}`;
   const person2Label = `${person2.year}.${person2.month}.${person2.day}`;
   const questionPreview = truncateText(userQuestion.trim(), 36);

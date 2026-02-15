@@ -191,6 +191,12 @@ const WOLDUK_TABLE = {
   '戌': '丙', '亥': '甲', '子': '壬', '丑': '庚'
 };
 
+// 문창귀인 - 일간 기준 (학문, 시험, 자격증에 유리)
+const MUNCHANG_TABLE = {
+  '甲': '巳', '乙': '午', '丙': '申', '丁': '酉', '戊': '申',
+  '己': '酉', '庚': '亥', '辛': '子', '壬': '寅', '癸': '卯'
+};
+
 /**
  * 신살(神殺) 계산 - 사주 내 길신/흉살 판별
  * @param {Array} pillars - [yearPillar, monthPillar, dayPillar, hourPillar]
@@ -240,6 +246,10 @@ function calculateShinsal(pillars, gender) {
   const woldukTarget = monthBranch && WOLDUK_TABLE[monthBranch] ? WOLDUK_TABLE[monthBranch] : null;
   const woldukFound = woldukTarget ? allStems.filter(s => s === woldukTarget).concat(allBranches.filter(b => b === woldukTarget)) : [];
 
+  // --- 문창귀인 ---
+  const munchangTarget = dayStem && MUNCHANG_TABLE[dayStem] ? MUNCHANG_TABLE[dayStem] : null;
+  const munchangFound = munchangTarget ? allBranches.filter(b => b === munchangTarget) : [];
+
   return {
     도화살: {
       present: dohuaFound.length > 0,
@@ -282,6 +292,13 @@ function calculateShinsal(pillars, gender) {
       description: woldukFound.length > 0
         ? '달의 덕을 받아 재물과 건강에 좋은 영향을 줍니다. 주변 사람들에게 신뢰를 얻습니다.'
         : '월덕귀인이 없으나 꾸준한 노력으로 신뢰를 쌓을 수 있습니다.'
+    },
+    문창귀인: {
+      present: munchangFound.length > 0,
+      branches: munchangTarget ? [munchangTarget] : [],
+      description: munchangFound.length > 0
+        ? '학문과 지혜의 귀인으로, 시험, 공부, 자격증에 유리합니다. 문서 관련 일에서 좋은 성과를 거둡니다.'
+        : '문창귀인이 없으나 꾸준한 학습과 독서로 지혜를 쌓을 수 있습니다.'
     }
   };
 }
@@ -580,26 +597,26 @@ function validateDateFields(obj, label) {
  */
 function calculateAccurateSaju(sajuData) {
   try {
-    // Map time value to hour and minute
-    // time 0 = 23:30 (자시), time 1 = 01:30 (축시), time 2 = 03:30 (인시), etc.
-    // time -1 (모름) = use 12:00 as default
-    const timeToHourMin = {
-      '-1': [12, 0],  // 모름
-      '0': [23, 30],  // 자시 (23:00-01:00)
-      '1': [1, 30],   // 축시 (01:00-03:00)
-      '2': [3, 30],   // 인시 (03:00-05:00)
-      '3': [5, 30],   // 묘시 (05:00-07:00)
-      '4': [7, 30],   // 진시 (07:00-09:00)
-      '5': [9, 30],   // 사시 (09:00-11:00)
-      '6': [11, 30],  // 오시 (11:00-13:00)
-      '7': [13, 30],  // 미시 (13:00-15:00)
-      '8': [15, 30],  // 신시 (15:00-17:00)
-      '9': [17, 30],  // 유시 (17:00-19:00)
-      '10': [19, 30], // 술시 (19:00-21:00)
-      '11': [21, 30], // 해시 (21:00-23:00)
-    };
+    // HH:MM 형식 또는 기존 시진 값(0-11) 모두 지원
+    function parseTimeInput(timeStr) {
+      if (!timeStr || timeStr === '-1' || timeStr === '모름') {
+        return [12, 0]; // 기본값 (정오)
+      }
+      // HH:MM 형식 파싱
+      const match = String(timeStr).match(/^(\d{1,2}):(\d{2})$/);
+      if (match) {
+        return [parseInt(match[1], 10), parseInt(match[2], 10)];
+      }
+      // 기존 0-11 시진 값 호환 (fallback)
+      const oldMap = {
+        '0': [23, 30], '1': [1, 30], '2': [3, 30], '3': [5, 30],
+        '4': [7, 30], '5': [9, 30], '6': [11, 30], '7': [13, 30],
+        '8': [15, 30], '9': [17, 30], '10': [19, 30], '11': [21, 30]
+      };
+      return oldMap[String(timeStr)] || [12, 0];
+    }
 
-    const [hour, minute] = timeToHourMin[String(sajuData.time)] || [12, 0];
+    const [hour, minute] = parseTimeInput(sajuData.time);
 
     let year = Number(sajuData.year);
     let month = Number(sajuData.month);
@@ -890,6 +907,8 @@ function getSajuPrompt(sajuData, question) {
 - 각 섹션 앞에 이모티콘을 넣고, 핵심 키워드는 **볼드** 표시하세요.
 - **보고서 형식 (필수)**:
   * 각 섹션은 **최소 10~15문장**으로 매우 상세하게 작성하세요.
+  * **절대 빈 섹션 금지**: 12개 섹션 모두 반드시 풍부한 내용으로 작성하세요. 어떤 섹션도 생략하거나 간략히 넘어가지 마세요.
+  * **각 섹션 최소 분량**: 성격/관계/직업/건강/시기별 운세 섹션은 각각 최소 300자 이상, 살/귀인 섹션은 각각 최소 500자 이상으로 작성하세요.
   * 각 섹션 첫 문장은 핵심 요약으로 시작하세요.
   * 각 섹션 마지막에 속담이나 비유를 추가하세요.
   * 전체 분석 길이: **최소 4000자 이상**으로 충실하게 작성하세요.
@@ -968,6 +987,7 @@ function getSajuPrompt(sajuData, question) {
 - 천을귀인: ${calculatedSaju.shinsal.천을귀인.present ? '있음 (' + calculatedSaju.shinsal.천을귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.천을귀인.description : '없음'}
 - 천덕귀인: ${calculatedSaju.shinsal.천덕귀인.present ? '있음 - ' + calculatedSaju.shinsal.천덕귀인.description : '없음'}
 - 월덕귀인: ${calculatedSaju.shinsal.월덕귀인.present ? '있음 - ' + calculatedSaju.shinsal.월덕귀인.description : '없음'}
+- 문창귀인: ${calculatedSaju.shinsal.문창귀인.present ? '있음 (' + calculatedSaju.shinsal.문창귀인.branches.join(', ') + ') - ' + calculatedSaju.shinsal.문창귀인.description : '없음'}
 
 아래 정확하게 계산된 사주를 해석해주세요. 음양 분석에서는 "${yinYangBalance}" 이 점을 반드시 고려하세요. 십성, 12운성, 지장간, 신살 정보를 반드시 분석에 활용하세요.`;
   } else {
@@ -1019,12 +1039,12 @@ ${calculatedSaju && calculatedSaju.yinYang ? `
 - 귀인이 없는 경우도 "없음"으로 간단히 언급하고 대안을 설명
 전체 섹션을 최소 20문장, 800자 이상으로 풍부하게 작성하세요.
 6. **대운(大運) 분석**: 현재 대운 시기(${daeunYears})와 향후 주요 대운 전환기를 명시하고, 각 시기별 운세 흐름과 주의사항을 자세히 알려주세요.
-7. **성격과 재능**: 일간(${calculatedSaju ? calculatedSaju.dayStem : ''})의 오행 특성, 십성 배치, 12운성이 나타내는 성격과 재능을 최소 15문장으로 자세히 분석해주세요. 장점과 단점 모두 포함하세요.
-8. **관계/대인관계**: 십성 관계에서 드러나는 대인관계 패턴, 어울리는 사람의 오행 특성, 연애/결혼/우정 각각의 특징을 최소 15문장으로 상세히 설명하세요.
-9. **직업/재물운**: 적성 분야(오행/십성 기반), 재물 유형(정재/편재), 투자 성향, 시기에 맞는 재무 전략을 최소 15문장으로 제공하세요.
-10. **건강운**: 오행의 과불급에 따른 취약 장기, 체질 특성, 계절별/나이별 건강 관리법을 최소 15문장으로 상세히 제공하세요.
-11. **시기별 운세 흐름**: 올해, 내년, 향후 5년의 운세 흐름과 주요 전환점을 최소 15문장으로 자세히 알려주세요.
-12. **마무리 조언 및 한 줄 메시지**: 전체 사주를 종합한 핵심 조언과 따뜻한 격려 메시지를 10문장 이상으로 남겨주세요.
+7. **성격과 재능**: 일간(${calculatedSaju ? calculatedSaju.dayStem : ''})의 오행 특성, 십성 배치, 12운성이 나타내는 성격과 재능을 반드시 15~20문장, 500자 이상으로 자세히 분석해주세요. 장점과 단점 모두 포함하세요.
+8. **관계/대인관계**: 십성 관계에서 드러나는 대인관계 패턴, 어울리는 사람의 오행 특성, 연애/결혼/우정 각각의 특징을 반드시 15~20문장, 500자 이상으로 상세히 설명하세요.
+9. **직업/재물운**: 적성 분야(오행/십성 기반), 재물 유형(정재/편재), 투자 성향, 시기에 맞는 재무 전략을 반드시 15~20문장, 500자 이상으로 제공하세요.
+10. **건강운**: 오행의 과불급에 따른 취약 장기, 체질 특성, 계절별/나이별 건강 관리법을 반드시 15~20문장, 500자 이상으로 상세히 제공하세요.
+11. **시기별 운세 흐름**: 올해, 내년, 향후 5년의 운세 흐름과 주요 전환점을 반드시 15~20문장, 500자 이상으로 자세히 알려주세요.
+12. **마무리 조언 및 한 줄 메시지**: 전체 사주를 종합한 핵심 조언과 따뜻한 격려 메시지를 10~15문장, 300자 이상으로 남겨주세요.
 
 **운세 카드 (정확히 아래 형식 준수)**
 - 건강운: ... (첫 줄에 요약 작성)
