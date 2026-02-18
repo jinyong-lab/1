@@ -1118,7 +1118,7 @@ function calculateAccurateSaju(sajuData) {
 
 async function callOpenAi(apiKey, messages) {
   const apiRequestBody = {
-    model: 'gpt-4o-mini',
+    model: 'gpt-4o',
     messages: messages,
     temperature: 0,      // 완전히 결정론적 출력 (0 = 가장 일관됨)
     seed: 42,            // 동일 입력에 대해 동일 출력 보장
