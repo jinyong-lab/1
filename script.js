@@ -1,4 +1,5 @@
-﻿const bY = document.getElementById('bY');
+﻿console.log('[SAJU] Build version: 20260219a');
+const bY = document.getElementById('bY');
 const bM = document.getElementById('bM');
 const bD = document.getElementById('bD');
 const bT = document.getElementById('bT');
