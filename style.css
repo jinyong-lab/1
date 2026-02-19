@@ -442,8 +442,10 @@
     .time-input-row.compact {
       gap: 8px;
     }
-    .time-input-row input[type="time"] {
+    .time-input-row input[type="time"],
+    .time-input-row input[type="text"] {
       flex: 1;
+      min-width: 0;
     }
     .time-unknown-label {
       display: flex;
