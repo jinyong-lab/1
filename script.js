@@ -1,4 +1,4 @@
-﻿console.log('[SAJU] Build version: 20260219a');
+﻿console.log('[SAJU] Build version: 20260219b');
 const bY = document.getElementById('bY');
 const bM = document.getElementById('bM');
 const bD = document.getElementById('bD');
@@ -1484,18 +1484,12 @@ document.getElementById('btnGo').addEventListener('click', async () => {
     <div class="section result-shell fortune-tabs-shell fade-in">
       <div class="analysis-header">
         <div>
-          <p class="analysis-eyebrow">🔮 상세 운세</p>
-          <h3 class="analysis-title">상세 운세 분석</h3>
+          <p class="analysis-eyebrow">🌅 내일의 운세</p>
+          <h3 class="analysis-title">내일의 운세 분석</h3>
         </div>
       </div>
-      <div class="tabs fortune-detail-tabs" role="tablist" aria-label="상세 운세 메뉴">
-        <button class="tab-btn active" data-fortune="tomorrow" role="tab">내일의 운세</button>
-        <button class="tab-btn" data-fortune="love" role="tab">연애운</button>
-        <button class="tab-btn" data-fortune="health" role="tab">건강운</button>
-        <button class="tab-btn" data-fortune="wealth" role="tab">재물운</button>
-      </div>
       <div class="fortune-tab-content" data-role="fortune-detail-content">
-        <p style="text-align:center;color:var(--muted);padding:40px 20px;">탭을 클릭하면 상세 분석이 표시됩니다.</p>
+        <p style="text-align:center;color:var(--muted);padding:40px 20px;">운세를 불러오는 중...</p>
       </div>
     </div>
     <div class="section result-shell music-shell">
@@ -1546,15 +1540,6 @@ document.getElementById('btnGo').addEventListener('click', async () => {
   }
 
   bindFortuneTabs(resultDiv);
-
-  // Fortune 상세 탭 클릭 핸들러 (fortune-detail-tabs 내부만 선택)
-  resultDiv.querySelectorAll('.fortune-detail-tabs [data-fortune]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      resultDiv.querySelectorAll('.fortune-detail-tabs [data-fortune]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      loadFortuneInResult(btn.dataset.fortune, resultDiv);
-    });
-  });
 
   const refreshBtn = resultDiv.querySelector('[data-role="refresh-songs"]');
   if (refreshBtn) {
